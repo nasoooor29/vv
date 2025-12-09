@@ -11,6 +11,11 @@ export const envVarsSchema = z.object({
   DBPath: z.string(),
 });
 
+export const loginSchema = z.object({
+  username: z.string(),
+  password: z.string(),
+});
+
 export const upsertSessionParamsSchema = z.object({
   user_id: z.number(),
   session_token: z.string(),

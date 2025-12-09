@@ -2,8 +2,47 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import { useMutation } from "@tanstack/react-query";
+import { orpc } from "@/lib/orpc";
+import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useNavigate } from "react-router";
+
+const loginSchema = z.object({
+  username: z.string().email("Please enter a valid email"),
+  password: z.string().min(1, "Password is required"),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function Login() {
+  const navigate = useNavigate();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const login = useMutation(
+    orpc.auth.login.mutationOptions({
+      onSuccess(data) {
+        console.log("Login successful:", data);
+        toast.success("Login successful!");
+        navigate("/dashboard");
+      },
+      onError() {
+        toast.error("Invalid email or password");
+      },
+    }),
+  );
+
+  const onSubmit = (data: LoginFormData) => {
+    login.mutate(data);
+  };
   return (
     <div className="bg-background relative min-h-screen overflow-hidden">
       <div className="from-background absolute -top-10 left-0 h-1/2 w-full rounded-b-full bg-linear-to-b to-transparent blur"></div>
@@ -34,24 +73,62 @@ export default function Login() {
                 </p>
               </div>
 
-              {/* Email Input */}
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" autoComplete="off" />
-              </div>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                {/* Email Input */}
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    {...register("username")}
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    autoComplete="off"
+                  />
+                  {errors.username && (
+                    <p className="text-sm text-destructive">
+                      {errors.username.message}
+                    </p>
+                  )}
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  className="border-border border"
-                  autoComplete="off"
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    {...register("password")}
+                    id="password"
+                    type="password"
+                    placeholder="Enter your password"
+                    className="border-border border"
+                    autoComplete="off"
+                  />
+                  {errors.password && (
+                    <p className="text-sm text-destructive">
+                      {errors.password.message}
+                    </p>
+                  )}
+                </div>
 
-              {/* Continue Button */}
-              <Button className="w-full">Continue</Button>
+                {/* Continue Button */}
+                <Button
+                  className="w-full"
+                  type="submit"
+                  disabled={login.isPending}
+                >
+                  {login.isPending ? "Logging in..." : "Continue"}
+                </Button>
+
+                {/* Register Link */}
+                <p className="text-center text-sm text-muted-foreground">
+                  Don't have an account?{" "}
+                  <button
+                    type="button"
+                    onClick={() => navigate("/register")}
+                    className="text-primary hover:underline font-medium"
+                  >
+                    Register here
+                  </button>
+                </p>
+              </form>
 
               {/* Divider */}
               <div className="relative">
@@ -66,6 +143,7 @@ export default function Login() {
               <Button
                 variant="outline"
                 className="text-primary hover:bg-primary-foreground/95 w-full"
+                type="button"
               >
                 <svg
                   className="h-5 w-5 text-foreground"

@@ -1,0 +1,140 @@
+package server
+
+import (
+	"database/sql"
+	"log/slog"
+	"net/http"
+	"time"
+
+	"visory/internal/database/sessions"
+	"visory/internal/database/user"
+	"visory/internal/models"
+
+	"github.com/gofrs/uuid"
+	"github.com/labstack/echo/v4"
+	"golang.org/x/crypto/bcrypt"
+)
+
+func (s *Server) Me(c echo.Context) error {
+	cookie, err := c.Cookie(models.COOKIE_NAME)
+	if err != nil {
+		slog.Error("error happened", "err", err)
+		return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
+	}
+	u, err := s.db.User.GetBySessionToken(c.Request().Context(), cookie.Value)
+	if err != nil {
+		slog.Error("error happened", "err", err)
+		return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
+	}
+	return c.JSON(http.StatusOK, u)
+}
+
+func (s *Server) Logout(c echo.Context) error {
+	cookie, err := c.Cookie(models.COOKIE_NAME)
+	if err != nil {
+		slog.Error("error happened", "err", err)
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid cookie").SetInternal(err)
+	}
+
+	if err := s.db.Session.DeleteBySessionToken(c.Request().Context(), cookie.Value); err != nil {
+		slog.Error("error happened", "err", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to logout").SetInternal(err)
+	}
+
+	cookie.MaxAge = -1 // Expire the cookie
+	c.SetCookie(cookie)
+
+	return c.NoContent(http.StatusOK)
+}
+
+func (s *Server) Register(c echo.Context) error {
+	p := user.UpsertUserParams{}
+	if err := c.Bind(&p); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body").SetInternal(err)
+	}
+	_, err := s.db.User.GetByEmailOrUsername(c.Request().Context(), user.GetByEmailOrUsernameParams{
+		Email:    p.Email,
+		Username: p.Username,
+	})
+	if err == nil {
+		slog.Error("user already exists", "email", p.Email, "username", p.Username)
+		return echo.NewHTTPError(http.StatusConflict, "User already exists")
+	}
+	bcryptPassword, err := bcrypt.GenerateFromPassword([]byte(p.Password), bcrypt.DefaultCost)
+	if err != nil {
+		slog.Error("error hashing password", "err", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to hash password").SetInternal(err)
+	}
+	p.Password = string(bcryptPassword)
+	val, err := s.db.User.UpsertUser(c.Request().Context(), p)
+	if err != nil {
+		slog.Error("error happened", "err", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to register user").SetInternal(err)
+	}
+	if err := s.GenerateCookie(c, val.ID); err != nil {
+		slog.Error("error generating cookie", "err", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to generate cookie").SetInternal(err)
+	}
+
+	return c.JSON(http.StatusOK, val)
+}
+
+func (s *Server) GenerateCookie(c echo.Context, userId int64) error {
+	uid, err := uuid.NewV4()
+	if err != nil {
+		slog.Error("error happened", "err", err)
+		return err
+	}
+
+	_, err = s.db.Session.UpsertSession(c.Request().Context(), sessions.UpsertSessionParams{
+		UserID:       userId,
+		SessionToken: uid.String(),
+	})
+	if err != nil {
+		slog.Error("error happened", "err", err)
+		return err
+	}
+
+	cookie := http.Cookie{
+		Name:     models.COOKIE_NAME,
+		Value:    uid.String(),
+		Path:     "/",
+		MaxAge:   int(time.Hour.Seconds()),
+		Secure:   true, // Set to false for HTTP localhost
+		SameSite: http.SameSiteNoneMode,
+	}
+	c.SetCookie(&cookie)
+
+	return nil
+}
+
+func (s *Server) Login(c echo.Context) error {
+	p := models.Login{}
+	if err := c.Bind(&p); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body").SetInternal(err)
+	}
+	val, err := s.db.User.GetByEmailOrUsername(c.Request().Context(), user.GetByEmailOrUsernameParams{
+		Email:    p.Username,
+		Username: p.Username,
+	})
+	if err == sql.ErrNoRows {
+		return echo.NewHTTPError(http.StatusNotFound, "You don't have an account please register").SetInternal(err)
+	}
+	if err != nil {
+		slog.Error("error happened", "err", err)
+		return echo.NewHTTPError(http.StatusUnauthorized, "Failed to login user").SetInternal(err)
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(val.Password), []byte(p.Password))
+	if err != nil {
+		slog.Error("your username or password is wrong", "err", err)
+		return echo.NewHTTPError(http.StatusUnauthorized, "your username or password is wrong").SetInternal(err)
+	}
+
+	if err := s.GenerateCookie(c, val.ID); err != nil {
+		slog.Error("error generating cookie", "err", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to generate cookie").SetInternal(err)
+	}
+
+	return c.JSON(http.StatusOK, val)
+}

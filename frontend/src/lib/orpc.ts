@@ -1,14 +1,33 @@
 import type { JsonifiedClient } from "@orpc/openapi-client";
 import type { ContractRouterClient } from "@orpc/contract";
-import { createORPCClient, onError } from "@orpc/client";
+import { createORPCClient, ORPCError } from "@orpc/client";
 import { OpenAPILink } from "@orpc/openapi-client/fetch";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import { QueryCache, QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { healthRouter } from "./routers/health";
 import { authRouter } from "./routers/auth";
+import { Z } from "@/types";
 
 export const queryClient = new QueryClient({
+  defaultOptions: {
+    mutations: {
+      onError(error, _variables, _onMutateResult, _context) {
+        if (error instanceof ORPCError) {
+          const back = Z.httpErrorSchema.safeParse(error?.data?.body);
+          if (back.success) {
+            toast.error(`${back.data.message}`);
+          } else {
+            toast.error(`Unexpected error format`);
+            console.log("Unexpected error format:", error.data);
+          }
+          return;
+        } else {
+          toast.error("wtf");
+        }
+      },
+    },
+  },
   queryCache: new QueryCache({
     onError: (error) => {
       toast.error(`Error: ${error.message}`, {
@@ -36,11 +55,7 @@ const link = new OpenAPILink(contract, {
       credentials: "include", // Include cookies for cross-origin requests
     });
   },
-  interceptors: [
-    onError((error) => {
-      console.error(error);
-    }),
-  ],
+  interceptors: [],
 });
 
 export const client: JsonifiedClient<ContractRouterClient<typeof contract>> =

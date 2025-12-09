@@ -11,6 +11,11 @@ export interface EnvVars {
   AppEnv: string;
   DBPath: string;
 }
+export const COOKIE_NAME = "token";
+export interface Login {
+  username: string;
+  password: string;
+}
 export interface UpsertSessionParams {
   user_id: number /* int64 */;
   session_token: string;

@@ -6,11 +6,59 @@ import (
 	"net/http"
 	"time"
 
+	"visory/internal/models"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
 	"github.com/coder/websocket"
 )
+
+func (s *Server) Auth(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		cookie, err := c.Cookie(models.COOKIE_NAME)
+		if err != nil {
+			slog.Error("error happened", "err", err)
+			return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
+		}
+		_, err = s.db.User.GetBySessionToken(c.Request().Context(), cookie.Value)
+		if err != nil {
+			slog.Error("error happened", "err", err)
+			return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
+		}
+
+		return next(c)
+	}
+}
+
+func (s *Server) RBAC(policies ...models.RBACPolicy) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			cookie, err := c.Cookie(models.COOKIE_NAME)
+			if err != nil {
+				slog.Error("error happened", "err", err)
+				return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
+			}
+			user, err := s.db.User.GetBySessionToken(c.Request().Context(), cookie.Value)
+			if err != nil {
+				slog.Error("error happened", "err", err)
+				return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
+			}
+
+			user_roles := models.RoleToRBACPolicies(user.Role)
+			if _, ok := user_roles[models.RBAC_USER_ADMIN]; ok {
+				return next(c)
+			}
+			for _, policy := range policies {
+				if v, ok := user_roles[policy]; !ok || !v {
+					return echo.NewHTTPError(http.StatusForbidden, "Insufficient permissions")
+				}
+			}
+
+			return next(c)
+		}
+	}
+}
 
 func (s *Server) RegisterRoutes() http.Handler {
 	e := echo.New()
@@ -28,15 +76,22 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	api.GET("/", s.HelloWorldHandler)
 
-	api.GET("/health", s.healthHandler)
+	api.GET("/health", s.healthHandler, s.RBAC(models.RBAC_HEALTH_CHECKER))
 
 	api.GET("/websocket", s.websocketHandler)
+
+	api.POST("/auth/register", s.Register)
+	api.POST("/auth/login", s.Login)
+
+	authGroup := api.Group("/auth")
+	authGroup.Use(s.Auth)
+	authGroup.GET("/me", s.Me)
+	authGroup.POST("/logout", s.Logout)
 
 	return e
 }
 
 func (s *Server) HelloWorldHandler(c echo.Context) error {
-	return echo.NewHTTPError(http.StatusInternalServerError, "Failed to list virtual-machines").SetInternal(fmt.Errorf("database connection error"))
 	resp := map[string]string{
 		"message": "Hello World",
 	}

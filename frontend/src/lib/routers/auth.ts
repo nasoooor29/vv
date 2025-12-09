@@ -5,20 +5,26 @@ export const authRouter = {
   login: base
     .route({
       method: "POST",
-      path: "/login",
+      path: "/auth/login",
     })
-    .input(Z.getByEmailOrUsernameParamsSchema)
-    .output(Z.withHttpError(Z.userSchema)),
+    .input(Z.loginSchema)
+    .output(Z.userSchema),
 
   logout: base.route({
     method: "POST",
-    path: "/logout",
+    path: "/auth/logout",
   }),
   register: base
     .route({
       method: "POST",
-      path: "/register",
+      path: "/auth/register",
     })
     .input(Z.upsertUserParamsSchema)
-    .output(Z.withHttpError(Z.userSchema)),
+    .output(Z.userSchema),
+  me: base
+    .route({
+      method: "GET",
+      path: "/auth/me",
+    })
+    .output(Z.userSchema),
 };

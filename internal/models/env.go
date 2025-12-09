@@ -4,7 +4,7 @@ import "github.com/kelseyhightower/envconfig"
 
 type EnvVars struct {
 	Port   string `envconfig:"PORT" default:"9999"`
-	AppEnv string `envconfig:"APP_ENV" default:"local"`
+	AppEnv string `envconfig:"APP_ENV" default:"test"`
 	DBPath string `envconfig:"BLUEPRINT_DB_DATABASE" default:"visory.db"`
 }
 
