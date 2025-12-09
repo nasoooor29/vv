@@ -9,28 +9,6 @@ import (
 	"context"
 )
 
-const byID = `-- name: ByID :one
-SELECT
-  id, user_id, session_token, created_at, updated_at
-FROM
-  user_sessions
-WHERE
-  id = ?
-`
-
-func (q *Queries) ByID(ctx context.Context, id int64) (UserSession, error) {
-	row := q.db.QueryRowContext(ctx, byID, id)
-	var i UserSession
-	err := row.Scan(
-		&i.ID,
-		&i.UserID,
-		&i.SessionToken,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
 const deleteBySessionToken = `-- name: DeleteBySessionToken :exec
 DELETE FROM user_sessions
 WHERE
@@ -42,36 +20,7 @@ func (q *Queries) DeleteBySessionToken(ctx context.Context, sessionToken string)
 	return err
 }
 
-const upsert = `-- name: Upsert :one
-INSERT INTO
-  user_sessions (user_id, session_token)
-VALUES
-  (?, ?) ON CONFLICT (session_token) DO
-UPDATE
-SET
-  user_id = excluded.user_id,
-  updated_at = CURRENT_TIMESTAMP RETURNING id, user_id, session_token, created_at, updated_at
-`
-
-type UpsertParams struct {
-	UserID       int64  `json:"user_id"`
-	SessionToken string `json:"session_token"`
-}
-
-func (q *Queries) Upsert(ctx context.Context, arg UpsertParams) (UserSession, error) {
-	row := q.db.QueryRowContext(ctx, upsert, arg.UserID, arg.SessionToken)
-	var i UserSession
-	err := row.Scan(
-		&i.ID,
-		&i.UserID,
-		&i.SessionToken,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getAll = `-- name: getAll :many
+const getAllSessions = `-- name: GetAllSessions :many
 SELECT
   id, user_id, session_token, created_at, updated_at
 FROM
@@ -88,8 +37,8 @@ FROM
 //	FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 //
 // );
-func (q *Queries) getAll(ctx context.Context) ([]UserSession, error) {
-	rows, err := q.db.QueryContext(ctx, getAll)
+func (q *Queries) GetAllSessions(ctx context.Context) ([]UserSession, error) {
+	rows, err := q.db.QueryContext(ctx, getAllSessions)
 	if err != nil {
 		return nil, err
 	}
@@ -115,4 +64,55 @@ func (q *Queries) getAll(ctx context.Context) ([]UserSession, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const getSessionByID = `-- name: GetSessionByID :one
+SELECT
+  id, user_id, session_token, created_at, updated_at
+FROM
+  user_sessions
+WHERE
+  id = ?
+`
+
+func (q *Queries) GetSessionByID(ctx context.Context, id int64) (UserSession, error) {
+	row := q.db.QueryRowContext(ctx, getSessionByID, id)
+	var i UserSession
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.SessionToken,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const upsertSession = `-- name: UpsertSession :one
+INSERT INTO
+  user_sessions (user_id, session_token)
+VALUES
+  (?, ?) ON CONFLICT (session_token) DO
+UPDATE
+SET
+  user_id = excluded.user_id,
+  updated_at = CURRENT_TIMESTAMP RETURNING id, user_id, session_token, created_at, updated_at
+`
+
+type UpsertSessionParams struct {
+	UserID       int64  `json:"user_id"`
+	SessionToken string `json:"session_token"`
+}
+
+func (q *Queries) UpsertSession(ctx context.Context, arg UpsertSessionParams) (UserSession, error) {
+	row := q.db.QueryRowContext(ctx, upsertSession, arg.UserID, arg.SessionToken)
+	var i UserSession
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.SessionToken,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

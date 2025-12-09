@@ -9,17 +9,15 @@ import (
 	"context"
 )
 
-const byID = `-- name: ByID :many
+const getAllLogs = `-- name: GetAllLogs :many
 SELECT
   id, user_id, "action", details, created_at
 FROM
   logs
-WHERE
-  id = ?
 `
 
-func (q *Queries) ByID(ctx context.Context, id int64) ([]Log, error) {
-	rows, err := q.db.QueryContext(ctx, byID, id)
+func (q *Queries) GetAllLogs(ctx context.Context) ([]Log, error) {
+	rows, err := q.db.QueryContext(ctx, getAllLogs)
 	if err != nil {
 		return nil, err
 	}
@@ -47,15 +45,17 @@ func (q *Queries) ByID(ctx context.Context, id int64) ([]Log, error) {
 	return items, nil
 }
 
-const getAll = `-- name: GetAll :many
+const getLogByID = `-- name: GetLogByID :many
 SELECT
   id, user_id, "action", details, created_at
 FROM
   logs
+WHERE
+  id = ?
 `
 
-func (q *Queries) GetAll(ctx context.Context) ([]Log, error) {
-	rows, err := q.db.QueryContext(ctx, getAll)
+func (q *Queries) GetLogByID(ctx context.Context, id int64) ([]Log, error) {
+	rows, err := q.db.QueryContext(ctx, getLogByID, id)
 	if err != nil {
 		return nil, err
 	}

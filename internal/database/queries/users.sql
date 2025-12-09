@@ -1,10 +1,10 @@
--- name: GetAll :many
+-- name: GetAllUsers :many
 SELECT
   *
 FROM
   users;
 
--- name: GetByID :many
+-- name: GetUserByID :many
 SELECT
   *
 FROM
@@ -21,7 +21,7 @@ FROM
 WHERE
   us.session_token = ?;
 
--- name: Upsert :one
+-- name: UpsertUser :one
 INSERT INTO
   users (username, email, password, role)
 VALUES
@@ -42,7 +42,7 @@ WHERE
   email = ?
   OR username = ?;
 
--- name: Delete :exec
+-- name: DeleteUser :exec
 DELETE FROM users
 WHERE
   id = ?;

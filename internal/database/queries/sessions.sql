@@ -6,13 +6,13 @@
 --   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 --   FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 -- );
--- name: getAll :many
+-- name: GetAllSessions :many
 SELECT
   *
 FROM
   user_sessions;
 
--- name: ByID :one
+-- name: GetSessionByID :one
 SELECT
   *
 FROM
@@ -20,7 +20,7 @@ FROM
 WHERE
   id = ?;
 
--- name: Upsert :one
+-- name: UpsertSession :one
 INSERT INTO
   user_sessions (user_id, session_token)
 VALUES

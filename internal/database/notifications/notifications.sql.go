@@ -9,38 +9,15 @@ import (
 	"context"
 )
 
-const byID = `-- name: ByID :one
-SELECT
-  id, user_id, message, read, created_at, updated_at
-FROM
-  notifications
-WHERE
-  id = ?
-`
-
-func (q *Queries) ByID(ctx context.Context, id int64) (Notification, error) {
-	row := q.db.QueryRowContext(ctx, byID, id)
-	var i Notification
-	err := row.Scan(
-		&i.ID,
-		&i.UserID,
-		&i.Message,
-		&i.Read,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getAll = `-- name: GetAll :many
+const getAllNotifications = `-- name: GetAllNotifications :many
 SELECT
   id, user_id, message, read, created_at, updated_at
 FROM
   notifications
 `
 
-func (q *Queries) GetAll(ctx context.Context) ([]Notification, error) {
-	rows, err := q.db.QueryContext(ctx, getAll)
+func (q *Queries) GetAllNotifications(ctx context.Context) ([]Notification, error) {
+	rows, err := q.db.QueryContext(ctx, getAllNotifications)
 	if err != nil {
 		return nil, err
 	}
@@ -67,4 +44,27 @@ func (q *Queries) GetAll(ctx context.Context) ([]Notification, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const getNotificationByID = `-- name: GetNotificationByID :one
+SELECT
+  id, user_id, message, read, created_at, updated_at
+FROM
+  notifications
+WHERE
+  id = ?
+`
+
+func (q *Queries) GetNotificationByID(ctx context.Context, id int64) (Notification, error) {
+	row := q.db.QueryRowContext(ctx, getNotificationByID, id)
+	var i Notification
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Message,
+		&i.Read,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

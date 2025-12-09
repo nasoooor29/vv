@@ -9,26 +9,26 @@ import (
 	"context"
 )
 
-const delete = `-- name: Delete :exec
+const deleteUser = `-- name: DeleteUser :exec
 DELETE FROM users
 WHERE
   id = ?
 `
 
-func (q *Queries) Delete(ctx context.Context, id int64) error {
-	_, err := q.db.ExecContext(ctx, delete, id)
+func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteUser, id)
 	return err
 }
 
-const getAll = `-- name: GetAll :many
+const getAllUsers = `-- name: GetAllUsers :many
 SELECT
   id, username, email, password, role, created_at, updated_at
 FROM
   users
 `
 
-func (q *Queries) GetAll(ctx context.Context) ([]User, error) {
-	rows, err := q.db.QueryContext(ctx, getAll)
+func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, getAllUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +88,32 @@ func (q *Queries) GetByEmailOrUsername(ctx context.Context, arg GetByEmailOrUser
 	return i, err
 }
 
-const getByID = `-- name: GetByID :many
+const getBySessionToken = `-- name: GetBySessionToken :one
+SELECT
+  u.id, u.username, u.email, u.password, u.role, u.created_at, u.updated_at
+FROM
+  users u
+  JOIN user_sessions us ON u.id = us.user_id
+WHERE
+  us.session_token = ?
+`
+
+func (q *Queries) GetBySessionToken(ctx context.Context, sessionToken string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getBySessionToken, sessionToken)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Email,
+		&i.Password,
+		&i.Role,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserByID = `-- name: GetUserByID :many
 SELECT
   id, username, email, password, role, created_at, updated_at
 FROM
@@ -97,8 +122,8 @@ WHERE
   id = ?
 `
 
-func (q *Queries) GetByID(ctx context.Context, id int64) ([]User, error) {
-	rows, err := q.db.QueryContext(ctx, getByID, id)
+func (q *Queries) GetUserByID(ctx context.Context, id int64) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, getUserByID, id)
 	if err != nil {
 		return nil, err
 	}
@@ -128,32 +153,7 @@ func (q *Queries) GetByID(ctx context.Context, id int64) ([]User, error) {
 	return items, nil
 }
 
-const getBySessionToken = `-- name: GetBySessionToken :one
-SELECT
-  u.id, u.username, u.email, u.password, u.role, u.created_at, u.updated_at
-FROM
-  users u
-  JOIN user_sessions us ON u.id = us.user_id
-WHERE
-  us.session_token = ?
-`
-
-func (q *Queries) GetBySessionToken(ctx context.Context, sessionToken string) (User, error) {
-	row := q.db.QueryRowContext(ctx, getBySessionToken, sessionToken)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Username,
-		&i.Email,
-		&i.Password,
-		&i.Role,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const upsert = `-- name: Upsert :one
+const upsertUser = `-- name: UpsertUser :one
 INSERT INTO
   users (username, email, password, role)
 VALUES
@@ -166,15 +166,15 @@ SET
   updated_at = CURRENT_TIMESTAMP RETURNING id, username, email, password, role, created_at, updated_at
 `
 
-type UpsertParams struct {
+type UpsertUserParams struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 	Role     string `json:"role"`
 }
 
-func (q *Queries) Upsert(ctx context.Context, arg UpsertParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, upsert,
+func (q *Queries) UpsertUser(ctx context.Context, arg UpsertUserParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, upsertUser,
 		arg.Username,
 		arg.Email,
 		arg.Password,

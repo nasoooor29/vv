@@ -1,10 +1,10 @@
--- name: GetAll :many
+-- name: GetAllNotifications :many
 SELECT
   *
 FROM
   notifications;
 
--- name: ByID :one
+-- name: GetNotificationByID :one
 SELECT
   *
 FROM

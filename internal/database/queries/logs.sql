@@ -1,10 +1,10 @@
--- name: GetAll :many
+-- name: GetAllLogs :many
 SELECT
   *
 FROM
   logs;
 
--- name: ByID :many
+-- name: GetLogByID :many
 SELECT
   *
 FROM
