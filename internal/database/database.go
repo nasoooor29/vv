@@ -73,7 +73,7 @@ type Health struct {
 	Status  string      `json:"status"`
 	Message string      `json:"message"`
 	Error   string      `json:"error,omitempty"`
-	Stats   HealthStats `json:"stats,omitempty"`
+	Stats   HealthStats `json:"stats"`
 }
 type HealthStats struct {
 	OpenConnections   int    `json:"open_connections"`

@@ -16,6 +16,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	api := e.Group("/api")
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"https://*", "http://*"},
@@ -25,16 +26,17 @@ func (s *Server) RegisterRoutes() http.Handler {
 		MaxAge:           300,
 	}))
 
-	e.GET("/", s.HelloWorldHandler)
+	api.GET("/", s.HelloWorldHandler)
 
-	e.GET("/health", s.healthHandler)
+	api.GET("/health", s.healthHandler)
 
-	e.GET("/websocket", s.websocketHandler)
+	api.GET("/websocket", s.websocketHandler)
 
 	return e
 }
 
 func (s *Server) HelloWorldHandler(c echo.Context) error {
+	return echo.NewHTTPError(http.StatusInternalServerError, "Failed to list virtual-machines").SetInternal(fmt.Errorf("database connection error"))
 	resp := map[string]string{
 		"message": "Hello World",
 	}

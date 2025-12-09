@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"visory/internal/server"
+	"visory/internal/utils"
 )
 
 func gracefulShutdown(apiServer *http.Server, done chan bool) {
@@ -39,6 +41,17 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 }
 
 func main() {
+	// Setup logger
+	slog.Info("setting up logger")
+	utils.NewDaLog(
+		os.Stdout,
+		utils.DaLogStyleLongType1,
+		&slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		},
+	)
+	// utils.SetupLogger()
+	slog.Info("loading environment variables")
 	server := server.NewServer()
 
 	// Create a done channel to signal when the shutdown is complete
@@ -46,6 +59,8 @@ func main() {
 
 	// Run graceful shutdown in a separate goroutine
 	go gracefulShutdown(server, done)
+
+	slog.Info("starting server", "addr", server.Addr)
 
 	err := server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {

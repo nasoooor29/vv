@@ -1,3 +1,11 @@
+/**
+ * this is just to mimic the echo error structure
+ * eg: {"message":"Failed to list virtual-machines"}
+ * reprod: echo.NewHTTPError(http.StatusInternalServerError, "Failed to list virtual-machines").SetInternal(fmt.Errorf("database connection error"))
+ */
+export interface HTTPError {
+  message: string;
+}
 export interface EnvVars {
   Port: string;
   AppEnv: string;
@@ -17,7 +25,7 @@ export interface Health {
   status: string;
   message: string;
   error?: string;
-  stats?: HealthStats;
+  stats: HealthStats;
 }
 export interface HealthStats {
   open_connections: number /* int */;

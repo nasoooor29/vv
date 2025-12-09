@@ -7,6 +7,8 @@ import {
 } from "react-router";
 import "./index.css";
 import { Toaster } from "./components/ui/sonner";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./lib/orpc";
 
 export const links = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -40,11 +42,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <>
-      {/* <div className="text-sm text-gray-500 p-2 bg-gray-100">root layout</div> */}
+    <QueryClientProvider client={queryClient}>
       <Outlet />
       <Toaster />
-    </>
+    </QueryClientProvider>
   );
 }
 
