@@ -30,7 +30,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <body>
+      <body className="dark">
         {children}
         <Scripts />
       </body>
@@ -41,16 +41,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <>
-      <div className="text-sm text-gray-500 p-2 bg-gray-100">root layout</div>
+      {/* <div className="text-sm text-gray-500 p-2 bg-gray-100">root layout</div> */}
       <Outlet />
       <Toaster />
     </>
-  );
-}
-
-export function HydrateFallback() {
-  return (
-    <div className="flex items-center justify-center h-screen">Loading...</div>
   );
 }
 
