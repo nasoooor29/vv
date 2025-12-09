@@ -1,0 +1,42 @@
+version: "2"
+sql:
+  - engine: "sqlite"
+    schema: "./internal/database/migrations"
+    queries: "./internal/database/queries/users.sql"
+    gen:
+      go:
+        emit_pointers_for_null_types: true
+        emit_json_tags: true
+        package: "user"
+        out: "./internal/database/user"
+
+  - engine: "sqlite"
+    schema: "./internal/database/migrations"
+    queries: "./internal/database/queries/logs.sql"
+    gen:
+      go:
+        emit_pointers_for_null_types: true
+        emit_json_tags: true
+        package: "logs"
+        out: "./internal/database/logs"
+
+  - engine: "sqlite"
+    schema: "./internal/database/migrations"
+    queries: "./internal/database/queries/notifications.sql"
+    gen:
+      go:
+        emit_pointers_for_null_types: true
+        emit_json_tags: true
+        package: "notifications"
+        out: "./internal/database/notifications"
+
+  - engine: "sqlite"
+    schema: "./internal/database/migrations"
+    queries: "./internal/database/queries/sessions.sql"
+    gen:
+      go:
+        emit_pointers_for_null_types: true
+        emit_json_tags: true
+        package: "sessions"
+        out: "./internal/database/sessions"
+
