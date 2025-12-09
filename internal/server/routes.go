@@ -1,10 +1,9 @@
 package server
 
 import (
-	"net/http"
-
 	"fmt"
-	"log"
+	"log/slog"
+	"net/http"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -51,9 +50,8 @@ func (s *Server) websocketHandler(c echo.Context) error {
 	w := c.Response().Writer
 	r := c.Request()
 	socket, err := websocket.Accept(w, r, nil)
-
 	if err != nil {
-		log.Printf("could not open websocket: %v", err)
+		slog.Error("could not open websocket", "error", err)
 		_, _ = w.Write([]byte("could not open websocket"))
 		w.WriteHeader(http.StatusInternalServerError)
 		return nil
