@@ -8,8 +8,15 @@ type EnvVars struct {
 	DBPath string `envconfig:"BLUEPRINT_DB_DATABASE" default:"visory.db"`
 }
 
+var ENV_VARS EnvVars
+
 func LoadEnv() EnvVars {
 	var cfg EnvVars
 	envconfig.MustProcess("", &cfg)
+	ENV_VARS = cfg
 	return cfg
+}
+
+func init() {
+	LoadEnv()
 }

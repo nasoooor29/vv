@@ -3,23 +3,23 @@ package server
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
 
 	"visory/internal/database"
+	"visory/internal/models"
 )
 
 type Server struct {
 	port int
 
-	db database.Service
+	db *database.Service
 }
 
 func NewServer() *http.Server {
-	port, _ := strconv.Atoi(os.Getenv("PORT"))
+	port, _ := strconv.Atoi(models.ENV_VARS.Port)
 	NewServer := &Server{
 		port: port,
 

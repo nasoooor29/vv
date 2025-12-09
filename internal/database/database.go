@@ -6,7 +6,6 @@ import (
 	"embed"
 	"fmt"
 	"log/slog"
-	"os"
 	"strconv"
 	"time"
 
@@ -14,6 +13,7 @@ import (
 	"visory/internal/database/notifications"
 	"visory/internal/database/sessions"
 	"visory/internal/database/user"
+	"visory/internal/models"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pressly/goose/v3"
@@ -44,7 +44,7 @@ type Service struct {
 }
 
 func New() *Service {
-	database := os.Getenv("BLUEPRINT_DB_DATABASE")
+	database := models.ENV_VARS.DBPath
 	if database == "" {
 		slog.Error("Database environment variable not set", "variable", "BLUEPRINT_DB_DATABASE")
 		panic("environment variable BLUEPRINT_DB_DATABASE is not set")
