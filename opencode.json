@@ -1,0 +1,22 @@
+{
+    "mcp": {
+        "context7": {
+            "type": "local",
+            "command": [
+                "bunx",
+                "-y",
+                "@upstash/context7-mcp"
+            ],
+            "enabled": true
+        },
+        "playwright": {
+            "type": "local",
+            "command": [
+                "bunx",
+                "-y",
+                "@playwright/mcp"
+            ],
+        }
+    },
+    "$schema": "https://opencode.ai/config.json"
+}
