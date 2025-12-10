@@ -28,6 +28,14 @@ import { orpc } from "@/lib/orpc";
 import { toast } from "sonner";
 import { useSession } from "@/stores/user";
 import { useEffect, useState } from "react";
+import { usePermission } from "./protected-content";
+import {
+  RBAC_QEMU_READ,
+  RBAC_DOCKER_READ,
+  RBAC_EVENT_VIEWER,
+  RBAC_SETTINGS_MANAGER,
+  RBAC_USER_ADMIN,
+} from "@/types/types.gen";
 
 // Utility function to format time difference
 function formatTimeDifference(timestamp: number | Date): string {
@@ -80,6 +88,7 @@ function RelativeTimeDisplay({
 export function AppSidebar() {
   const nav = useNavigate();
   const clearSession = useSession((s) => s.clearSession);
+  const { hasPermission } = usePermission();
   const logoutMutation = useMutation(
     orpc.auth.logout.mutationOptions({
       onSuccess() {
@@ -94,20 +103,77 @@ export function AppSidebar() {
       staleTime: 1 * 1000,
     }),
   );
+
+  // Main menu items with their required permissions
   const menuItems = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "vms", label: "Virtual Machines", icon: Server },
-    { id: "containers", label: "Containers", icon: Container },
-    { id: "monitoring", label: "Monitoring", icon: Activity },
+    {
+      id: "dashboard",
+      label: "Dashboard",
+      icon: LayoutDashboard,
+      requiredPermission: undefined, // Dashboard accessible to all authenticated users
+    },
+    {
+      id: "vms",
+      label: "Virtual Machines",
+      icon: Server,
+      requiredPermission: RBAC_QEMU_READ,
+    },
+    {
+      id: "containers",
+      label: "Containers",
+      icon: Container,
+      requiredPermission: RBAC_DOCKER_READ,
+    },
+    {
+      id: "monitoring",
+      label: "Monitoring",
+      icon: Activity,
+      requiredPermission: RBAC_EVENT_VIEWER,
+    },
   ];
 
+  // System items with their required permissions
   const systemItems = [
-    { id: "networking", label: "Networking", icon: Network },
-    { id: "storage", label: "Storage", icon: Database },
-    { id: "security", label: "Security", icon: Shield },
-    { id: "users", label: "Users", icon: Users },
-    { id: "settings", label: "Settings", icon: Settings },
+    {
+      id: "networking",
+      label: "Networking",
+      icon: Network,
+      requiredPermission: RBAC_SETTINGS_MANAGER,
+    },
+    {
+      id: "storage",
+      label: "Storage",
+      icon: Database,
+      requiredPermission: RBAC_SETTINGS_MANAGER,
+    },
+    {
+      id: "security",
+      label: "Security",
+      icon: Shield,
+      requiredPermission: RBAC_USER_ADMIN,
+    },
+    {
+      id: "users",
+      label: "Users",
+      icon: Users,
+      requiredPermission: RBAC_USER_ADMIN,
+    },
+    {
+      id: "settings",
+      label: "Settings",
+      icon: Settings,
+      requiredPermission: RBAC_SETTINGS_MANAGER,
+    },
   ];
+
+  // Filter menu items based on permissions
+  const visibleMenuItems = menuItems.filter((item) =>
+    item.requiredPermission ? hasPermission(item.requiredPermission) : true
+  );
+
+  const visibleSystemItems = systemItems.filter((item) =>
+    item.requiredPermission ? hasPermission(item.requiredPermission) : true
+  );
 
   return (
     <Sidebar>
@@ -124,56 +190,42 @@ export function AppSidebar() {
           <SidebarGroupLabel>Main</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {visibleMenuItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
                   <SidebarMenuButton asChild>
                     <Link to={`/${item.id}`}>
                       <item.icon />
                       <span>{item.label}</span>
                     </Link>
-                    {/* <a href={`/${item.id}`}> */}
-                    {/* </a> */}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              {/* {menuItems.map((item) => { */}
-              {/*   const Icon = item.icon; */}
-              {/*   return ( */}
-              {/*     <SidebarMenuItem key={item.id}> */}
-              {/*       <SidebarMenuButton */}
-              {/*       // onClick={() => setActiveSection(item.id)} */}
-              {/*       // isActive={activeSection === item.id} */}
-              {/*       > */}
-              {/*         <Icon className="h-4 w-4" /> */}
-              {/*         <span>{item.label}</span> */}
-              {/*       </SidebarMenuButton> */}
-              {/*     </SidebarMenuItem> */}
-              {/*   ); */}
-              {/* })} */}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        <SidebarGroup>
-          <SidebarGroupLabel>System</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {systemItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                    // onClick={() => setActiveSection(item.id)}
-                    // isActive={activeSection === item.id}
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {visibleSystemItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>System</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {visibleSystemItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton
+                      // onClick={() => setActiveSection(item.id)}
+                      // isActive={activeSection === item.id}
+                      >
+                        <Icon className="h-4 w-4" />
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
       <SidebarFooter>
         <Button
