@@ -11,7 +11,9 @@ export async function redirectToOAuthProvider(provider: string) {
   const redirectUri = encodeURIComponent(
     `${window.location.origin}/app/dashboard`,
   );
-  window.location.href = `${health.base_url}/auth/oauth/${provider}?redirect_to=${redirectUri}`;
+  console.log("Redirecting to OAuth provider:", provider);
+  console.log("Health base URL:", health);
+  window.location.href = `${health.base_url}/api/auth/oauth/${provider}?redirect_to=${redirectUri}`;
 }
 
 // Utility function to format time difference

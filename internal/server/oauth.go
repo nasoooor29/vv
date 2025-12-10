@@ -80,10 +80,6 @@ func (s *Server) OAuthCallback(c echo.Context) error {
 	if !ok {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid OAuth provider")
 	}
-	redirectTo := c.QueryParam("redirect_to")
-	if redirectTo == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "Missing redirect_to parameter")
-	}
 
 	// Add provider context to the request
 	req := gothic.GetContextWithProvider(c.Request(), provider)
@@ -144,7 +140,7 @@ func (s *Server) OAuthCallback(c echo.Context) error {
 	}
 
 	// Redirect to dashboard on frontend
-	return c.Redirect(http.StatusFound, redirectTo)
+	return c.Redirect(http.StatusFound, models.ENV_VARS.FRONTEND_DASH)
 }
 
 // generateUsernameFromEmail generates a username from an email address

@@ -19,6 +19,7 @@ type EnvVars struct {
 	// OAuthCallbackURL  string `envconfig:"OAUTH_CALLBACK_URL" default:"http://localhost:9999/api/auth/oauth/callback" required:"true"`
 	BaseUrl         string `envconfig:"BASE_URL" default:"http://localhost"`
 	SessionSecret   string `envconfig:"SESSION_SECRET" required:"true"`
+	FRONTEND_DASH   string `envconfig:"FRONTEND_DASH_URL" default:"http://localhost:5173/app"`
 	BaseUrlWithPort string
 }
 
@@ -34,7 +35,7 @@ func LoadEnv() EnvVars {
 	var cfg EnvVars
 	envconfig.MustProcess("", &cfg)
 	ENV_VARS = cfg
-	cfg.BaseUrlWithPort = cfg.BaseUrl + ":" + cfg.Port
+	ENV_VARS.BaseUrlWithPort = ENV_VARS.BaseUrl + ":" + ENV_VARS.Port
 	return cfg
 }
 
