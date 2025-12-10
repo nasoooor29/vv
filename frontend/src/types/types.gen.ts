@@ -11,6 +11,15 @@ export interface EnvVars {
   AppEnv: string;
   DBPath: string;
   APP_VERSION: string;
+  GoogleOAuthKey: string;
+  GoogleOAuthSecret: string;
+  GithubOAuthKey: string;
+  GithubOAuthSecret: string;
+  /**
+   * OAuthCallbackURL  string `envconfig:"OAUTH_CALLBACK_URL" default:"http://localhost:9999/api/auth/oauth/callback" required:"true"`
+   */
+  BaseUrl: string;
+  SessionSecret: string;
 }
 export const COOKIE_NAME = "token";
 export const BYPASS_RBAC_HEADER = "X-Bypass-RBAC";
@@ -47,6 +56,7 @@ export interface Health {
   status: string;
   message: string;
   app_version: string;
+  base_url: string;
   error?: string;
   stats: HealthStats;
 }

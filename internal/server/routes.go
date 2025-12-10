@@ -84,6 +84,10 @@ func (s *Server) RegisterRoutes() http.Handler {
 	api.POST("/auth/register", s.Register)
 	api.POST("/auth/login", s.Login)
 
+	// OAuth routes
+	api.GET("/auth/oauth/:provider", s.OAuthLogin)
+	api.GET("/auth/oauth/callback/:provider", s.OAuthCallback)
+
 	authGroup := api.Group("/auth")
 	authGroup.Use(s.Auth)
 	authGroup.GET("/me", s.Me)

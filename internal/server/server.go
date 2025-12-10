@@ -6,24 +6,26 @@ import (
 	"strconv"
 	"time"
 
-	_ "github.com/joho/godotenv/autoload"
-
 	"visory/internal/database"
 	"visory/internal/models"
+
+	"github.com/markbates/goth"
 )
 
 type Server struct {
 	port int
 
-	db *database.Service
+	db             *database.Service
+	OAuthProviders map[string]goth.Provider
 }
 
 func NewServer() *http.Server {
 	port, _ := strconv.Atoi(models.ENV_VARS.Port)
+	providers := InitializeOAuth()
 	NewServer := &Server{
-		port: port,
-
-		db: database.New(),
+		port:           port,
+		db:             database.New(),
+		OAuthProviders: providers,
 	}
 
 	// Declare Server config

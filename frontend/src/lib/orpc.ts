@@ -3,7 +3,7 @@ import type { ContractRouterClient } from "@orpc/contract";
 import { createORPCClient, ORPCError } from "@orpc/client";
 import { OpenAPILink } from "@orpc/openapi-client/fetch";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
-import { QueryCache, QueryClient } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { healthRouter } from "./routers/health";
 import { authRouter } from "./routers/auth";

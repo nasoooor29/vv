@@ -73,6 +73,7 @@ type Health struct {
 	Status     string      `json:"status"`
 	Message    string      `json:"message"`
 	AppVersion string      `json:"app_version"`
+	BaseURL    string      `json:"base_url"`
 	Error      string      `json:"error,omitempty"`
 	Stats      HealthStats `json:"stats"`
 }
@@ -93,6 +94,7 @@ func (s *Service) Health() *Health {
 	defer cancel()
 	stats := &Health{
 		AppVersion: models.ENV_VARS.APP_VERSION,
+		BaseURL:    models.ENV_VARS.BaseUrlWithPort,
 		Stats:      HealthStats{},
 	}
 
