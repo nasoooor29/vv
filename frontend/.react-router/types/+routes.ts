@@ -26,12 +26,20 @@ type Pages = {
   "/app": {
     params: {};
   };
+  "/app/docker/:id": {
+    params: {
+      "id": string;
+    };
+  };
+  "/app/dashboard": {
+    params: {};
+  };
 };
 
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/auth" | "/auth/register" | "/auth/login" | "/app";
+    page: "/" | "/auth" | "/auth/register" | "/auth/login" | "/app" | "/app/docker/:id" | "/app/dashboard";
   };
   "routes/_landing.tsx": {
     id: "routes/_landing";
@@ -55,7 +63,15 @@ type RouteFiles = {
   };
   "routes/app.tsx": {
     id: "routes/app";
-    page: "/app";
+    page: "/app" | "/app/docker/:id" | "/app/dashboard";
+  };
+  "routes/app.docker.$id.tsx": {
+    id: "routes/app.docker.$id";
+    page: "/app/docker/:id";
+  };
+  "routes/app.dashboard.tsx": {
+    id: "routes/app.dashboard";
+    page: "/app/dashboard";
   };
   "routes/app._index.tsx": {
     id: "routes/app._index";
@@ -71,5 +87,7 @@ type RouteModules = {
   "routes/auth.register": typeof import("./src/routes/auth.register.tsx");
   "routes/auth.login": typeof import("./src/routes/auth.login.tsx");
   "routes/app": typeof import("./src/routes/app.tsx");
+  "routes/app.docker.$id": typeof import("./src/routes/app.docker.$id.tsx");
+  "routes/app.dashboard": typeof import("./src/routes/app.dashboard.tsx");
   "routes/app._index": typeof import("./src/routes/app._index.tsx");
 };

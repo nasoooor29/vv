@@ -116,7 +116,6 @@ func (q *Queries) GetBySessionToken(ctx context.Context, sessionToken string) (U
 const getUserAndSessionByToken = `-- name: GetUserAndSessionByToken :one
 SELECT
     u.id, u.username, u.email, u.password, u.role, u.created_at, u.updated_at, us.id, us.user_id, us.session_token, us.created_at, us.updated_at
-    -- u.*, us.*
 FROM
   users u
   JOIN user_sessions us ON u.id = us.user_id

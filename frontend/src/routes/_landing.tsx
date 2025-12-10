@@ -1,8 +1,10 @@
 import { Button } from "@/components/ui/button";
+import { useSession } from "@/stores/user";
 import { Cloud } from "lucide-react";
 import { Link, Outlet } from "react-router";
 
 export default function LandingLayout() {
+  const s = useSession((state) => state.session);
   console.log("LandingLayout rendered");
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -13,17 +15,25 @@ export default function LandingLayout() {
           <h1 className="text-2xl font-bold text-foreground">Visory</h1>
         </div>
         <div className="flex items-center gap-4">
-          <Link
-            to="/auth/login"
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Sign In
-          </Link>
-          <Link to="/auth/register">
-            <Button className="bg-primary hover:bg-primary/90">
-              Get Started
-            </Button>
-          </Link>
+          {s ? (
+            <Link to="/app/dashboard">
+              <Button>Dashboard</Button>
+            </Link>
+          ) : (
+            <>
+              <Link
+                to="/auth/login"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Sign In
+              </Link>
+              <Link to="/auth/register">
+                <Button className="bg-primary hover:bg-primary/90">
+                  Get Started
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </nav>
 

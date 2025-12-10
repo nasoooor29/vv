@@ -23,7 +23,7 @@ generate_sqlc() {
 }
 fix_some_types() {
     local types_file=$1
-    sed -i 's/any \/[*] time\.Time [*]\//Date/g' $types_file
+    sed -i 's/any \/[*] time\.Time [*]\//string/g' $types_file
 }
 
 generate_types() {

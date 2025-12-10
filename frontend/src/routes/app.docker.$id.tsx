@@ -1,5 +1,5 @@
 function Dashboard() {
-  return <div>dash index</div>;
+  return <div>Docker ID</div>;
 }
 
 export default Dashboard;

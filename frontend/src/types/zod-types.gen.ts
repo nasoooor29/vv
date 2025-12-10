@@ -16,11 +16,6 @@ export const loginSchema = z.object({
   password: z.string(),
 });
 
-export const userWithSessionSchema = z.object({
-  user: z.any(),
-  session: z.any(),
-});
-
 export const rbacPolicySchema = z.string();
 
 export const upsertSessionParamsSchema = z.object({
@@ -56,16 +51,16 @@ export const userSchema = z.object({
   email: z.string(),
   password: z.string(),
   role: z.string(),
-  created_at: z.date(),
-  updated_at: z.date(),
+  created_at: z.string(),
+  updated_at: z.string(),
 });
 
 export const userSessionSchema = z.object({
   id: z.number(),
   user_id: z.number(),
   session_token: z.string(),
-  created_at: z.date(),
-  updated_at: z.date(),
+  created_at: z.string(),
+  updated_at: z.string(),
 });
 
 export const upsertUserParamsSchema = z.object({
@@ -80,7 +75,7 @@ export const logSchema = z.object({
   user_id: z.number(),
   action: z.string(),
   details: z.string().optional(),
-  created_at: z.date(),
+  created_at: z.string(),
 });
 
 export const notificationSchema = z.object({
@@ -88,8 +83,8 @@ export const notificationSchema = z.object({
   user_id: z.number(),
   message: z.string(),
   read: z.boolean().optional(),
-  created_at: z.date(),
-  updated_at: z.date(),
+  created_at: z.string(),
+  updated_at: z.string(),
 });
 
 export const healthSchema = z.object({

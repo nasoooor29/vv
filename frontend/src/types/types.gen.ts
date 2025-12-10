@@ -17,10 +17,6 @@ export interface Login {
   username: string;
   password: string;
 }
-export interface UserWithSession {
-  user: any /* user.User */;
-  session: any /* sessions.UserSession */;
-}
 export type RBACPolicy = string;
 export const RBAC_DOCKER_READ: RBACPolicy = "docker_read";
 export const RBAC_DOCKER_WRITE: RBACPolicy = "docker_write";
@@ -80,15 +76,15 @@ export interface Log {
   user_id: number /* int64 */;
   action: string;
   details?: string;
-  created_at: Date;
+  created_at: string;
 }
 export interface Notification {
   id: number /* int64 */;
   user_id: number /* int64 */;
   message: string;
   read?: boolean;
-  created_at: Date;
-  updated_at: Date;
+  created_at: string;
+  updated_at: string;
 }
 export interface User {
   id: number /* int64 */;
@@ -96,13 +92,13 @@ export interface User {
   email: string;
   password: string;
   role: string;
-  created_at: Date;
-  updated_at: Date;
+  created_at: string;
+  updated_at: string;
 }
 export interface UserSession {
   id: number /* int64 */;
   user_id: number /* int64 */;
   session_token: string;
-  created_at: Date;
-  updated_at: Date;
+  created_at: string;
+  updated_at: string;
 }
