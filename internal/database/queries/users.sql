@@ -21,6 +21,17 @@ FROM
 WHERE
   us.session_token = ?;
 
+
+-- name: GetUserAndSessionByToken :one
+SELECT
+    sqlc.embed(u), sqlc.embed(us)
+FROM
+  users u
+  JOIN user_sessions us ON u.id = us.user_id
+WHERE
+  us.session_token = ?;
+
+
 -- name: UpsertUser :one
 INSERT INTO
   users (username, email, password, role)

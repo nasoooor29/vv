@@ -21,12 +21,12 @@ func (s *Server) Me(c echo.Context) error {
 		slog.Error("error happened", "err", err)
 		return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
 	}
-	u, err := s.db.User.GetBySessionToken(c.Request().Context(), cookie.Value)
+	userWithSession, err := s.db.User.GetUserAndSessionByToken(c.Request().Context(), cookie.Value)
 	if err != nil {
 		slog.Error("error happened", "err", err)
 		return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
 	}
-	return c.JSON(http.StatusOK, u)
+	return c.JSON(http.StatusOK, userWithSession)
 }
 
 func (s *Server) Logout(c echo.Context) error {

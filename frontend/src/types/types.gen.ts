@@ -12,10 +12,30 @@ export interface EnvVars {
   DBPath: string;
 }
 export const COOKIE_NAME = "token";
+export const BYPASS_RBAC_HEADER = "X-Bypass-RBAC";
 export interface Login {
   username: string;
   password: string;
 }
+export interface UserWithSession {
+  user: any /* user.User */;
+  session: any /* sessions.UserSession */;
+}
+export type RBACPolicy = string;
+export const RBAC_DOCKER_READ: RBACPolicy = "docker_read";
+export const RBAC_DOCKER_WRITE: RBACPolicy = "docker_write";
+export const RBAC_DOCKER_UPDATE: RBACPolicy = "docker_update";
+export const RBAC_DOCKER_DELETE: RBACPolicy = "docker_delete";
+export const RBAC_QEMU_READ: RBACPolicy = "qemu_read";
+export const RBAC_QEMU_WRITE: RBACPolicy = "qemu_write";
+export const RBAC_QEMU_UPDATE: RBACPolicy = "qemu_update";
+export const RBAC_QEMU_DELETE: RBACPolicy = "qemu_delete";
+export const RBAC_EVENT_VIEWER: RBACPolicy = "event_viewer";
+export const RBAC_EVENT_MANAGER: RBACPolicy = "event_manager";
+export const RBAC_USER_ADMIN: RBACPolicy = "user_admin";
+export const RBAC_SETTINGS_MANAGER: RBACPolicy = "settings_manager";
+export const RBAC_AUDIT_LOG_VIEWER: RBACPolicy = "audit_log_viewer";
+export const RBAC_HEALTH_CHECKER: RBACPolicy = "health_checker";
 export interface UpsertSessionParams {
   user_id: number /* int64 */;
   session_token: string;
@@ -44,6 +64,10 @@ export interface HealthStats {
 export interface GetByEmailOrUsernameParams {
   email: string;
   username: string;
+}
+export interface GetUserAndSessionByTokenRow {
+  user: User;
+  user_session: UserSession;
 }
 export interface UpsertUserParams {
   username: string;

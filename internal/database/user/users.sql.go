@@ -113,6 +113,42 @@ func (q *Queries) GetBySessionToken(ctx context.Context, sessionToken string) (U
 	return i, err
 }
 
+const getUserAndSessionByToken = `-- name: GetUserAndSessionByToken :one
+SELECT
+    u.id, u.username, u.email, u.password, u.role, u.created_at, u.updated_at, us.id, us.user_id, us.session_token, us.created_at, us.updated_at
+    -- u.*, us.*
+FROM
+  users u
+  JOIN user_sessions us ON u.id = us.user_id
+WHERE
+  us.session_token = ?
+`
+
+type GetUserAndSessionByTokenRow struct {
+	User        User        `json:"user"`
+	UserSession UserSession `json:"user_session"`
+}
+
+func (q *Queries) GetUserAndSessionByToken(ctx context.Context, sessionToken string) (GetUserAndSessionByTokenRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserAndSessionByToken, sessionToken)
+	var i GetUserAndSessionByTokenRow
+	err := row.Scan(
+		&i.User.ID,
+		&i.User.Username,
+		&i.User.Email,
+		&i.User.Password,
+		&i.User.Role,
+		&i.User.CreatedAt,
+		&i.User.UpdatedAt,
+		&i.UserSession.ID,
+		&i.UserSession.UserID,
+		&i.UserSession.SessionToken,
+		&i.UserSession.CreatedAt,
+		&i.UserSession.UpdatedAt,
+	)
+	return i, err
+}
+
 const getUserByID = `-- name: GetUserByID :many
 SELECT
   id, username, email, password, role, created_at, updated_at

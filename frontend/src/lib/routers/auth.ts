@@ -26,5 +26,5 @@ export const authRouter = {
       method: "GET",
       path: "/auth/me",
     })
-    .output(Z.userSchema),
+    .output(Z.getUserAndSessionByTokenRowSchema),
 };
