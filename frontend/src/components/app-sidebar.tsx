@@ -37,21 +37,7 @@ import {
   RBAC_USER_ADMIN,
 } from "@/types/types.gen";
 
-// Utility function to format time difference
-function formatTimeDifference(timestamp: number | Date): string {
-  const now = Date.now();
-  const updated = new Date(timestamp).getTime();
-  const diffMs = now - updated;
-  const diffSec = Math.floor(diffMs / 1000);
-
-  if (diffSec < 60) return `${diffSec} sec ago`;
-  const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin} min ago`;
-  const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr} hr ago`;
-  const diffDay = Math.floor(diffHr / 24);
-  return `${diffDay} day${diffDay > 1 ? "s" : ""} ago`;
-}
+import { formatTimeDifference } from "@/lib/utils";
 
 // Component for reactive time display
 function RelativeTimeDisplay({
@@ -168,11 +154,11 @@ export function AppSidebar() {
 
   // Filter menu items based on permissions
   const visibleMenuItems = menuItems.filter((item) =>
-    item.requiredPermission ? hasPermission(item.requiredPermission) : true
+    item.requiredPermission ? hasPermission(item.requiredPermission) : true,
   );
 
   const visibleSystemItems = systemItems.filter((item) =>
-    item.requiredPermission ? hasPermission(item.requiredPermission) : true
+    item.requiredPermission ? hasPermission(item.requiredPermission) : true,
   );
 
   return (

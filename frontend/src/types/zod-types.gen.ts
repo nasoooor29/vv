@@ -10,6 +10,12 @@ export const envVarsSchema = z.object({
   AppEnv: z.string(),
   DBPath: z.string(),
   APP_VERSION: z.string(),
+  GoogleOAuthKey: z.string(),
+  GoogleOAuthSecret: z.string(),
+  GithubOAuthKey: z.string(),
+  GithubOAuthSecret: z.string(),
+  BaseUrl: z.string(),
+  SessionSecret: z.string(),
 });
 
 export const loginSchema = z.object({
@@ -92,6 +98,7 @@ export const healthSchema = z.object({
   status: z.string(),
   message: z.string(),
   app_version: z.string(),
+  base_url: z.string(),
   error: z.string().optional(),
   stats: healthStatsSchema,
 });
