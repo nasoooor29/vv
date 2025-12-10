@@ -20,6 +20,18 @@ const (
 	BLOB
 )
 
+type ImagenaryEchoEcho struct {
+	*echo.Echo
+	// key is the path, value is the json schema or whatever the go type is
+	schemas map[string]any
+}
+
+func NewImagenaryEchoEcho(e *echo.Echo) *ImagenaryEchoEcho {
+	return &ImagenaryEchoEcho{
+		Echo: e,
+	}
+}
+
 type Serilizable[T any] interface {
 	Serilize(int, any) error
 	GetWithStatus() (int, T)
@@ -54,7 +66,8 @@ func (t *JsonSerlizer[T]) Serilize(status int, v any) error {
 }
 
 // this can go inside echo.Echo ?
-func ToEchoHandlerFunc[T any](f func(echo.Context) (Serilizable[T], error)) echo.HandlerFunc {
+func ToEchoHandlerFunc[T any](i *ImagenaryEchoEcho, f func(echo.Context) (Serilizable[T], error)) echo.HandlerFunc {
+	// now here we have access to the type
 	return func(c echo.Context) error {
 		serilizer, err := f(c)
 		if err != nil {
@@ -81,10 +94,10 @@ func (s *Server) Me2(c echo.Context) (Serilizable[user.GetUserAndSessionByTokenR
 }
 
 func Dummy_() {
-	e := echo.New()
+	e := NewImagenaryEchoEcho(echo.New())
 	s := &Server{
 		db:   database.New(),
 		port: 3338,
 	}
-	e.GET("/me2", ToEchoHandlerFunc(s.Me2))
+	e.GET("/me2", ToEchoHandlerFunc(e, s.Me2))
 }
