@@ -1,0 +1,163 @@
+# OAuth Quick Setup Guide
+
+## Environment Variables Setup
+
+### Using `.env` File (Recommended)
+
+1. Copy the example environment file:
+```bash
+cp .env.example .env
+```
+
+2. Edit `.env` and add your OAuth credentials:
+```bash
+# Google OAuth
+GOOGLE_OAUTH_KEY="your-google-client-id"
+GOOGLE_OAUTH_SECRET="your-google-client-secret"
+
+# GitHub OAuth (optional)
+GITHUB_OAUTH_KEY="your-github-client-id"
+GITHUB_OAUTH_SECRET="your-github-client-secret"
+
+# OAuth Callback URL (adjust for your deployment)
+OAUTH_CALLBACK_URL="http://localhost:9999/api/auth/oauth/callback"
+
+# Session Secret (required for cookie encryption)
+SESSION_SECRET="your-random-secret-key"
+```
+
+3. Generate a secure session secret:
+```bash
+# On macOS/Linux:
+openssl rand -base64 32
+
+# Or on any system with Python:
+python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+The application will automatically load variables from the `.env` file when it starts.
+
+### Using Environment Variables (Alternative)
+
+If you prefer not to use a `.env` file, export variables directly:
+
+```bash
+export GOOGLE_OAUTH_KEY="your-google-client-id"
+export GOOGLE_OAUTH_SECRET="your-google-client-secret"
+export GITHUB_OAUTH_KEY="your-github-client-id"
+export GITHUB_OAUTH_SECRET="your-github-client-secret"
+export OAUTH_CALLBACK_URL="http://localhost:9999/api/auth/oauth/callback"
+export SESSION_SECRET="your-random-secret-key"
+```
+
+## Google Setup (Recommended)
+
+1. Go to https://console.cloud.google.com/
+2. Create a new project (or select existing)
+3. Search for "Google+ API" and enable it
+4. Go to "Credentials" → Create OAuth 2.0 credentials
+5. Choose "Web application"
+6. Add authorized redirect URIs:
+   - `http://localhost:9999/api/auth/oauth/callback/google`
+   - Add your production domain URL when deploying
+7. Copy Client ID and Client Secret
+8. Add to `.env` file:
+   ```
+   GOOGLE_OAUTH_KEY=<your-client-id>
+   GOOGLE_OAUTH_SECRET=<your-client-secret>
+   ```
+
+## GitHub Setup (Optional)
+
+1. Go to https://github.com/settings/developers
+2. Click "New OAuth App"
+3. Fill in application name and homepage URL
+4. Set "Authorization callback URL" to:
+   - `http://localhost:9999/api/auth/oauth/callback/github`
+5. Copy Client ID and Client Secret
+6. Add to `.env` file:
+   ```
+   GITHUB_OAUTH_KEY=<your-client-id>
+   GITHUB_OAUTH_SECRET=<your-client-secret>
+   ```
+
+## Production Deployment
+
+Before deploying to production:
+
+1. Register production domain with OAuth providers
+2. Update `OAUTH_CALLBACK_URL` in `.env` to use HTTPS domain:
+   ```
+   OAUTH_CALLBACK_URL="https://yourdomain.com/api/auth/oauth/callback"
+   ```
+3. Set `Secure: true` in cookie settings (already done in code)
+4. Ensure HTTPS is enabled on your server
+5. Do NOT commit `.env` to version control (it's in `.gitignore`)
+
+## API Endpoints
+
+After setup, these endpoints are available:
+
+- **Login with Google**: `/api/auth/oauth/google`
+- **Callback**: `/api/auth/oauth/callback/google` (auto-handled)
+- **Login with GitHub**: `/api/auth/oauth/github`
+- **Callback**: `/api/auth/oauth/callback/github` (auto-handled)
+
+## Frontend Integration
+
+Both login and register pages have OAuth buttons that work out of the box:
+
+- Login page: "Sign in with Google" and "Sign in with GitHub" buttons
+- Register page: "Sign up with Google" and "Sign up with GitHub" buttons
+
+## Testing Locally
+
+```bash
+# Copy the example env file
+cp .env.example .env
+
+# Edit .env and add your OAuth credentials
+# Then run the application
+go run ./cmd/api/main.go
+```
+
+Click the OAuth buttons on the login/register pages to test the flow.
+
+## Troubleshooting
+
+**"no SESSION_SECRET environment variable is set" warning**
+- SESSION_SECRET is required for secure cookie storage
+- Generate a random secret: `openssl rand -base64 32`
+- Add to `.env` file: `SESSION_SECRET=your-generated-secret`
+- Or set as environment variable: `export SESSION_SECRET=your-generated-secret`
+- Restart the application after setting this variable
+
+**"OAuth provider not configured"**
+- Check `.env` file exists with correct variable names
+- Verify `GOOGLE_OAUTH_KEY` and `GOOGLE_OAUTH_SECRET` are set
+- Restart the application after updating `.env`
+
+**"error loading .env file" warning**
+- This is normal if `.env` doesn't exist; the app will use environment variables
+- To use `.env`, copy `.env.example` to `.env` and add your credentials
+
+**"Missing authorization code"**
+- OAuth provider might not be configured correctly
+- Check the callback URL matches provider settings exactly
+
+**User not created**
+- Check database is running
+- Verify email is not already registered
+
+## File Structure
+
+```
+.
+├── .env                    # Your local environment variables (gitignored)
+├── .env.example           # Example environment file (commit this)
+├── OAUTH_SETUP.md         # This file
+├── OAUTH_IMPLEMENTATION.md # Detailed implementation guide
+└── cmd/api/main.go        # Entry point that loads .env
+```
+
+For more details, see `OAUTH_IMPLEMENTATION.md`
