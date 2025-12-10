@@ -64,7 +64,7 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader>
         <div className="px-2 py-2">
-          <h2 className="text-lg font-semibold">HypervisorOS</h2>
+          <h2 className="text-lg font-semibold">Visory</h2>
           <p className="text-sm text-muted-foreground">v2.1.0</p>
         </div>
       </SidebarHeader>

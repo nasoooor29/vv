@@ -35,12 +35,9 @@ function AppLayout() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
+        <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger />
           <div className="flex w-full items-center justify-between">
-            <div>
-              <h1 className="text-xl font-semibold">Hypervisor Management</h1>
-            </div>
             <div className="flex gap-2">
               {/* <DeployStack /> */}
               {/* <RunContainer /> */}
