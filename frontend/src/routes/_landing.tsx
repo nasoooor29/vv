@@ -21,15 +21,17 @@ export default function LandingLayout() {
             </Link>
           ) : (
             <>
-              <Link
-                to="/auth/login"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Sign In
+              <Link to="/auth/login">
+                <Button
+                  variant={"outline"}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  Login
+                </Button>
               </Link>
               <Link to="/auth/register">
                 <Button className="bg-primary hover:bg-primary/90">
-                  Get Started
+                  Register
                 </Button>
               </Link>
             </>

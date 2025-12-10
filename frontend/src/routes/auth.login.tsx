@@ -32,17 +32,11 @@ export default function Login() {
       onSuccess(data) {
         console.log("Login successful:", data);
         toast.success("Login successful!");
-        navigate("/dashboard");
-      },
-      onError() {
-        toast.error("Invalid email or password");
+        navigate("/app/dashboard");
       },
     }),
   );
 
-  const onSubmit = (data: LoginFormData) => {
-    login.mutate(data);
-  };
   return (
     <div className="bg-background relative min-h-screen overflow-hidden">
       <div className="from-background absolute -top-10 left-0 h-1/2 w-full rounded-b-full bg-linear-to-b to-transparent blur"></div>
@@ -57,8 +51,8 @@ export default function Login() {
         </div>
 
         {/* Right Side - Login Form */}
-        <div className="flex flex-1 items-center justify-center p-8">
-          <Card className="border-border/70 bg-card/20 w-full max-w-md shadow-[0_10px_26px_#e0e0e0a1] backdrop-blur-lg dark:shadow-none">
+        <div className="flex flex-1 items-center justify-center md:p-8">
+          <Card className="md:border-border/70 md:bg-card/20 w-full md:max-w-md md:shadow-[0_10px_26px_#e0e0e0a1] md:backdrop-blur-lg dark:shadow-none border-none bg-transparent">
             <CardContent className="space-y-6 p-8">
               {/* Logo and Header */}
               <div className="space-y-4 text-center">
@@ -73,7 +67,10 @@ export default function Login() {
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <form
+                onSubmit={handleSubmit((data) => login.mutate(data))}
+                className="space-y-6"
+              >
                 {/* Email Input */}
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>

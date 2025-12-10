@@ -39,7 +39,7 @@ export default function Register() {
       onSuccess(data) {
         console.log("Registration successful:", data);
         toast.success("Registration successful!");
-        navigate("/dashboard");
+        navigate("/app/dashboard");
       },
       onError() {
         toast.error("Registration failed. Please try again.");
@@ -74,8 +74,8 @@ export default function Register() {
         </div>
 
         {/* Right Side - Register Form */}
-        <div className="flex flex-1 items-center justify-center p-8">
-          <Card className="border-border/70 bg-card/20 w-full max-w-lg shadow-[0_10px_26px_#e0e0e0a1] backdrop-blur-lg dark:shadow-none">
+        <div className="flex flex-1 items-center justify-center md:p-8">
+          <Card className="md:border-border/70 md:bg-card/20 w-full md:max-w-md md:shadow-[0_10px_26px_#e0e0e0a1] md:backdrop-blur-lg dark:shadow-none border-none bg-transparent">
             <CardContent className="space-y-6 p-8">
               {/* Logo and Header */}
               <div className="space-y-4 text-center">

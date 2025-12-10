@@ -28,18 +28,19 @@ export const queryClient = new QueryClient({
       },
     },
   },
-  queryCache: new QueryCache({
-    onError: (error) => {
-      toast.error(`Error: ${error.message}`, {
-        action: {
-          label: "retry",
-          onClick: () => {
-            queryClient.invalidateQueries();
-          },
-        },
-      });
-    },
-  }),
+  // // bring it back if you want global query error handling
+  // queryCache: new QueryCache({
+  //   onError: (error) => {
+  //     toast.error(`Error: ${error.message}`, {
+  //       action: {
+  //         label: "retry",
+  //         onClick: () => {
+  //           queryClient.invalidateQueries();
+  //         },
+  //       },
+  //     });
+  //   },
+  // }),
 });
 
 export const contract = {

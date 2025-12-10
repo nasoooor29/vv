@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { useSession } from "@/stores/user";
 import {
   Cloud,
   Container,
@@ -8,10 +9,13 @@ import {
   Gauge,
   ChevronRight,
   Check,
+  Home,
 } from "lucide-react";
 import { Link } from "react-router";
 
 export default function LandingPage() {
+  const s = useSession((state) => state.session);
+  console.log("LandingLayout rendered");
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       {/* Hero Section */}
@@ -35,18 +39,25 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-            <Link to="/register">
-              <Button
-                size="lg"
-                className="bg-primary hover:bg-primary/90 text-lg px-8"
-              >
-                Start Free Trial
-                <ChevronRight className="w-5 h-5 ml-2" />
-              </Button>
-            </Link>
-            <Button size="lg" variant="outline" className="text-lg px-8">
-              View Demo
-            </Button>
+            {s ? (
+              <>
+                <Link to="/app">
+                  <Button variant={"default"} size="lg" className="w-full">
+                    Go to Dashboard
+                    <Home />
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/auth/register">
+                  <Button variant={"default"} size="lg" className="w-full">
+                    Start Your Journey
+                    <ChevronRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </section>
