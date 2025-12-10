@@ -122,7 +122,7 @@ export default function Login() {
                   Don't have an account?{" "}
                   <button
                     type="button"
-                    onClick={() => navigate("/register")}
+                    onClick={() => navigate("/auth/register")}
                     className="text-primary hover:underline font-medium"
                   >
                     Register here

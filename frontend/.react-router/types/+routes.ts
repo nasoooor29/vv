@@ -14,13 +14,16 @@ type Pages = {
   "/": {
     params: {};
   };
-  "/dashboard": {
+  "/auth": {
     params: {};
   };
-  "/register": {
+  "/auth/register": {
     params: {};
   };
-  "/login": {
+  "/auth/login": {
+    params: {};
+  };
+  "/app": {
     params: {};
   };
 };
@@ -28,35 +31,45 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/dashboard" | "/register" | "/login";
+    page: "/" | "/auth" | "/auth/register" | "/auth/login" | "/app";
   };
-  "routes/dashboard.tsx": {
-    id: "routes/dashboard";
-    page: "/dashboard";
-  };
-  "routes/_index.tsx": {
-    id: "routes/_index";
+  "routes/_landing.tsx": {
+    id: "routes/_landing";
     page: "/";
   };
-  "routes/_auth.tsx": {
-    id: "routes/_auth";
-    page: "/register" | "/login";
+  "routes/_landing._index.tsx": {
+    id: "routes/_landing._index";
+    page: "/";
   };
-  "routes/_auth.register.tsx": {
-    id: "routes/_auth.register";
-    page: "/register";
+  "routes/auth.tsx": {
+    id: "routes/auth";
+    page: "/auth" | "/auth/register" | "/auth/login";
   };
-  "routes/_auth.login.tsx": {
-    id: "routes/_auth.login";
-    page: "/login";
+  "routes/auth.register.tsx": {
+    id: "routes/auth.register";
+    page: "/auth/register";
+  };
+  "routes/auth.login.tsx": {
+    id: "routes/auth.login";
+    page: "/auth/login";
+  };
+  "routes/app.tsx": {
+    id: "routes/app";
+    page: "/app";
+  };
+  "routes/app._index.tsx": {
+    id: "routes/app._index";
+    page: "/app";
   };
 };
 
 type RouteModules = {
   "root": typeof import("./src/root.tsx");
-  "routes/dashboard": typeof import("./src/routes/dashboard.tsx");
-  "routes/_index": typeof import("./src/routes/_index.tsx");
-  "routes/_auth": typeof import("./src/routes/_auth.tsx");
-  "routes/_auth.register": typeof import("./src/routes/_auth.register.tsx");
-  "routes/_auth.login": typeof import("./src/routes/_auth.login.tsx");
+  "routes/_landing": typeof import("./src/routes/_landing.tsx");
+  "routes/_landing._index": typeof import("./src/routes/_landing._index.tsx");
+  "routes/auth": typeof import("./src/routes/auth.tsx");
+  "routes/auth.register": typeof import("./src/routes/auth.register.tsx");
+  "routes/auth.login": typeof import("./src/routes/auth.login.tsx");
+  "routes/app": typeof import("./src/routes/app.tsx");
+  "routes/app._index": typeof import("./src/routes/app._index.tsx");
 };

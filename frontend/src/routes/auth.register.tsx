@@ -177,7 +177,7 @@ export default function Register() {
                   Already have an account?{" "}
                   <button
                     type="button"
-                    onClick={() => navigate("/login")}
+                    onClick={() => navigate("/auth/login")}
                     className="text-primary hover:underline font-medium"
                   >
                     Login here

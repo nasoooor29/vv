@@ -14,27 +14,6 @@ import { Link } from "react-router";
 export default function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
-      {/* Navigation */}
-      <nav className="flex items-center justify-between px-6 py-4 border-b border-border">
-        <div className="flex items-center gap-2">
-          <Cloud className="w-8 h-8 text-primary" />
-          <h1 className="text-2xl font-bold text-foreground">Visory</h1>
-        </div>
-        <div className="flex items-center gap-4">
-          <Link
-            to="/login"
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Sign In
-          </Link>
-          <Link to="/register">
-            <Button className="bg-primary hover:bg-primary/90">
-              Get Started
-            </Button>
-          </Link>
-        </div>
-      </nav>
-
       {/* Hero Section */}
       <section className="flex-1 flex flex-col items-center justify-center px-6 py-20 text-center max-w-5xl mx-auto">
         <div className="space-y-6">
