@@ -11,18 +11,33 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+type SerilizerType int
+
+const (
+	JSON SerilizerType = iota
+	XML
+	HTML
+	BLOB
+)
+
 type Serilizable[T any] interface {
 	Serilize(int, any) error
 	GetWithStatus() (int, T)
+	GetSerilizerType() SerilizerType
 }
 type JsonSerlizer[T any] struct {
 	status int
 	jj     T
 	e      echo.Context
+	_type  SerilizerType
 }
 
 func (t *JsonSerlizer[T]) GetWithStatus() (int, T) {
 	return t.status, t.jj
+}
+
+func (t *JsonSerlizer[T]) GetSerilizerType() SerilizerType {
+	return t._type
 }
 
 func NewJsonSerilizer[T any](e echo.Context, status int, jj T) *JsonSerlizer[T] {
@@ -30,6 +45,7 @@ func NewJsonSerilizer[T any](e echo.Context, status int, jj T) *JsonSerlizer[T] 
 		status: status,
 		jj:     jj,
 		e:      e,
+		_type:  JSON,
 	}
 }
 
