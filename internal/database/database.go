@@ -70,10 +70,11 @@ func New() *Service {
 }
 
 type Health struct {
-	Status  string      `json:"status"`
-	Message string      `json:"message"`
-	Error   string      `json:"error,omitempty"`
-	Stats   HealthStats `json:"stats"`
+	Status     string      `json:"status"`
+	Message    string      `json:"message"`
+	AppVersion string      `json:"app_version"`
+	Error      string      `json:"error,omitempty"`
+	Stats      HealthStats `json:"stats"`
 }
 type HealthStats struct {
 	OpenConnections   int    `json:"open_connections"`
@@ -91,7 +92,8 @@ func (s *Service) Health() *Health {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	stats := &Health{
-		Stats: HealthStats{},
+		AppVersion: models.ENV_VARS.APP_VERSION,
+		Stats:      HealthStats{},
 	}
 
 	// Ping the database

@@ -9,6 +9,7 @@ export const envVarsSchema = z.object({
   Port: z.string(),
   AppEnv: z.string(),
   DBPath: z.string(),
+  APP_VERSION: z.string(),
 });
 
 export const loginSchema = z.object({
@@ -90,6 +91,7 @@ export const notificationSchema = z.object({
 export const healthSchema = z.object({
   status: z.string(),
   message: z.string(),
+  app_version: z.string(),
   error: z.string().optional(),
   stats: healthStatsSchema,
 });

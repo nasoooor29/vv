@@ -10,6 +10,7 @@ export interface EnvVars {
   Port: string;
   AppEnv: string;
   DBPath: string;
+  APP_VERSION: string;
 }
 export const COOKIE_NAME = "token";
 export const BYPASS_RBAC_HEADER = "X-Bypass-RBAC";
@@ -45,6 +46,7 @@ export interface Service {
 export interface Health {
   status: string;
   message: string;
+  app_version: string;
   error?: string;
   stats: HealthStats;
 }

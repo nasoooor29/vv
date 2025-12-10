@@ -23,10 +23,54 @@ import {
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Link, useNavigate } from "react-router";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
 import { toast } from "sonner";
 import { useSession } from "@/stores/user";
+import { useEffect, useState } from "react";
+
+// Utility function to format time difference
+function formatTimeDifference(timestamp: number | Date): string {
+  const now = Date.now();
+  const updated = new Date(timestamp).getTime();
+  const diffMs = now - updated;
+  const diffSec = Math.floor(diffMs / 1000);
+
+  if (diffSec < 60) return `${diffSec} sec ago`;
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin} min ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr} hr ago`;
+  const diffDay = Math.floor(diffHr / 24);
+  return `${diffDay} day${diffDay > 1 ? "s" : ""} ago`;
+}
+
+// Component for reactive time display
+function RelativeTimeDisplay({
+  timestamp,
+}: {
+  timestamp: number | Date | null;
+}) {
+  const [displayTime, setDisplayTime] = useState(() =>
+    timestamp ? formatTimeDifference(timestamp) : "",
+  );
+
+  useEffect(() => {
+    if (!timestamp) return;
+
+    // Initial update
+    setDisplayTime(formatTimeDifference(timestamp));
+
+    // Update every second for more responsive display
+    const interval = setInterval(() => {
+      setDisplayTime(formatTimeDifference(timestamp));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [timestamp]);
+
+  return <>{displayTime}</>;
+}
 
 // interface AppSidebarProps {
 //   activeSection: string;
@@ -43,6 +87,11 @@ export function AppSidebar() {
         clearSession();
         nav("/auth/login");
       },
+    }),
+  );
+  const health = useQuery(
+    orpc.health.check.queryOptions({
+      staleTime: 1 * 1000,
     }),
   );
   const menuItems = [
@@ -65,7 +114,9 @@ export function AppSidebar() {
       <SidebarHeader>
         <div className="px-2 py-2">
           <h2 className="text-lg font-semibold">Visory</h2>
-          <p className="text-sm text-muted-foreground">v2.1.0</p>
+          <p className="text-sm text-muted-foreground">
+            v{health.data?.app_version}
+          </p>
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -133,8 +184,11 @@ export function AppSidebar() {
           Logout
         </Button>
         <div className="px-2 py-2 text-xs text-muted-foreground">
-          <div>System Status: Online</div>
-          <div>Last Updated: Just now</div>
+          <div>System Status: {health.data?.message}</div>
+          <div>
+            Last Updated:{" "}
+            <RelativeTimeDisplay timestamp={health.dataUpdatedAt} />
+          </div>
         </div>
       </SidebarFooter>
     </Sidebar>

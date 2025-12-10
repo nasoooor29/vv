@@ -76,7 +76,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	api.GET("/", s.HelloWorldHandler)
 
-	api.GET("/health", s.healthHandler, s.RBAC(models.RBAC_HEALTH_CHECKER))
+	// api.GET("/health", s.healthHandler, s.RBAC(models.RBAC_HEALTH_CHECKER))
+	api.GET("/health", s.healthHandler)
 
 	api.GET("/websocket", s.websocketHandler)
 

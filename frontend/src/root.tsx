@@ -9,6 +9,7 @@ import "./index.css";
 import { Toaster } from "./components/ui/sonner";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/orpc";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 export const links = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -34,6 +35,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body className="dark">
         {children}
+
         <Scripts />
       </body>
     </html>
@@ -45,6 +47,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <Outlet />
       <Toaster />
+      {/* <ReactQueryDevtools initialIsOpen={false} /> */}
     </QueryClientProvider>
   );
 }
