@@ -86,6 +86,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	authGroup := api.Group("/auth")
 	authGroup.Use(s.Auth)
 	authGroup.GET("/me", s.Me)
+	authGroup.GET("/me2", ToEchoHandlerFunc(s.Me2))
 	authGroup.POST("/logout", s.Logout)
 
 	return e
