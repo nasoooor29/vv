@@ -26,14 +26,15 @@ export const useSession = create<Store>()(
   ),
 );
 
-// Poll every second to update session info
-setInterval(async () => {
+// Poll every second to update session info AND initialize on load
+const initSession = async () => {
   try {
     const session = await client.auth.me();
-    if (!session) {
-      // just so we don't rerender unnecessarily
-      useSession.getState().setSession(session); // i promise it's perfect dw
-      return;
+    if (session) {
+      useSession.getState().setSession(session);
+      console.log("Session initialized:", session);
+    } else {
+      useSession.getState().clearSession();
     }
   } catch (error) {
     if (error instanceof ORPCError) {
@@ -45,4 +46,10 @@ setInterval(async () => {
       }
     }
   }
-}, 1000);
+};
+
+// Initialize session immediately
+initSession();
+
+// Then poll every second
+setInterval(initSession, 10000);
