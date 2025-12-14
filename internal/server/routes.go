@@ -8,6 +8,7 @@ import (
 
 	"visory/internal/database"
 	"visory/internal/database/user"
+	"visory/internal/docs"
 	"visory/internal/models"
 	"visory/internal/utils"
 
@@ -121,18 +122,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 		Description("User Logout Endpoint")
 
 	spec := openapi.OpenAPI()
-	data, err := spec.MarshalJSON()
-	if err != nil {
-		slog.Error("error happened", "err", err)
-	} else {
-		slog.Info("OpenAPI spec generated")
-		api.GET("/openapi.json", func(c echo.Context) error {
-			return c.JSONBlob(http.StatusOK, data)
-		})
-		// Swagger UI endpoint
-		api.GET("/docs", openapiHandler)
-
-	}
+	api.GET("/docs", docs.RedocHandler(spec))
 
 	openapi.Mount(e)
 
