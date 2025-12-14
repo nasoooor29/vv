@@ -56,7 +56,7 @@ test:
 	@go test ./... -v
 
 # Live Reload
-watch:
+back:
 	@air
 
 front:
