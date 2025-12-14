@@ -89,14 +89,18 @@ func (g *Group) POST(path string, h echo.HandlerFunc, mw ...echo.MiddlewareFunc)
 	return r
 }
 
-func (g *Group) Returns(code int, schema Schema, contentType string, desc ...string) *Group {
-	if contentType == "" {
-		contentType = "application/json"
-	}
+func (g *Group) Returns(code int, v any, opts ...string) *Group {
+	schema := JSON(v)
+	contentType := "application/json"
 	description := ""
-	if len(desc) > 0 {
-		description = desc[0]
+
+	for i, opt := range opts {
+		if i == 0 {
+			// First optional param is description
+			description = opt
+		}
 	}
+
 	g.responses[code] = Response{
 		Schema:      schema,
 		ContentType: contentType,
@@ -157,14 +161,18 @@ func (a *API) add(
 	return r
 }
 
-func (r *Route) Returns(code int, schema Schema, contentType string, desc ...string) *Route {
-	if contentType == "" {
-		contentType = "application/json"
-	}
+func (r *Route) Returns(code int, v any, opts ...string) *Route {
+	schema := JSON(v)
+	contentType := "application/json"
 	description := ""
-	if len(desc) > 0 {
-		description = desc[0]
+
+	for i, opt := range opts {
+		if i == 0 {
+			// First optional param is description
+			description = opt
+		}
 	}
+
 	r.Responses[code] = Response{
 		Schema:      schema,
 		ContentType: contentType,
@@ -178,14 +186,16 @@ func (r *Route) Description(desc string) *Route {
 	return r
 }
 
-func (r *Route) Input(schema Schema, contentType string, required bool) *Route {
-	if contentType == "" {
-		contentType = "application/json"
+func (r *Route) Input(v any, opts ...string) *Route {
+	schema := JSON(v)
+	contentType := "application/json"
+	if len(opts) > 0 {
+		contentType = opts[0]
 	}
 	r.input = &Input{
 		Schema:      schema,
 		ContentType: contentType,
-		Required:    required,
+		Required:    true,
 	}
 	return r
 }

@@ -81,43 +81,43 @@ func (s *Server) RegisterRoutes() http.Handler {
 	}))
 
 	api.GET("/health", s.healthHandler).
-		Returns(http.StatusOK, utils.JSON(database.Health{}), "application/json", "Database connection is healthy").
-		Returns(http.StatusInternalServerError, utils.JSON(models.HTTPError{}), "application/json", "Database connection failed").
+		Returns(http.StatusOK, database.Health{}, "Database connection is healthy").
+		Returns(http.StatusInternalServerError, models.HTTPError{}, "Database connection failed").
 		Description("Health Check Endpoint")
 
 	api.POST("/auth/register", s.Register).
-		Input(utils.JSON(user.UpsertUserParams{}), "application/json", true).
-		Returns(http.StatusOK, utils.JSON(user.User{}), "application/json").
-		Returns(http.StatusBadRequest, utils.JSON(models.HTTPError{}), "application/json").
-		Returns(http.StatusConflict, utils.JSON(models.HTTPError{}), "application/json").
+		Input(user.UpsertUserParams{}).
+		Returns(http.StatusOK, user.User{}).
+		Returns(http.StatusBadRequest, models.HTTPError{}).
+		Returns(http.StatusConflict, models.HTTPError{}).
 		Description("User Registration Endpoint")
 
 	api.POST("/auth/login", s.Login).
-		Input(utils.JSON(models.Login{}), "application/json", true).
-		Returns(http.StatusOK, utils.JSON(user.User{}), "application/json").
-		Returns(http.StatusBadRequest, utils.JSON(models.HTTPError{}), "application/json").
-		Returns(http.StatusUnauthorized, utils.JSON(models.HTTPError{}), "application/json").
+		Input(models.Login{}).
+		Returns(http.StatusOK, user.User{}).
+		Returns(http.StatusBadRequest, models.HTTPError{}).
+		Returns(http.StatusUnauthorized, models.HTTPError{}).
 		Description("User Login Endpoint")
 
 	api.GET("/auth/oauth/:provider", s.OAuthLogin).
 		Description("OAuth Login Endpoint")
 
 	api.GET("/auth/oauth/callback/:provider", s.OAuthCallback).
-		Returns(http.StatusOK, utils.JSON(user.User{}), "application/json").
-		Returns(http.StatusBadRequest, utils.JSON(models.HTTPError{}), "application/json").
-		Returns(http.StatusUnauthorized, utils.JSON(models.HTTPError{}), "application/json").
+		Returns(http.StatusOK, user.User{}).
+		Returns(http.StatusBadRequest, models.HTTPError{}).
+		Returns(http.StatusUnauthorized, models.HTTPError{}).
 		Description("OAuth Callback Endpoint")
 
 	authGroup := api.Group("/auth", s.Auth).
-		Returns(http.StatusUnauthorized, utils.JSON(models.HTTPError{}), "application/json")
+		Returns(http.StatusUnauthorized, models.HTTPError{})
 
 	authGroup.GET("/me", s.Me).
-		Returns(http.StatusOK, utils.JSON(user.GetUserAndSessionByTokenRow{}), "application/json").
+		Returns(http.StatusOK, user.GetUserAndSessionByTokenRow{}).
 		Description("Get Current User Endpoint")
 
 	authGroup.POST("/logout", s.Logout).
-		Returns(http.StatusOK, utils.JSON(nil), "application/json").
-		Returns(http.StatusBadRequest, utils.JSON(models.HTTPError{}), "application/json").
+		Returns(http.StatusOK, nil).
+		Returns(http.StatusBadRequest, models.HTTPError{}).
 		Description("User Logout Endpoint")
 
 	spec := openapi.OpenAPI()
