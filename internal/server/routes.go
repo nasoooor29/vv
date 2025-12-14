@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"visory/internal/models"
+	"visory/internal/utils"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -64,7 +65,12 @@ func (s *Server) RegisterRoutes() http.Handler {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	api := e.Group("/api")
+
+	openapi := utils.New()
+	api := openapi.Group("/api")
+
+	// auth := api.Group("/auth", s.Auth)
+	// apiw := e.Group("/api")
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"https://*", "http://*"},
@@ -74,24 +80,66 @@ func (s *Server) RegisterRoutes() http.Handler {
 		MaxAge:           300,
 	}))
 
-	api.GET("/", s.HelloWorldHandler)
+	api.GET("/", s.HelloWorldHandler).
+		Returns(http.StatusOK, utils.JSON(map[string]string{}), "application/json").
+		Returns(http.StatusInternalServerError, utils.JSON(models.HTTPError{}), "application/json").
+		Description("Hello World Endpoint")
 
-	// api.GET("/health", s.healthHandler, s.RBAC(models.RBAC_HEALTH_CHECKER))
-	api.GET("/health", s.healthHandler)
+	api.GET("/health", s.healthHandler).
+		Returns(http.StatusOK, utils.JSON(map[string]string{}), "application/json").
+		Returns(http.StatusInternalServerError, utils.JSON(models.HTTPError{}), "application/json").
+		Description("Health Check Endpoint")
 
-	api.GET("/websocket", s.websocketHandler)
+	api.POST("/auth/register", s.Register).
+		Returns(http.StatusOK, utils.JSON(map[string]string{}), "application/json").
+		Returns(http.StatusBadRequest, utils.JSON(models.HTTPError{}), "application/json").
+		Returns(http.StatusConflict, utils.JSON(models.HTTPError{}), "application/json").
+		Returns(http.StatusInternalServerError, utils.JSON(models.HTTPError{}), "application/json").
+		Description("User Registration Endpoint")
 
-	api.POST("/auth/register", s.Register)
-	api.POST("/auth/login", s.Login)
+	api.POST("/auth/login", s.Login).
+		Returns(http.StatusOK, utils.JSON(map[string]string{}), "application/json").
+		Returns(http.StatusBadRequest, utils.JSON(models.HTTPError{}), "application/json").
+		Returns(http.StatusUnauthorized, utils.JSON(models.HTTPError{}), "application/json").
+		Returns(http.StatusInternalServerError, utils.JSON(models.HTTPError{}), "application/json").
+		Description("User Login Endpoint")
 
-	// OAuth routes
-	api.GET("/auth/oauth/:provider", s.OAuthLogin)
-	api.GET("/auth/oauth/callback/:provider", s.OAuthCallback)
+	api.GET("/auth/oauth/:provider", s.OAuthLogin).
+		Description("OAuth Login Endpoint")
 
-	authGroup := api.Group("/auth")
-	authGroup.Use(s.Auth)
-	authGroup.GET("/me", s.Me)
-	authGroup.POST("/logout", s.Logout)
+	api.GET("/auth/oauth/callback/:provider", s.OAuthCallback).
+		Returns(http.StatusOK, utils.JSON(map[string]string{}), "application/json").
+		Returns(http.StatusBadRequest, utils.JSON(models.HTTPError{}), "application/json").
+		Returns(http.StatusUnauthorized, utils.JSON(models.HTTPError{}), "application/json").
+		Returns(http.StatusInternalServerError, utils.JSON(models.HTTPError{}), "application/json").
+		Description("OAuth Callback Endpoint")
+
+	authGroup := api.Group("/auth", s.Auth).
+		Returns(http.StatusUnauthorized, utils.JSON(models.HTTPError{}), "application/json").
+		Returns(http.StatusInternalServerError, utils.JSON(models.HTTPError{}), "application/json")
+
+	authGroup.GET("/me", s.Me).
+		Returns(http.StatusOK, utils.JSON(map[string]string{}), "application/json").
+		Description("Get Current User Endpoint")
+
+	authGroup.POST("/logout", s.Logout).
+		Returns(http.StatusOK, utils.JSON(nil), "application/json").
+		Returns(http.StatusBadRequest, utils.JSON(models.HTTPError{}), "application/json").
+		Description("User Logout Endpoint")
+
+	spec := openapi.OpenAPI()
+	data, err := spec.MarshalJSON()
+	if err != nil {
+		slog.Error("error happened", "err", err)
+	} else {
+		slog.Info("OpenAPI spec generated")
+		api.GET("/openapi.json", func(c echo.Context) error {
+			return c.JSONBlob(http.StatusOK, data)
+		})
+
+	}
+
+	openapi.Mount(e)
 
 	return e
 }
