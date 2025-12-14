@@ -37,6 +37,7 @@ type Group struct {
 	middleware []echo.MiddlewareFunc
 	parent     *Group
 	responses  map[int]Response
+	tag        string
 }
 
 func (g *Group) Group(prefix string, mw ...echo.MiddlewareFunc) *Group {
@@ -63,6 +64,25 @@ func (g *Group) fullMiddleware() []echo.MiddlewareFunc {
 	return append(g.parent.fullMiddleware(), g.middleware...)
 }
 
+func (g *Group) fullTag() string {
+	if g.parent == nil || g.parent.prefix == "" {
+		// Remove leading /
+		if len(g.prefix) > 0 && g.prefix[0] == '/' {
+			return g.prefix[1:]
+		}
+		return g.prefix
+	}
+	parentTag := g.parent.fullTag()
+	childTag := g.prefix
+	if len(childTag) > 0 && childTag[0] == '/' {
+		childTag = childTag[1:]
+	}
+	if parentTag == "" {
+		return childTag
+	}
+	return parentTag + " > " + childTag
+}
+
 func (g *Group) GET(path string, h echo.HandlerFunc, mw ...echo.MiddlewareFunc) *Route {
 	r := g.api.add(
 		http.MethodGet,
@@ -70,6 +90,7 @@ func (g *Group) GET(path string, h echo.HandlerFunc, mw ...echo.MiddlewareFunc) 
 		h,
 		append(g.fullMiddleware(), mw...)...,
 	)
+	r.tag = g.fullTag()
 	for code, resp := range g.responses {
 		r.Responses[code] = resp
 	}
@@ -83,6 +104,7 @@ func (g *Group) POST(path string, h echo.HandlerFunc, mw ...echo.MiddlewareFunc)
 		h,
 		append(g.fullMiddleware(), mw...)...,
 	)
+	r.tag = g.fullTag()
 	for code, resp := range g.responses {
 		r.Responses[code] = resp
 	}
@@ -136,6 +158,7 @@ type Route struct {
 	Responses   map[int]Response
 	description string
 	input       *Input
+	tag         string
 }
 
 type Response struct {
@@ -379,6 +402,11 @@ func (a *API) OpenAPI() *openapi3.T {
 	for _, r := range a.routes {
 		op := openapi3.NewOperation()
 		op.Description = r.description
+
+		// Add tag if present
+		if r.tag != "" {
+			op.Tags = []string{r.tag}
+		}
 
 		for _, p := range r.Params {
 			op.Parameters = append(op.Parameters, &openapi3.ParameterRef{
