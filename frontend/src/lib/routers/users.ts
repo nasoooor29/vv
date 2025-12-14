@@ -21,14 +21,17 @@ export const usersRouter = {
   updateUser: base
     .route({
       method: "PUT",
-      path: "/users/:id",
+      path: "/users/{id}",
+      inputStructure: "detailed",
     })
     .input(
       z.object({
-        id: z.number(),
-        username: z.string(),
-        email: z.string(),
-        role: z.string().optional(),
+        params: z.object({ id: z.string() }),
+        body: z.object({
+          username: z.string(),
+          email: z.string(),
+          role: z.string().optional(),
+        }).optional(),
       })
     )
     .output(Z.userSchema),
@@ -36,19 +39,25 @@ export const usersRouter = {
   deleteUser: base
     .route({
       method: "DELETE",
-      path: "/users/:id",
+      path: "/users/{id}",
+      inputStructure: "detailed",
     })
-    .input(z.object({ id: z.number() })),
+    .input(z.object({ 
+      params: z.object({ id: z.string() }),
+    })),
 
   updateUserRole: base
     .route({
       method: "PATCH",
-      path: "/users/:id/role",
+      path: "/users/{id}/role",
+      inputStructure: "detailed",
     })
     .input(
       z.object({
-        id: z.number(),
-        role: z.string(),
+        params: z.object({ id: z.string() }),
+        body: z.object({
+          role: z.string(),
+        }).optional(),
       })
     )
     .output(Z.userSchema),

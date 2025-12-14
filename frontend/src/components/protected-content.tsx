@@ -112,8 +112,8 @@ export function ProtectedContent({
  */
 export function usePermission() {
   const session = useSession((s) => s.session);
-  console.log("usePermission session:", session);
-  console.log("usePermission user role:", session?.user?.role);
+  // console.log("usePermission session:", session);
+  // console.log("usePermission user role:", session?.user?.role);
 
   const checkPermission = (required: RBACPolicy | RBACPolicy[]): boolean => {
     if (!session || !session.user.role) return false;

@@ -38,7 +38,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Edit, Shield } from "lucide-react";
+import { Trash2, Edit, Shield, Plus } from "lucide-react";
 
 // Available roles to choose from
 const AVAILABLE_ROLES = [
@@ -83,23 +83,41 @@ export default function UsersPage() {
   const [deletingUserId, setDeletingUserId] = useState<number | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [rolePromptUser, setRolePromptUser] = useState<any>(null);
   const [selectedRoles, setSelectedRoles] = useState<typeof AVAILABLE_ROLES>(
     [],
   );
+  const [newUser, setNewUser] = useState({
+    username: "",
+    email: "",
+    password: "",
+    role: "user",
+  });
 
   const usersQuery = useQuery(orpc.users.listUsers.queryOptions());
+
+  const createUserMutation = useMutation(
+    orpc.users.createUser.mutationOptions({
+      onSuccess() {
+        toast.success("User created successfully");
+        setShowCreateDialog(false);
+        setNewUser({
+          username: "",
+          email: "",
+          password: "",
+          role: "user",
+        });
+      },
+    }),
+  );
 
   const updateUserMutation = useMutation(
     orpc.users.updateUser.mutationOptions({
       onSuccess() {
         toast.success("User updated successfully");
-        usersQuery.refetch();
         setShowEditDialog(false);
         setEditingUser(null);
-      },
-      onError() {
-        toast.error("Failed to update user");
       },
     }),
   );
@@ -108,7 +126,6 @@ export default function UsersPage() {
     orpc.users.deleteUser.mutationOptions({
       onSuccess() {
         toast.success("User deleted successfully");
-        usersQuery.refetch();
         setShowDeleteDialog(false);
         setDeletingUserId(null);
       },
@@ -119,9 +136,11 @@ export default function UsersPage() {
     orpc.users.updateUserRole.mutationOptions({
       onSuccess() {
         toast.success("User role updated successfully");
-        usersQuery.refetch();
         setRolePromptUser(null);
         setSelectedRoles([]);
+      },
+      onError() {
+        toast.error("Failed to update user role");
       },
     }),
   );
@@ -142,13 +161,28 @@ export default function UsersPage() {
     setShowEditDialog(true);
   };
 
+  const handleCreate = () => {
+    if (!newUser.username || !newUser.email || !newUser.password) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    createUserMutation.mutate({
+      username: newUser.username,
+      email: newUser.email,
+      password: newUser.password,
+      role: newUser.role || "user",
+    });
+  };
+
   const handleSaveEdit = () => {
     if (editingUser) {
       updateUserMutation.mutate({
-        id: editingUser.id,
-        username: editingUser.username,
-        email: editingUser.email,
-        role: editingUser.role || "user",
+        params: { id: String(editingUser.id) },
+        body: {
+          username: editingUser.username,
+          email: editingUser.email,
+          role: editingUser.role || "user",
+        },
       });
     }
   };
@@ -160,7 +194,7 @@ export default function UsersPage() {
 
   const handleConfirmDelete = () => {
     if (deletingUserId) {
-      deleteUserMutation.mutate({ id: deletingUserId });
+      deleteUserMutation.mutate({ params: { id: String(deletingUserId) } });
     }
   };
 
@@ -174,14 +208,18 @@ export default function UsersPage() {
     if (rolePromptUser && selectedRoles.length > 0) {
       const rolesString = mergeRoles(selectedRoles);
       updateRoleMutation.mutate({
-        id: rolePromptUser.id,
-        role: rolesString,
+        params: { id: String(rolePromptUser.id) },
+        body: {
+          role: rolesString,
+        },
       });
     } else if (rolePromptUser) {
       // If no roles selected, set to "user"
       updateRoleMutation.mutate({
-        id: rolePromptUser.id,
-        role: "user",
+        params: { id: String(rolePromptUser.id) },
+        body: {
+          role: "user",
+        },
       });
     }
   };
@@ -190,6 +228,10 @@ export default function UsersPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Users Management</h1>
+        <Button onClick={() => setShowCreateDialog(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Create User
+        </Button>
       </div>
 
       <Card>
@@ -289,6 +331,84 @@ export default function UsersPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Create User Dialog */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New User</DialogTitle>
+            <DialogDescription>Add a new user to the system</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Username</Label>
+              <Input
+                placeholder="Enter username"
+                value={newUser.username}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, username: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <Label>Email</Label>
+              <Input
+                type="email"
+                placeholder="Enter email"
+                value={newUser.email}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, email: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <Label>Password</Label>
+              <Input
+                type="password"
+                placeholder="Enter password"
+                value={newUser.password}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, password: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <Label>Roles</Label>
+              <MultipleSelector
+                value={parseRoles(newUser.role || "")}
+                onChange={(roles) => {
+                  setNewUser({
+                    ...newUser,
+                    role: mergeRoles(roles),
+                  });
+                }}
+                defaultOptions={AVAILABLE_ROLES}
+                placeholder="Select roles..."
+                emptyIndicator={
+                  <p className="text-center text-sm">No roles found</p>
+                }
+              />
+              <p className="text-xs text-muted-foreground mt-2">
+                Leave empty to assign default 'User' role
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowCreateDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreate}
+              disabled={createUserMutation.isPending}
+            >
+              {createUserMutation.isPending ? "Creating..." : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
