@@ -7,6 +7,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { healthRouter } from "./routers/health";
 import { authRouter } from "./routers/auth";
+import { usersRouter } from "./routers/users";
 import { Z } from "@/types";
 
 export const queryClient = new QueryClient({
@@ -46,10 +47,11 @@ export const queryClient = new QueryClient({
 export const contract = {
   health: healthRouter,
   auth: authRouter,
+  users: usersRouter,
 };
 
 const link = new OpenAPILink(contract, {
-  url: "http://localhost:9999/api",
+  url: "http://localhost:9997/api",
   fetch: (request, init) => {
     // when not 200-299, it will throw an ORPCError
     return globalThis.fetch(request, {
