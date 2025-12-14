@@ -18,6 +18,7 @@ Stored as comma-separated strings in `users.role` field.
 ## Frontend
 - **Routes**: Redirect if user lacks permission (check frontend/src/lib/rbac.ts for some general utils, and frontend/src/components/protected-content.tsx for permission hooks)
 - **Components**: Use Shadcn UI, max 250 lines
+- **styling**: don't use arbtrary colors just use the shadcn colors and the ones on frontend/src/index.css
 - **State**: Zustand stores in `@frontend/src/stores/`
 - **Types**: Zod schemas in `@frontend/src/types/index.ts`
 
