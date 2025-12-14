@@ -2,11 +2,12 @@ package server
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log/slog"
 	"net/http"
 	"time"
 
+	"visory/internal/database"
+	"visory/internal/database/user"
 	"visory/internal/models"
 	"visory/internal/utils"
 
@@ -69,6 +70,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	openapi := utils.New()
 	api := openapi.Group("/api")
+	api.Returns(http.StatusInternalServerError, utils.JSON(models.HTTPError{}), "application/json")
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"https://*", "http://*"},
@@ -78,50 +80,39 @@ func (s *Server) RegisterRoutes() http.Handler {
 		MaxAge:           300,
 	}))
 
-	// API Documentation index
-	api.GET("/", func(c echo.Context) error {
-		data, err := ioutil.ReadFile("internal/server/templates/api_index.html")
-		if err != nil {
-			return c.String(http.StatusInternalServerError, "Failed to load documentation")
-		}
-		return c.HTML(http.StatusOK, string(data))
-	})
-
 	api.GET("/health", s.healthHandler).
-		Returns(http.StatusOK, utils.JSON(map[string]string{}), "application/json").
-		Returns(http.StatusInternalServerError, utils.JSON(models.HTTPError{}), "application/json").
+		Returns(http.StatusOK, utils.JSON(database.Health{}), "application/json", "Database connection is healthy").
+		Returns(http.StatusInternalServerError, utils.JSON(models.HTTPError{}), "application/json", "Database connection failed").
 		Description("Health Check Endpoint")
 
 	api.POST("/auth/register", s.Register).
-		Returns(http.StatusOK, utils.JSON(map[string]string{}), "application/json").
+		Input(utils.JSON(user.UpsertUserParams{}), "application/json", true).
+		Returns(http.StatusOK, utils.JSON(user.User{}), "application/json").
 		Returns(http.StatusBadRequest, utils.JSON(models.HTTPError{}), "application/json").
 		Returns(http.StatusConflict, utils.JSON(models.HTTPError{}), "application/json").
-		Returns(http.StatusInternalServerError, utils.JSON(models.HTTPError{}), "application/json").
 		Description("User Registration Endpoint")
 
 	api.POST("/auth/login", s.Login).
-		Returns(http.StatusOK, utils.JSON(map[string]string{}), "application/json").
+		Input(utils.JSON(models.Login{}), "application/json", true).
+		Returns(http.StatusOK, utils.JSON(user.User{}), "application/json").
 		Returns(http.StatusBadRequest, utils.JSON(models.HTTPError{}), "application/json").
 		Returns(http.StatusUnauthorized, utils.JSON(models.HTTPError{}), "application/json").
-		Returns(http.StatusInternalServerError, utils.JSON(models.HTTPError{}), "application/json").
 		Description("User Login Endpoint")
 
 	api.GET("/auth/oauth/:provider", s.OAuthLogin).
 		Description("OAuth Login Endpoint")
 
 	api.GET("/auth/oauth/callback/:provider", s.OAuthCallback).
-		Returns(http.StatusOK, utils.JSON(map[string]string{}), "application/json").
+		Returns(http.StatusOK, utils.JSON(user.User{}), "application/json").
 		Returns(http.StatusBadRequest, utils.JSON(models.HTTPError{}), "application/json").
 		Returns(http.StatusUnauthorized, utils.JSON(models.HTTPError{}), "application/json").
-		Returns(http.StatusInternalServerError, utils.JSON(models.HTTPError{}), "application/json").
 		Description("OAuth Callback Endpoint")
 
 	authGroup := api.Group("/auth", s.Auth).
-		Returns(http.StatusUnauthorized, utils.JSON(models.HTTPError{}), "application/json").
-		Returns(http.StatusInternalServerError, utils.JSON(models.HTTPError{}), "application/json")
+		Returns(http.StatusUnauthorized, utils.JSON(models.HTTPError{}), "application/json")
 
 	authGroup.GET("/me", s.Me).
-		Returns(http.StatusOK, utils.JSON(map[string]string{}), "application/json").
+		Returns(http.StatusOK, utils.JSON(user.GetUserAndSessionByTokenRow{}), "application/json").
 		Description("Get Current User Endpoint")
 
 	authGroup.POST("/logout", s.Logout).
@@ -147,7 +138,7 @@ func (s *Server) RegisterRoutes() http.Handler {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>API Documentation - Swagger UI</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.18.3/swagger-ui.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui.css">
     <style>
         html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }
         *, *:before, *:after { box-sizing: inherit; }
@@ -156,44 +147,26 @@ func (s *Server) RegisterRoutes() http.Handler {
 </head>
 <body>
     <div id="swagger-ui"></div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.18.3/swagger-ui.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui-bundle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui-standalone-preset.js"></script>
     <script>
-        const ui = SwaggerUIBundle({
-            url: "/api/openapi.json",
-            dom_id: '#swagger-ui',
-            presets: [
-                SwaggerUIBundle.presets.apis,
-                SwaggerUIBundle.SwaggerUIStandalonePreset
-            ],
-            layout: "StandaloneLayout",
-            defaultModelsExpandDepth: 1,
-            docExpansion: "list"
-        })
-    </script>
-</body>
-</html>`
-			return c.HTML(http.StatusOK, html)
-		})
-
-		// ReDoc endpoint (alternative UI)
-		api.GET("/redoc", func(c echo.Context) error {
-			html := `<!DOCTYPE html>
-<html>
-<head>
-    <title>API Documentation - ReDoc</title>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
+        window.onload = function() {
+            const ui = SwaggerUIBundle({
+                url: "/api/openapi.json",
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout"
+            })
+            window.ui = ui
         }
-    </style>
-</head>
-<body>
-    <redoc spec-url="/api/openapi.json"></redoc>
-    <script src="https://cdn.jsdelivr.net/npm/redoc@latest/bundles/redoc.standalone.js"></script>
+    </script>
 </body>
 </html>`
 			return c.HTML(http.StatusOK, html)
