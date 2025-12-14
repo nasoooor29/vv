@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log/slog"
 	"net/http"
 	"time"
@@ -69,9 +70,6 @@ func (s *Server) RegisterRoutes() http.Handler {
 	openapi := utils.New()
 	api := openapi.Group("/api")
 
-	// auth := api.Group("/auth", s.Auth)
-	// apiw := e.Group("/api")
-
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"https://*", "http://*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
@@ -80,10 +78,14 @@ func (s *Server) RegisterRoutes() http.Handler {
 		MaxAge:           300,
 	}))
 
-	api.GET("/", s.HelloWorldHandler).
-		Returns(http.StatusOK, utils.JSON(map[string]string{}), "application/json").
-		Returns(http.StatusInternalServerError, utils.JSON(models.HTTPError{}), "application/json").
-		Description("Hello World Endpoint")
+	// API Documentation index
+	api.GET("/", func(c echo.Context) error {
+		data, err := ioutil.ReadFile("internal/server/templates/api_index.html")
+		if err != nil {
+			return c.String(http.StatusInternalServerError, "Failed to load documentation")
+		}
+		return c.HTML(http.StatusOK, string(data))
+	})
 
 	api.GET("/health", s.healthHandler).
 		Returns(http.StatusOK, utils.JSON(map[string]string{}), "application/json").
@@ -135,6 +137,66 @@ func (s *Server) RegisterRoutes() http.Handler {
 		slog.Info("OpenAPI spec generated")
 		api.GET("/openapi.json", func(c echo.Context) error {
 			return c.JSONBlob(http.StatusOK, data)
+		})
+
+		// Swagger UI endpoint
+		api.GET("/docs", func(c echo.Context) error {
+			html := `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation - Swagger UI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.18.3/swagger-ui.min.css">
+    <style>
+        html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }
+        *, *:before, *:after { box-sizing: inherit; }
+        body { margin:0; padding:0; }
+    </style>
+</head>
+<body>
+    <div id="swagger-ui"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.18.3/swagger-ui.min.js"></script>
+    <script>
+        const ui = SwaggerUIBundle({
+            url: "/api/openapi.json",
+            dom_id: '#swagger-ui',
+            presets: [
+                SwaggerUIBundle.presets.apis,
+                SwaggerUIBundle.SwaggerUIStandalonePreset
+            ],
+            layout: "StandaloneLayout",
+            defaultModelsExpandDepth: 1,
+            docExpansion: "list"
+        })
+    </script>
+</body>
+</html>`
+			return c.HTML(http.StatusOK, html)
+		})
+
+		// ReDoc endpoint (alternative UI)
+		api.GET("/redoc", func(c echo.Context) error {
+			html := `<!DOCTYPE html>
+<html>
+<head>
+    <title>API Documentation - ReDoc</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <redoc spec-url="/api/openapi.json"></redoc>
+    <script src="https://cdn.jsdelivr.net/npm/redoc@latest/bundles/redoc.standalone.js"></script>
+</body>
+</html>`
+			return c.HTML(http.StatusOK, html)
 		})
 
 	}
