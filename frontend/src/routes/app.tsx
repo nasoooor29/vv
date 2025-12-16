@@ -13,16 +13,16 @@ import { Outlet, useNavigate } from "react-router";
 function AppLayout() {
   const data = useQuery(
     orpc.auth.me.queryOptions({
-      staleTime: 1 * 1000, // 1 second
+      staleTime: 5 * 60 * 1000, // 5 minutes
     }),
   );
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!data.data) {
+    if (!data.isLoading && !data.data) {
       navigate("/auth/login", { replace: true });
     }
-  }, [data.data, navigate]);
+  }, [data.data, data.isLoading, navigate]);
 
   if (data.error && data.error instanceof ORPCError) {
     if (data.error.status !== 401) {

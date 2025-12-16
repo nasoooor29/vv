@@ -57,7 +57,7 @@ export const contract = {
 };
 
 const link = new OpenAPILink(contract, {
-  url: "http://localhost:9997/api",
+  url: "http://localhost:9999/api",
   fetch: (request, init) => {
     // when not 200-299, it will throw an ORPCError
     return globalThis.fetch(request, {
