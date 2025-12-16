@@ -22,7 +22,7 @@ interface UsersTableProps {
   // isError: boolean;
   onEdit: (user: T.User) => void;
   onManageRoles: (user: T.User) => void;
-  onDelete: (userId: number) => void;
+  onDelete: (user: T.User) => void;
   // isUpdatePending: boolean;
   // isDeletePending: boolean;
 }
@@ -151,7 +151,7 @@ export function UsersTable({
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={() => onDelete(user.id)}
+                    onClick={() => onDelete(user)}
                     // disabled={isDeletePending}
                   >
                     <Trash2 className="h-4 w-4" />

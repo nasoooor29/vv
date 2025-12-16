@@ -1,6 +1,5 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
 import { usePermission } from "@/components/protected-content";
 import { RBAC_USER_ADMIN } from "@/types/types.gen";
@@ -22,9 +21,6 @@ export default function UsersPage() {
   const { confirm, ConfirmationDialog } = useConfirmation();
 
   const [editingUser, setEditingUser] = useState<T.User | null>(null);
-  const [roleEditUser, setRoleEditUser] = useState<T.User | null>(null);
-
-  const usersQuery = useQuery(orpc.users.listUsers.queryOptions());
 
   const deleteUserMutation = useMutation(
     orpc.users.deleteUser.mutationOptions({
@@ -41,9 +37,7 @@ export default function UsersPage() {
 
   const editUser = EditUserDialog(editingUser);
 
-  const editRoles = ManageRolesDialog({
-    user: roleEditUser,
-  });
+  const editRoles = ManageRolesDialog(editingUser);
 
   // Check permission
   if (!checkPermission(RBAC_USER_ADMIN)) {
@@ -64,21 +58,18 @@ export default function UsersPage() {
 
   const handleManageRoles = (user: T.User) => {
     console.log("Managing roles for user:", user);
-    setRoleEditUser(user);
+    setEditingUser(user);
     editRoles.dialog.open();
   };
 
-  const handleDelete = (userId: number) => {
-    const user = usersQuery.data?.find((u) => u.id === userId);
-    if (!user) return;
-
+  const handleDelete = (user: T.User) => {
     confirm({
       title: "Delete User",
       description: `Are you sure you want to delete ${user.username}? This action cannot be undone.`,
       isDestructive: true,
       onConfirm: async () => {
         await deleteUserMutation.mutateAsync({
-          params: { id: String(userId) },
+          params: { id: String(user.id) },
         });
       },
     });
@@ -103,8 +94,6 @@ export default function UsersPage() {
             onEdit={handleEdit}
             onManageRoles={handleManageRoles}
             onDelete={handleDelete}
-            // isUpdatePending={editMutation.isPending || rolesMutation.isPending}
-            // isDeletePending={deleteUserMutation.isPending}
           />
         </CardContent>
       </Card>
