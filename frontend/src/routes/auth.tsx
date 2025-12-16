@@ -13,10 +13,10 @@ export default function AuthLayout() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (data.data) {
+    if (!data.isLoading && data.data) {
       navigate("/app", { replace: true });
     }
-  }, [data.data, navigate]);
+  }, [data.data, data.isLoading, navigate]);
 
   if (data.error && data.error instanceof ORPCError) {
     if (data.error.status !== 401) {

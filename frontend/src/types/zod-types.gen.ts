@@ -68,6 +68,13 @@ export const healthStatsSchema = z.object({
   max_lifetime_closed: z.number(),
 });
 
+export const createUserParamsSchema = z.object({
+  username: z.string(),
+  email: z.string(),
+  password: z.string(),
+  role: z.string(),
+});
+
 export const getByEmailOrUsernameParamsSchema = z.object({
   email: z.string(),
   username: z.string(),
@@ -89,6 +96,23 @@ export const userSessionSchema = z.object({
   session_token: z.string(),
   created_at: z.string(),
   updated_at: z.string(),
+});
+
+export const updateUserParamsSchema = z.object({
+  username: z.string(),
+  email: z.string(),
+  role: z.string(),
+  id: z.number(),
+});
+
+export const updateUserPasswordParamsSchema = z.object({
+  password: z.string(),
+  id: z.number(),
+});
+
+export const updateUserRoleParamsSchema = z.object({
+  role: z.string(),
+  id: z.number(),
 });
 
 export const upsertUserParamsSchema = z.object({

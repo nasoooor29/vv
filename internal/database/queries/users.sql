@@ -57,3 +57,35 @@ WHERE
 DELETE FROM users
 WHERE
   id = ?;
+
+-- name: CreateUser :one
+INSERT INTO
+  users (username, email, password, role)
+VALUES
+  (?, ?, ?, ?) RETURNING *;
+
+-- name: UpdateUser :one
+UPDATE users
+SET
+  username = ?,
+  email = ?,
+  role = ?,
+  updated_at = CURRENT_TIMESTAMP
+WHERE
+  id = ? RETURNING *;
+
+-- name: UpdateUserPassword :one
+UPDATE users
+SET
+  password = ?,
+  updated_at = CURRENT_TIMESTAMP
+WHERE
+  id = ? RETURNING *;
+
+-- name: UpdateUserRole :one
+UPDATE users
+SET
+  role = ?,
+  updated_at = CURRENT_TIMESTAMP
+WHERE
+  id = ? RETURNING *;

@@ -3,14 +3,21 @@ import type { ContractRouterClient } from "@orpc/contract";
 import { createORPCClient, ORPCError } from "@orpc/client";
 import { OpenAPILink } from "@orpc/openapi-client/fetch";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
-import { QueryClient } from "@tanstack/react-query";
+import { MutationCache, QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { healthRouter } from "./routers/health";
 import { authRouter } from "./routers/auth";
 import { storageRouter } from "./routers/storage";
+import { usersRouter } from "./routers/users";
 import { Z } from "@/types";
 
 export const queryClient = new QueryClient({
+  mutationCache: new MutationCache({
+    onSuccess(data, variables, _onMutateResult, mutation, _context) {
+      console.log("Mutation successful:", { data, variables, mutation });
+      queryClient.invalidateQueries();
+    },
+  }),
   defaultOptions: {
     mutations: {
       onError(error, _variables, _onMutateResult, _context) {
@@ -48,6 +55,7 @@ export const contract = {
   health: healthRouter,
   auth: authRouter,
   storage: storageRouter,
+  users: usersRouter,
 };
 
 const link = new OpenAPILink(contract, {

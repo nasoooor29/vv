@@ -88,6 +88,12 @@ export interface HealthStats {
   max_idle_closed: number /* int64 */;
   max_lifetime_closed: number /* int64 */;
 }
+export interface CreateUserParams {
+  username: string;
+  email: string;
+  password: string;
+  role: string;
+}
 export interface GetByEmailOrUsernameParams {
   email: string;
   username: string;
@@ -95,6 +101,20 @@ export interface GetByEmailOrUsernameParams {
 export interface GetUserAndSessionByTokenRow {
   user: User;
   user_session: UserSession;
+}
+export interface UpdateUserParams {
+  username: string;
+  email: string;
+  role: string;
+  id: number /* int64 */;
+}
+export interface UpdateUserPasswordParams {
+  password: string;
+  id: number /* int64 */;
+}
+export interface UpdateUserRoleParams {
+  role: string;
+  id: number /* int64 */;
 }
 export interface UpsertUserParams {
   username: string;

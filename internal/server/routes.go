@@ -99,6 +99,14 @@ func (s *Server) RegisterRoutes() http.Handler {
 	storageGroup.Use(s.RBAC(models.RBAC_SETTINGS_MANAGER))
 	storageGroup.GET("/devices", s.GetStorageDevices)
 	storageGroup.GET("/mount-points", s.GetMountPoints)
+	usersGroup := api.Group("/users")
+	usersGroup.Use(s.Auth)
+	usersGroup.GET("", s.GetAllUsers, s.RBAC(models.RBAC_USER_ADMIN))
+	usersGroup.GET("/", s.GetAllUsers, s.RBAC(models.RBAC_USER_ADMIN))
+	usersGroup.POST("", s.CreateUser, s.RBAC(models.RBAC_USER_ADMIN))
+	usersGroup.PUT("/:id", s.UpdateUser, s.RBAC(models.RBAC_USER_ADMIN))
+	usersGroup.DELETE("/:id", s.DeleteUser, s.RBAC(models.RBAC_USER_ADMIN))
+	usersGroup.PATCH("/:id/role", s.UpdateUserRole, s.RBAC(models.RBAC_USER_ADMIN))
 
 	return e
 }

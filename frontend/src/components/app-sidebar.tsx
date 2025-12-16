@@ -189,12 +189,12 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        {visibleSystemItems.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel>System</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {visibleSystemItems.map((item) => {
+         {visibleSystemItems.length > 0 && (
+           <SidebarGroup>
+             <SidebarGroupLabel>System</SidebarGroupLabel>
+             <SidebarGroupContent>
+               <SidebarMenu>
+                 {visibleSystemItems.map((item) => {
                    const Icon = item.icon;
                    return (
                      <SidebarMenuItem key={item.id}>
@@ -207,10 +207,10 @@ export function AppSidebar() {
                      </SidebarMenuItem>
                    );
                  })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
+               </SidebarMenu>
+             </SidebarGroupContent>
+           </SidebarGroup>
+         )}
       </SidebarContent>
       <SidebarFooter>
         <Button
