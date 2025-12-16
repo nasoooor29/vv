@@ -19,6 +19,7 @@ Stored as comma-separated strings in `users.role` field.
 - **Routes**: Redirect if user lacks permission (check frontend/src/lib/rbac.ts for some general utils, and frontend/src/components/protected-content.tsx for permission hooks)
 - **Components**: Use Shadcn UI, max 250 lines
 - **styling**: don't use arbtrary colors just use the shadcn colors and the ones on frontend/src/index.css
+- **tanstack query**: auto invalidation is already implemented so no need for .refetch()
 - **State**: Zustand stores in `@frontend/src/stores/`
 - **Types**: Zod schemas in `@frontend/src/types/index.ts`
 
@@ -26,6 +27,7 @@ Stored as comma-separated strings in `users.role` field.
 - **Handlers**: `@internal/server/`, register in `RegisterRoutes()`
 - **Middleware**: `Auth()` validates token, `RBAC(...policies)` checks permissions (403 if insufficient)
 - **Database**: SQL in `@internal/database/queries/`, run `./scripts/sqlc.sh` after changes
+- **Types Gen**: the converted types from go to ts only in only in `./internal/database` and `./internal/models` the others won't
 - **Errors**: Use `echo.NewHTTPError(status, "message")`
 
 ## New Feature
