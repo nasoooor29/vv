@@ -60,7 +60,7 @@ export const useDialog = (props: DialogOrDrawerProps) => {
     );
   };
   return {
-    dialog: dialogContent,
+    component: dialogContent,
     open: () => setIsOpen(true),
     close: () => setIsOpen(false),
     isOpen,

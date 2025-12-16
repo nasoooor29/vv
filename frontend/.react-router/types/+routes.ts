@@ -103,7 +103,7 @@ type RouteFiles = {
     id: "routes/app.dashboard";
     page: "/app/dashboard";
   };
-  "routes/app.sys.users.tsx": {
+  "routes/app.sys.users/route.tsx": {
     id: "routes/app.sys.users";
     page: "/app/sys/users";
   };
@@ -134,7 +134,7 @@ type RouteModules = {
   "routes/app.sys.storage": typeof import("./src/routes/app.sys.storage.tsx");
   "routes/app.docker.$id": typeof import("./src/routes/app.docker.$id.tsx");
   "routes/app.dashboard": typeof import("./src/routes/app.dashboard.tsx");
-  "routes/app.sys.users": typeof import("./src/routes/app.sys.users.tsx");
+  "routes/app.sys.users": typeof import("./src/routes/app.sys.users/route.tsx");
   "routes/app.monitor": typeof import("./src/routes/app.monitor.tsx");
   "routes/app._index": typeof import("./src/routes/app._index.tsx");
   "routes/app.vms": typeof import("./src/routes/app.vms.tsx");
