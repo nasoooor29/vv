@@ -97,3 +97,21 @@ export function hasAnyPermission(
 
   return requiredPolicies.some((policy) => userRoles.has(policy));
 }
+
+/**
+ * Convert comma-separated role string to array of role strings
+ */
+export function roleStringToArray(roleString: string): string[] {
+  if (!roleString) return [];
+  return roleString
+    .split(",")
+    .map((role) => role.trim())
+    .filter((role) => role.length > 0);
+}
+
+/**
+ * Convert array of roles to comma-separated string
+ */
+export function roleArrayToString(roles: string[]): string {
+  return roles.join(", ");
+}
