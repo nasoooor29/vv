@@ -5,6 +5,25 @@ export const httpErrorSchema = z.object({
   message: z.string(),
 });
 
+export const storageDeviceSchema = z.object({
+  name: z.string(),
+  size: z.string(),
+  size_bytes: z.number(),
+  type: z.string(),
+  mount_point: z.string(),
+  usage_percent: z.number(),
+});
+
+export const mountPointSchema = z.object({
+  path: z.string(),
+  device: z.string(),
+  fs_type: z.string(),
+  total: z.number(),
+  used: z.number(),
+  available: z.number(),
+  use_percent: z.number(),
+});
+
 export const envVarsSchema = z.object({
   Port: z.string(),
   AppEnv: z.string(),

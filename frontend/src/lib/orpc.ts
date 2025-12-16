@@ -7,6 +7,7 @@ import { MutationCache, QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { healthRouter } from "./routers/health";
 import { authRouter } from "./routers/auth";
+import { storageRouter } from "./routers/storage";
 import { usersRouter } from "./routers/users";
 import { Z } from "@/types";
 
@@ -53,11 +54,12 @@ export const queryClient = new QueryClient({
 export const contract = {
   health: healthRouter,
   auth: authRouter,
+  storage: storageRouter,
   users: usersRouter,
 };
 
 const link = new OpenAPILink(contract, {
-  url: "http://localhost:9999/api",
+  url: "http://localhost:9993/api",
   fetch: (request, init) => {
     // when not 200-299, it will throw an ORPCError
     return globalThis.fetch(request, {

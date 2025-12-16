@@ -6,6 +6,23 @@
 export interface HTTPError {
   message: string;
 }
+export interface StorageDevice {
+  name: string;
+  size: string;
+  size_bytes: number /* int64 */;
+  type: string;
+  mount_point: string;
+  usage_percent: number /* int32 */;
+}
+export interface MountPoint {
+  path: string;
+  device: string;
+  fs_type: string;
+  total: number /* int64 */;
+  used: number /* int64 */;
+  available: number /* int64 */;
+  use_percent: number /* int32 */;
+}
 export interface EnvVars {
   Port: string;
   AppEnv: string;

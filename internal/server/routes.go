@@ -93,6 +93,12 @@ func (s *Server) RegisterRoutes() http.Handler {
 	authGroup.GET("/me", s.Me)
 	authGroup.POST("/logout", s.Logout)
 
+	// Storage routes
+	storageGroup := api.Group("/storage")
+	storageGroup.Use(s.Auth)
+	storageGroup.Use(s.RBAC(models.RBAC_SETTINGS_MANAGER))
+	storageGroup.GET("/devices", s.GetStorageDevices)
+	storageGroup.GET("/mount-points", s.GetMountPoints)
 	usersGroup := api.Group("/users")
 	usersGroup.Use(s.Auth)
 	usersGroup.GET("", s.GetAllUsers, s.RBAC(models.RBAC_USER_ADMIN))

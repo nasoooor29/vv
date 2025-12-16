@@ -91,8 +91,12 @@ type RouteFiles = {
     id: "routes/app.sys.settings";
     page: "/app/sys/settings";
   };
-  "routes/app.sys.storage.tsx": {
+  "routes/app.sys.storage/route.tsx": {
     id: "routes/app.sys.storage";
+    page: "/app/sys/storage";
+  };
+  "routes/app.sys.storage._index.tsx": {
+    id: "routes/app.sys.storage._index";
     page: "/app/sys/storage";
   };
   "routes/app.docker.$id.tsx": {
@@ -131,7 +135,8 @@ type RouteModules = {
   "routes/app": typeof import("./src/routes/app.tsx");
   "routes/app.sys.networking": typeof import("./src/routes/app.sys.networking.tsx");
   "routes/app.sys.settings": typeof import("./src/routes/app.sys.settings.tsx");
-  "routes/app.sys.storage": typeof import("./src/routes/app.sys.storage.tsx");
+  "routes/app.sys.storage": typeof import("./src/routes/app.sys.storage/route.tsx");
+  "routes/app.sys.storage._index": typeof import("./src/routes/app.sys.storage._index.tsx");
   "routes/app.docker.$id": typeof import("./src/routes/app.docker.$id.tsx");
   "routes/app.dashboard": typeof import("./src/routes/app.dashboard.tsx");
   "routes/app.sys.users": typeof import("./src/routes/app.sys.users/route.tsx");
