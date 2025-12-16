@@ -612,7 +612,12 @@ export function useFormGenerator<T extends ZodObject<any>>(
 
   return {
     wrapper: FormComponentImpl,
-    form: form,
+    form: {
+      ...form,
+      setDefaultValues: (values: Partial<T["_output"]>) => {
+        form.reset(values);
+      },
+    },
     field: FieldComponentImpl,
     errors: ErrorsComponent,
     submit: SubmitComponentImpl,

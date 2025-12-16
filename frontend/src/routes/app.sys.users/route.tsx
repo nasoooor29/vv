@@ -6,7 +6,6 @@ import { RBAC_USER_ADMIN } from "@/types/types.gen";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { useState } from "react";
 import { useConfirmation } from "@/hooks";
 import { T } from "@/types";
 import { UsersTable } from "./table";
@@ -19,8 +18,6 @@ import { toast } from "sonner";
 export default function UsersPage() {
   const { hasPermission: checkPermission } = usePermission();
   const { confirm, ConfirmationDialog } = useConfirmation();
-
-  const [editingUser, setEditingUser] = useState<T.User | null>(null);
 
   const deleteUserMutation = useMutation(
     orpc.users.deleteUser.mutationOptions({
@@ -35,9 +32,9 @@ export default function UsersPage() {
 
   const createUser = CreateUserDialog();
 
-  const editUser = EditUserDialog(editingUser);
+  const editUser = EditUserDialog(null);
 
-  const editRoles = ManageRolesDialog(editingUser);
+  const editRoles = ManageRolesDialog(null);
 
   // Check permission
   if (!checkPermission(RBAC_USER_ADMIN)) {
@@ -52,13 +49,13 @@ export default function UsersPage() {
 
   const handleEdit = (user: T.User) => {
     console.log("Editing user:", user);
-    setEditingUser(user);
+    editUser.form.setDefaultValues(user);
     editUser.dialog.open();
   };
 
   const handleManageRoles = (user: T.User) => {
     console.log("Managing roles for user:", user);
-    setEditingUser(user);
+    editRoles.setRoles(user.role);
     editRoles.dialog.open();
   };
 

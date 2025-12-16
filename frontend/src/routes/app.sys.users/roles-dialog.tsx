@@ -91,6 +91,7 @@ export function ManageRolesDialog(user: T.User | null) {
 
   return {
     dialog: dialog,
+    setRoles: (roles: string) => setSelectedRoles(roleStringToArray(roles)),
     mutation: updateRoleMutation,
   };
 }

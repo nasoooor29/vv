@@ -68,6 +68,7 @@ export function EditUserDialog(user: T.User | null) {
 
   return {
     dialog: dialog,
+    form: EditForm.form,
     mutation: updateUserMutation,
   };
 }
