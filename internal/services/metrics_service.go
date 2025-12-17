@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"database/sql"
-	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
@@ -11,20 +10,21 @@ import (
 	"visory/internal/database"
 	"visory/internal/database/logs"
 	"visory/internal/models"
+	"visory/internal/utils"
 
 	"github.com/labstack/echo/v4"
 )
 
 type MetricsService struct {
-	db     *database.Service
-	logger *slog.Logger
+	db         *database.Service
+	dispatcher *utils.ErrorDispatcher
 }
 
 // NewMetricsService creates a new MetricsService with dependency injection
-func NewMetricsService(db *database.Service, logger *slog.Logger) *MetricsService {
+func NewMetricsService(db *database.Service, dispatcher *utils.ErrorDispatcher) *MetricsService {
 	return &MetricsService{
-		db:     db,
-		logger: logger.WithGroup("metrics"),
+		db:         db,
+		dispatcher: dispatcher.WithGroup("metrics"),
 	}
 }
 
@@ -37,8 +37,7 @@ type GetMetricsRequest struct {
 func (s *MetricsService) GetMetrics(c echo.Context) error {
 	req := new(GetMetricsRequest)
 	if err := c.Bind(req); err != nil {
-		s.logger.Error("failed to parse query params", "error", err)
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid query parameters")
+		return s.dispatcher.NewBadRequest("invalid query parameters", err)
 	}
 
 	// Set defaults
@@ -60,8 +59,7 @@ func (s *MetricsService) GetMetrics(c echo.Context) error {
 	// Get error rate by service
 	errorRates, err := s.db.Log.GetErrorRateByService(ctx, since)
 	if err != nil && err != sql.ErrNoRows {
-		s.logger.Error("failed to get error rates", "error", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to retrieve metrics")
+		return s.dispatcher.NewInternalServerError("failed to retrieve metrics", err)
 	}
 	if errorRates != nil {
 		for _, rate := range errorRates {
@@ -77,8 +75,7 @@ func (s *MetricsService) GetMetrics(c echo.Context) error {
 	// Get hourly log counts
 	hourlyLogs, err := s.db.Log.GetAverageLogCountByHour(ctx, since)
 	if err != nil && err != sql.ErrNoRows {
-		s.logger.Error("failed to get hourly logs", "error", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to retrieve metrics")
+		return s.dispatcher.NewInternalServerError("failed to retrieve metrics", err)
 	}
 	if hourlyLogs != nil {
 		for _, log := range hourlyLogs {
@@ -95,8 +92,7 @@ func (s *MetricsService) GetMetrics(c echo.Context) error {
 		CreatedAt_2: since,
 	})
 	if err != nil && err != sql.ErrNoRows {
-		s.logger.Error("failed to get level distribution", "error", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to retrieve metrics")
+		return s.dispatcher.NewInternalServerError("failed to retrieve metrics", err)
 	}
 	if levelDist != nil {
 		for _, dist := range levelDist {
@@ -114,8 +110,7 @@ func (s *MetricsService) GetMetrics(c echo.Context) error {
 		CreatedAt_2: since,
 	})
 	if err != nil && err != sql.ErrNoRows {
-		s.logger.Error("failed to get service distribution", "error", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to retrieve metrics")
+		return s.dispatcher.NewInternalServerError("failed to retrieve metrics", err)
 	}
 	if serviceDist != nil {
 		for _, dist := range serviceDist {
@@ -127,11 +122,12 @@ func (s *MetricsService) GetMetrics(c echo.Context) error {
 		}
 	}
 
-	s.logger.Info("metrics retrieved",
-		slog.Int("days", req.Days),
-		slog.Int("error_rate_entries", len(response.ErrorRateByService)),
-		slog.Int("hourly_entries", len(response.LogCountByHour)),
-	)
+	// NOTE: log
+	// s.dispatcher.Info("metrics retrieved",
+	// 	slog.Int("days", req.Days),
+	// 	slog.Int("error_rate_entries", len(response.ErrorRateByService)),
+	// 	slog.Int("hourly_entries", len(response.LogCountByHour)),
+	// )
 
 	return c.JSON(http.StatusOK, response)
 }
@@ -153,8 +149,7 @@ func (s *MetricsService) GetServiceMetrics(c echo.Context) error {
 		CreatedAt_2: since,
 	})
 	if err != nil && err != sql.ErrNoRows {
-		s.logger.Error("failed to get service metrics", "error", err, "service", serviceGroup)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to retrieve metrics")
+		return s.dispatcher.NewInternalServerError("failed to retrieve metrics", err, "service", serviceGroup)
 	}
 
 	// Count total logs for this service
@@ -163,8 +158,7 @@ func (s *MetricsService) GetServiceMetrics(c echo.Context) error {
 		CreatedAt:    since,
 	})
 	if err != nil && err != sql.ErrNoRows {
-		s.logger.Error("failed to count logs", "error", err, "service", serviceGroup)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to retrieve metrics")
+		return s.dispatcher.NewInternalServerError("failed to retrieve metrics", err, "service", serviceGroup)
 	}
 
 	// Count errors for this service
@@ -174,8 +168,7 @@ func (s *MetricsService) GetServiceMetrics(c echo.Context) error {
 		CreatedAt:    since,
 	})
 	if err != nil && err != sql.ErrNoRows {
-		s.logger.Error("failed to count errors", "error", err, "service", serviceGroup)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to retrieve metrics")
+		return s.dispatcher.NewInternalServerError("failed to retrieve metrics", err, "service", serviceGroup)
 	}
 
 	errorRate := 0.0
@@ -205,12 +198,13 @@ func (s *MetricsService) GetServiceMetrics(c echo.Context) error {
 		LevelDistribution: levelDistribution,
 	}
 
-	s.logger.Info("service metrics retrieved",
-		slog.String("service", serviceGroup),
-		slog.Int("days", days),
-		slog.Int64("total", total),
-		slog.Float64("error_rate", errorRate),
-	)
+	// NOTE: log
+	// s.dispatcher.Info("service metrics retrieved",
+	// 	slog.String("service", serviceGroup),
+	// 	slog.Int("days", days),
+	// 	slog.Int64("total", total),
+	// 	slog.Float64("error_rate", errorRate),
+	// )
 
 	return c.JSON(http.StatusOK, response)
 }
@@ -222,8 +216,7 @@ func (s *MetricsService) GetHealthMetrics(c echo.Context) error {
 
 	errorRates, err := s.db.Log.GetErrorRateByService(ctx, since)
 	if err != nil && err != sql.ErrNoRows {
-		s.logger.Error("failed to get health metrics", "error", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to retrieve health metrics")
+		return s.dispatcher.NewInternalServerError("failed to retrieve health metrics", err)
 	}
 
 	health := models.HealthMetricsResponse{
@@ -276,10 +269,11 @@ func (s *MetricsService) GetHealthMetrics(c echo.Context) error {
 		health.OverallStatus = "warning"
 	}
 
-	s.logger.Info("health metrics retrieved",
-		slog.String("overall_status", health.OverallStatus),
-		slog.Int("alerts", len(alerts)),
-	)
+	// NOTE: log
+	// s.dispatcher.Info("health metrics retrieved",
+	// 	slog.String("overall_status", health.OverallStatus),
+	// 	slog.Int("alerts", len(alerts)),
+	// )
 
 	return c.JSON(http.StatusOK, health)
 }
