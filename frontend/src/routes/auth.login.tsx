@@ -10,6 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useNavigate } from "react-router";
 import OAuthMenu from "@/components/oauth";
+import { useSession } from "@/stores/user";
 
 const loginSchema = z.object({
   username: z.email("Please enter a valid email"),
@@ -20,6 +21,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const navigate = useNavigate();
+  const setSession = useSession((s) => s.setSession);
   const {
     register,
     handleSubmit,
@@ -33,6 +35,7 @@ export default function Login() {
       onSuccess(data) {
         console.log("Login successful:", data);
         toast.success("Login successful!");
+        setSession(data);
         navigate("/app/dashboard");
       },
     }),

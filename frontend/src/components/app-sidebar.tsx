@@ -133,12 +133,6 @@ export function AppSidebar() {
       requiredPermission: RBAC_SETTINGS_MANAGER,
     },
     {
-      id: "security",
-      label: "Security",
-      icon: Shield,
-      requiredPermission: RBAC_USER_ADMIN,
-    },
-    {
       id: "users",
       label: "Users",
       icon: Users,
@@ -189,28 +183,28 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-         {visibleSystemItems.length > 0 && (
-           <SidebarGroup>
-             <SidebarGroupLabel>System</SidebarGroupLabel>
-             <SidebarGroupContent>
-               <SidebarMenu>
-                 {visibleSystemItems.map((item) => {
-                   const Icon = item.icon;
-                   return (
-                     <SidebarMenuItem key={item.id}>
-                       <SidebarMenuButton asChild>
-                         <Link to={`/app/sys/${item.id}`}>
-                           <Icon className="h-4 w-4" />
-                           <span>{item.label}</span>
-                         </Link>
-                       </SidebarMenuButton>
-                     </SidebarMenuItem>
-                   );
-                 })}
-               </SidebarMenu>
-             </SidebarGroupContent>
-           </SidebarGroup>
-         )}
+        {visibleSystemItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>System</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {visibleSystemItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton asChild>
+                        <Link to={`/app/sys/${item.id}`}>
+                          <Icon className="h-4 w-4" />
+                          <span>{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
       <SidebarFooter>
         <Button

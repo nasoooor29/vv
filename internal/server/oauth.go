@@ -134,7 +134,7 @@ func (s *Server) OAuthCallback(c echo.Context) error {
 	}
 
 	// Generate session cookie
-	if err := s.GenerateCookie(c, userId); err != nil {
+	if _, err := s.GenerateCookie(c, userId); err != nil {
 		slog.Error("error generating cookie", "err", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to generate session")
 	}

@@ -72,19 +72,23 @@ func (s *Server) Register(c echo.Context) error {
 		slog.Error("error happened", "err", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to register user").SetInternal(err)
 	}
-	if err := s.GenerateCookie(c, val.ID); err != nil {
-		slog.Error("error generating cookie", "err", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to generate cookie").SetInternal(err)
+	cookie, err := s.GenerateCookie(c, val.ID)
+
+	userWithSession, err := s.db.User.GetUserAndSessionByToken(c.Request().Context(), cookie)
+	if err != nil {
+		slog.Error("error happened", "err", err)
+		return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
 	}
 
-	return c.JSON(http.StatusOK, val)
+	return c.JSON(http.StatusOK, userWithSession)
 }
 
-func (s *Server) GenerateCookie(c echo.Context, userId int64) error {
+func (s *Server) GenerateCookie(c echo.Context, userId int64) (string, error) {
 	uid, err := uuid.NewV4()
 	if err != nil {
 		slog.Error("error happened", "err", err)
-		return err
+		return "",
+			err
 	}
 
 	_, err = s.db.Session.UpsertSession(c.Request().Context(), sessions.UpsertSessionParams{
@@ -93,7 +97,7 @@ func (s *Server) GenerateCookie(c echo.Context, userId int64) error {
 	})
 	if err != nil {
 		slog.Error("error happened", "err", err)
-		return err
+		return "", err
 	}
 
 	cookie := http.Cookie{
@@ -106,7 +110,7 @@ func (s *Server) GenerateCookie(c echo.Context, userId int64) error {
 	}
 	c.SetCookie(&cookie)
 
-	return nil
+	return uid.String(), nil
 }
 
 func (s *Server) Login(c echo.Context) error {
@@ -131,13 +135,19 @@ func (s *Server) Login(c echo.Context) error {
 		slog.Error("your username or password is wrong", "err", err)
 		return echo.NewHTTPError(http.StatusUnauthorized, "your username or password is wrong").SetInternal(err)
 	}
-
-	if err := s.GenerateCookie(c, val.ID); err != nil {
+	cookie, err := s.GenerateCookie(c, val.ID)
+	if err != nil {
 		slog.Error("error generating cookie", "err", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to generate cookie").SetInternal(err)
 	}
 
-	return c.JSON(http.StatusOK, val)
+	userWithSession, err := s.db.User.GetUserAndSessionByToken(c.Request().Context(), cookie)
+	if err != nil {
+		slog.Error("error happened", "err", err)
+		return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
+	}
+
+	return c.JSON(http.StatusOK, userWithSession)
 }
 
 func (s *Server) GetAllUsers(c echo.Context) error {
