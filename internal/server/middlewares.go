@@ -71,7 +71,10 @@ func RequestLogger(logger *slog.Logger, dispatcher *utils.Dispatcher) echo.Middl
 				Bytes:     res.Size,
 				Error:     errMsg,
 			}
-			dispatcher.InsertIntoDB(data)
+
+			if req.Method != "GET" {
+				dispatcher.InsertIntoDB(data)
+			}
 
 			_, logLevel := utils.StatusCodeToLogLevel(data.Status)
 			if logLevel == slog.LevelError {

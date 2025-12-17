@@ -1,47 +1,3 @@
-/**
- * this is just to mimic the echo error structure
- * eg: {"message":"Failed to list virtual-machines"}
- * reprod: echo.NewHTTPError(http.StatusInternalServerError, "Failed to list virtual-machines").SetInternal(fmt.Errorf("database connection error"))
- */
-export interface HTTPError {
-  message: string;
-}
-export interface StorageDevice {
-  name: string;
-  size: string;
-  size_bytes: number /* int64 */;
-  type: string;
-  mount_point: string;
-  usage_percent: number /* int32 */;
-}
-export interface MountPoint {
-  path: string;
-  device: string;
-  fs_type: string;
-  total: number /* int64 */;
-  used: number /* int64 */;
-  available: number /* int64 */;
-  use_percent: number /* int32 */;
-}
-export interface EnvVars {
-  Port: string;
-  AppEnv: string;
-  DBPath: string;
-  APP_VERSION: string;
-  GoogleOAuthKey: string;
-  GoogleOAuthSecret: string;
-  GithubOAuthKey: string;
-  GithubOAuthSecret: string;
-  /**
-   * OAuthCallbackURL  string `envconfig:"OAUTH_CALLBACK_URL" default:"http://localhost:9999/api/auth/oauth/callback" required:"true"`
-   */
-  BaseUrl: string;
-  SessionSecret: string;
-  FRONTEND_DASH: string;
-  BaseUrlWithPort: string;
-}
-export const COOKIE_NAME = "token";
-export const BYPASS_RBAC_HEADER = "X-Bypass-RBAC";
 export interface Login {
   username: string;
   password: string;
@@ -61,6 +17,14 @@ export const RBAC_USER_ADMIN: RBACPolicy = "user_admin";
 export const RBAC_SETTINGS_MANAGER: RBACPolicy = "settings_manager";
 export const RBAC_AUDIT_LOG_VIEWER: RBACPolicy = "audit_log_viewer";
 export const RBAC_HEALTH_CHECKER: RBACPolicy = "health_checker";
+/**
+ * this is just to mimic the echo error structure
+ * eg: {"message":"Failed to list virtual-machines"}
+ * reprod: echo.NewHTTPError(http.StatusInternalServerError, "Failed to list virtual-machines").SetInternal(fmt.Errorf("database connection error"))
+ */
+export interface HTTPError {
+  message: string;
+}
 export interface LogResponse {
   id: number /* int64 */;
   user_id: number /* int64 */;
@@ -69,6 +33,20 @@ export interface LogResponse {
   service_group: string;
   level: string;
   created_at: string;
+}
+export interface LogRequestData {
+  Request_id: string;
+  User_id: number /* int64 */;
+  Method: string;
+  Path: string;
+  Uri: string;
+  Status: number /* int */;
+  Latency: any /* time.Duration */;
+  Remote_ip: string;
+  User_agent: string;
+  Protocol: string;
+  Bytes: number /* int64 */;
+  Error: any;
 }
 export interface GetLogsResponse {
   logs: LogResponse[];
@@ -143,6 +121,79 @@ export interface HealthMetricsResponse {
   services: ServiceHealth[];
   overall_status: string;
   alerts: string[];
+}
+export interface StorageDevice {
+  name: string;
+  size: string;
+  size_bytes: number /* int64 */;
+  type: string;
+  mount_point: string;
+  usage_percent: number /* int32 */;
+}
+export interface MountPoint {
+  path: string;
+  device: string;
+  fs_type: string;
+  total: number /* int64 */;
+  used: number /* int64 */;
+  available: number /* int64 */;
+  use_percent: number /* int32 */;
+}
+export interface EnvVars {
+  Port: string;
+  AppEnv: string;
+  DBPath: string;
+  APP_VERSION: string;
+  GoogleOAuthKey: string;
+  GoogleOAuthSecret: string;
+  GithubOAuthKey: string;
+  GithubOAuthSecret: string;
+  /**
+   * OAuthCallbackURL  string `envconfig:"OAUTH_CALLBACK_URL" default:"http://localhost:9999/api/auth/oauth/callback" required:"true"`
+   */
+  BaseUrl: string;
+  SessionSecret: string;
+  FRONTEND_DASH: string;
+  BaseUrlWithPort: string;
+}
+export const COOKIE_NAME = "token";
+export const BYPASS_RBAC_HEADER = "X-Bypass-RBAC";
+export interface StorageService {
+  Dispatcher?: any /* utils.Dispatcher */;
+  Logger?: any /* slog.Logger */;
+}
+export interface UsersService {
+  Dispatcher?: any /* utils.Dispatcher */;
+  Logger?: any /* slog.Logger */;
+}
+export interface AuthService {
+  Dispatcher?: any /* utils.Dispatcher */;
+  Logger?: any /* slog.Logger */;
+  OAuthProviders: { [key: string]: any /* goth.Provider */ };
+}
+export interface MetricsService {
+  Dispatcher?: any /* utils.Dispatcher */;
+  Logger?: any /* slog.Logger */;
+}
+/**
+ * GetMetricsRequest represents metrics query parameters
+ */
+export interface GetMetricsRequest {
+  Days: number /* int */;
+}
+export interface LogsService {
+  Dispatcher?: any /* utils.Dispatcher */;
+  Logger?: any /* slog.Logger */;
+}
+/**
+ * GetLogsRequest represents query parameters for log filtering
+ */
+export interface GetLogsRequest {
+  ServiceGroup: string;
+  Level: string;
+  Page: number /* int */;
+  PageSize: number /* int */;
+  Days: number /* int */; // Filter logs from last N days
 }
 export interface CountLogsByLevelParams {
   level: string;

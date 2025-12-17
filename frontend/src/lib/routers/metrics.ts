@@ -16,6 +16,7 @@ export const metricsRouter = {
     })
     .input(
       z.object({
+        // no need to create type in golang
         days: z.number().optional().default(7),
       }),
     )
@@ -29,6 +30,7 @@ export const metricsRouter = {
     })
     .input(
       detailed({
+        // no need to create type in golang
         params: { service: z.string() },
         query: { days: z.number().optional().default(7) },
       }),
@@ -40,6 +42,7 @@ export const metricsRouter = {
       method: "GET",
       path: "/metrics/health",
     })
+    // no need to create type in golang
     .input(z.object({}))
     .output(Z.healthMetricsResponseSchema),
 };

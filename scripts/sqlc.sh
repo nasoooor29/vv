@@ -28,7 +28,7 @@ fix_some_types() {
 
 generate_types() {
     # variable called files will contain all the go files in the internal/models and internal/database and remove any file called models.go
-    local FILES=$(find ./internal/models ./internal/database -name "*.go" ! -name "models.go" ! -name "db.go")
+    local FILES=$(find ./internal/models ./internal/services ./internal/database -name "*.go" ! -name "models.go" ! -name "db.go")
     tygo gendir $FILES ./internal/database/user/models.go -r -o "$TYPES_FILE" >/dev/null
     print_blue "fixing some types..."
     fix_some_types "$TYPES_FILE"
