@@ -32,7 +32,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	}))
 
 	api.GET("/", s.HelloWorldHandler)
-	RBAC := RBAC("/health", s.healthHandler, RBAC(models.RBAC_HEALTH_CHECKER))
+	Roles := s.authService.RBACMiddleware
 	api.GET("/health", s.healthHandler)
 
 	api.GET("/websocket", s.websocketHandler)
@@ -52,34 +52,34 @@ func (s *Server) RegisterRoutes() http.Handler {
 	// Storage routes
 	storageGroup := api.Group("/storage")
 	storageGroup.Use(s.authService.AuthMiddleware)
-	storageGroup.Use(RBAC(models.RBAC_SETTINGS_MANAGER))
+	storageGroup.Use(Roles(models.RBAC_SETTINGS_MANAGER))
 	storageGroup.GET("/devices", s.storageService.GetStorageDevices)
 	storageGroup.GET("/mount-points", s.storageService.GetMountPoints)
 
 	// Users routes
 	usersGroup := api.Group("/users")
 	usersGroup.Use(s.authService.AuthMiddleware)
-	usersGroup.GET("", s.usersService.GetAllUsers, RBAC(models.RBAC_USER_ADMIN))
-	usersGroup.GET("/", s.usersService.GetAllUsers, RBAC(models.RBAC_USER_ADMIN))
-	usersGroup.GET("/:id", s.usersService.GetUserById, RBAC(models.RBAC_USER_ADMIN))
-	usersGroup.POST("", s.usersService.CreateUser, RBAC(models.RBAC_USER_ADMIN))
-	usersGroup.PUT("/:id", s.usersService.UpdateUser, RBAC(models.RBAC_USER_ADMIN))
-	usersGroup.DELETE("/:id", s.usersService.DeleteUser, RBAC(models.RBAC_USER_ADMIN))
-	usersGroup.PATCH("/:id/role", s.usersService.UpdateUserRole, RBAC(models.RBAC_USER_ADMIN))
+	usersGroup.GET("", s.usersService.GetAllUsers, Roles(models.RBAC_USER_ADMIN))
+	usersGroup.GET("/", s.usersService.GetAllUsers, Roles(models.RBAC_USER_ADMIN))
+	usersGroup.GET("/:id", s.usersService.GetUserById, Roles(models.RBAC_USER_ADMIN))
+	usersGroup.POST("", s.usersService.CreateUser, Roles(models.RBAC_USER_ADMIN))
+	usersGroup.PUT("/:id", s.usersService.UpdateUser, Roles(models.RBAC_USER_ADMIN))
+	usersGroup.DELETE("/:id", s.usersService.DeleteUser, Roles(models.RBAC_USER_ADMIN))
+	usersGroup.PATCH("/:id/role", s.usersService.UpdateUserRole, Roles(models.RBAC_USER_ADMIN))
 
 	// Logs routes
 	logsGroup := api.Group("/logs")
 	logsGroup.Use(s.authService.AuthMiddleware)
-	logsGroup.GET("", s.logsService.GetLogs, RBAC(models.RBAC_AUDIT_LOG_VIEWER))
-	logsGroup.GET("/stats", s.logsService.GetLogStats, RBAC(models.RBAC_AUDIT_LOG_VIEWER))
-	logsGroup.DELETE("/cleanup", s.logsService.ClearOldLogs, RBAC(models.RBAC_USER_ADMIN))
+	logsGroup.GET("", s.logsService.GetLogs, Roles(models.RBAC_AUDIT_LOG_VIEWER))
+	logsGroup.GET("/stats", s.logsService.GetLogStats, Roles(models.RBAC_AUDIT_LOG_VIEWER))
+	logsGroup.DELETE("/cleanup", s.logsService.ClearOldLogs, Roles(models.RBAC_USER_ADMIN))
 
 	// Metrics routes
 	metricsGroup := api.Group("/metrics")
 	metricsGroup.Use(s.authService.AuthMiddleware)
-	metricsGroup.GET("", s.metricsService.GetMetrics, RBAC(models.RBAC_AUDIT_LOG_VIEWER))
-	metricsGroup.GET("/health", s.metricsService.GetHealthMetrics, RBAC(models.RBAC_HEALTH_CHECKER))
-	metricsGroup.GET("/:service", s.metricsService.GetServiceMetrics, RBAC(models.RBAC_AUDIT_LOG_VIEWER))
+	metricsGroup.GET("", s.metricsService.GetMetrics, Roles(models.RBAC_AUDIT_LOG_VIEWER))
+	metricsGroup.GET("/health", s.metricsService.GetHealthMetrics, Roles(models.RBAC_HEALTH_CHECKER))
+	metricsGroup.GET("/:service", s.metricsService.GetServiceMetrics, Roles(models.RBAC_AUDIT_LOG_VIEWER))
 
 	return e
 }
