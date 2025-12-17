@@ -207,6 +207,18 @@ func (s *AuthService) Register(c echo.Context) error {
 	return c.JSON(http.StatusOK, val)
 }
 
+// @Summary      login
+// @Description  login with username/email and password
+// @Tags         accounts
+// @Accept       json
+// @Produce      json
+// @Param        credentials  body      models.Login  true  "User login credentials"
+// @Success      200   {object}  user.User
+// @Failure      400   {object}  models.HTTPError
+// @Failure      401   {object}  models.HTTPError
+// @Failure      404   {object}  models.HTTPError
+// @Failure      500   {object}  models.HTTPError
+// @Router       /auth/login [post]
 // Login logs in a user
 func (s *AuthService) Login(c echo.Context) error {
 	p := models.Login{}
@@ -236,6 +248,14 @@ func (s *AuthService) Login(c echo.Context) error {
 	return c.JSON(http.StatusOK, val)
 }
 
+// @Summary      OAuth login
+// @Description  initiate OAuth login flow
+// @Tags         accounts
+// @Produce      json
+// @Param        provider  path      string  true  "OAuth provider (google, github)"
+// @Failure      400   {object}  models.HTTPError
+// @Failure      500   {object}  models.HTTPError
+// @Router       /auth/oauth/{provider} [get]
 // OAuthLogin handles OAuth login initiation
 func (s *AuthService) OAuthLogin(c echo.Context) error {
 	provider := c.Param("provider")
