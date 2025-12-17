@@ -57,6 +57,7 @@ func NewServer() *http.Server {
 	NewServer := &Server{
 		port:           port,
 		db:             db,
+		logger:         logger,
 		dispatcher:     serverDispatcher,
 		OAuthProviders: authService.OAuthProviders,
 		authService:    authService,
