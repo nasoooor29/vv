@@ -10,6 +10,10 @@ import { authRouter } from "./routers/auth";
 import { storageRouter } from "./routers/storage";
 import { usersRouter } from "./routers/users";
 import { Z } from "@/types";
+import {
+  RequestValidationPlugin,
+  ResponseValidationPlugin,
+} from "@orpc/contract/plugins";
 
 export const queryClient = new QueryClient({
   mutationCache: new MutationCache({
@@ -67,6 +71,10 @@ const link = new OpenAPILink(contract, {
       credentials: "include", // Include cookies for cross-origin requests
     });
   },
+  plugins: [
+    // new ResponseValidationPlugin(contract),
+    // new RequestValidationPlugin(contract),
+  ],
   interceptors: [],
 });
 
