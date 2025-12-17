@@ -9,6 +9,7 @@ import { healthRouter } from "./routers/health";
 import { authRouter } from "./routers/auth";
 import { storageRouter } from "./routers/storage";
 import { usersRouter } from "./routers/users";
+import { logsRouter } from "./routers/logs";
 import { Z } from "@/types";
 
 export const queryClient = new QueryClient({
@@ -56,6 +57,7 @@ export const contract = {
   auth: authRouter,
   storage: storageRouter,
   users: usersRouter,
+  logs: logsRouter,
 };
 
 const link = new OpenAPILink(contract, {
