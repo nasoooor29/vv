@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -32,12 +33,13 @@ func (a *API) Group(prefix string, mw ...echo.MiddlewareFunc) *Group {
 }
 
 type Group struct {
-	api        *API
-	prefix     string
-	middleware []echo.MiddlewareFunc
-	parent     *Group
-	responses  map[int]Response
-	tag        string
+	api                 *API
+	prefix              string
+	middleware          []echo.MiddlewareFunc
+	parent              *Group
+	responses           map[int]Response
+	tag                 string
+	hasDefaultResponses bool
 }
 
 func (g *Group) Group(prefix string, mw ...echo.MiddlewareFunc) *Group {
@@ -135,6 +137,18 @@ func (g *Group) Description(desc string) *Group {
 	return g
 }
 
+func (g *Group) NoInput() *Group {
+	// Mark that this group has default responses set
+	g.hasDefaultResponses = true
+	return g
+}
+
+func (g *Group) NoReturn() *Group {
+	// Mark that this group has default responses set
+	g.hasDefaultResponses = true
+	return g
+}
+
 /* =========================
    INPUT
 ========================= */
@@ -159,6 +173,8 @@ type Route struct {
 	description string
 	input       *Input
 	tag         string
+	noReturn    bool
+	noInput     bool
 }
 
 type Response struct {
@@ -220,6 +236,16 @@ func (r *Route) Input(v any, opts ...string) *Route {
 		ContentType: contentType,
 		Required:    true,
 	}
+	return r
+}
+
+func (r *Route) NoInput() *Route {
+	r.noInput = true
+	return r
+}
+
+func (r *Route) NoReturn() *Route {
+	r.noReturn = true
 	return r
 }
 
@@ -439,6 +465,11 @@ func (a *API) OpenAPI() *openapi3.T {
 					Required: r.input.Required,
 				},
 			}
+		} else if !r.noInput {
+			// Warn if no input is explicitly set and method typically expects input
+			if r.Method == http.MethodPost || r.Method == http.MethodPut || r.Method == http.MethodPatch {
+				slog.Warn("route has no input defined", "method", r.Method, "path", r.Path)
+			}
 		}
 
 		for code, resp := range r.Responses {
@@ -470,6 +501,11 @@ func (a *API) OpenAPI() *openapi3.T {
 				Description: &statusDesc,
 				Content:     content,
 			})
+		}
+
+		// Warn if no responses are defined and not explicitly disabled
+		if len(r.Responses) == 0 && !r.noReturn {
+			slog.Warn("route has no response defined", "method", r.Method, "path", r.Path)
 		}
 
 		doc.AddOperation(r.Path, r.Method, op)

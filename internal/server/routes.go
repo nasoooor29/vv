@@ -117,6 +117,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 		Description("Get Current User Endpoint")
 
 	authGroup.POST("/logout", s.Logout).
+		NoInput().
 		Returns(http.StatusOK, nil).
 		Returns(http.StatusBadRequest, models.HTTPError{}).
 		Description("User Logout Endpoint")
