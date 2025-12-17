@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# https://github.com/nasoooor29/mi-py
+
 # if the user did not provide a name for the migration, ask him to provide one
 if [ -z "$1" ]; then
     echo "Please provide a name for the migration"
