@@ -112,22 +112,13 @@ func (s *MetricsService) GetMetrics(c echo.Context) error {
 	if err != nil && err != sql.ErrNoRows {
 		return s.dispatcher.NewInternalServerError("failed to retrieve metrics", err)
 	}
-	if serviceDist != nil {
-		for _, dist := range serviceDist {
-			response.ServiceGroupDistribution = append(response.ServiceGroupDistribution, models.ServiceStats{
-				ServiceGroup: dist.ServiceGroup,
-				Count:        dist.Count,
-				Percentage:   dist.Percentage,
-			})
-		}
+	for _, dist := range serviceDist {
+		response.ServiceGroupDistribution = append(response.ServiceGroupDistribution, models.ServiceStats{
+			ServiceGroup: dist.ServiceGroup,
+			Count:        dist.Count,
+			Percentage:   dist.Percentage,
+		})
 	}
-
-	// NOTE: log
-	// s.dispatcher.Info("metrics retrieved",
-	// 	slog.Int("days", req.Days),
-	// 	slog.Int("error_rate_entries", len(response.ErrorRateByService)),
-	// 	slog.Int("hourly_entries", len(response.LogCountByHour)),
-	// )
 
 	return c.JSON(http.StatusOK, response)
 }
@@ -198,14 +189,6 @@ func (s *MetricsService) GetServiceMetrics(c echo.Context) error {
 		LevelDistribution: levelDistribution,
 	}
 
-	// NOTE: log
-	// s.dispatcher.Info("service metrics retrieved",
-	// 	slog.String("service", serviceGroup),
-	// 	slog.Int("days", days),
-	// 	slog.Int64("total", total),
-	// 	slog.Float64("error_rate", errorRate),
-	// )
-
 	return c.JSON(http.StatusOK, response)
 }
 
@@ -268,12 +251,6 @@ func (s *MetricsService) GetHealthMetrics(c echo.Context) error {
 	} else if maxErrorRate > 5 {
 		health.OverallStatus = "warning"
 	}
-
-	// NOTE: log
-	// s.dispatcher.Info("health metrics retrieved",
-	// 	slog.String("overall_status", health.OverallStatus),
-	// 	slog.Int("alerts", len(alerts)),
-	// )
 
 	return c.JSON(http.StatusOK, health)
 }
