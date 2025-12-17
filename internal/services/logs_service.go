@@ -10,6 +10,7 @@ import (
 
 	"visory/internal/database"
 	"visory/internal/database/logs"
+	"visory/internal/models"
 
 	"github.com/labstack/echo/v4"
 )
@@ -34,26 +35,6 @@ type GetLogsRequest struct {
 	Page         int    `query:"page"`
 	PageSize     int    `query:"page_size"`
 	Days         int    `query:"days"` // Filter logs from last N days
-}
-
-// LogResponse represents a log entry for the API
-type LogResponse struct {
-	ID           int64     `json:"id"`
-	UserID       int64     `json:"user_id"`
-	Action       string    `json:"action"`
-	Details      *string   `json:"details"`
-	ServiceGroup string    `json:"service_group"`
-	Level        string    `json:"level"`
-	CreatedAt    time.Time `json:"created_at"`
-}
-
-// GetLogsResponse represents paginated log results
-type GetLogsResponse struct {
-	Logs       []LogResponse `json:"logs"`
-	Total      int64         `json:"total"`
-	Page       int           `json:"page"`
-	PageSize   int           `json:"page_size"`
-	TotalPages int64         `json:"total_pages"`
 }
 
 // GetLogs retrieves logs with filtering and pagination
@@ -158,9 +139,9 @@ func (s *LogsService) GetLogs(c echo.Context) error {
 	}
 
 	// Convert to response format
-	responseList := make([]LogResponse, len(logsList))
+	responseList := make([]models.LogResponse, len(logsList))
 	for i, log := range logsList {
-		responseList[i] = LogResponse{
+		responseList[i] = models.LogResponse{
 			ID:           log.ID,
 			UserID:       log.UserID,
 			Action:       log.Action,
@@ -173,7 +154,7 @@ func (s *LogsService) GetLogs(c echo.Context) error {
 
 	totalPages := (total + int64(req.PageSize) - 1) / int64(req.PageSize)
 
-	response := GetLogsResponse{
+	response := models.GetLogsResponse{
 		Logs:       responseList,
 		Total:      total,
 		Page:       req.Page,
@@ -223,12 +204,12 @@ func (s *LogsService) GetLogStats(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to retrieve stats")
 	}
 
-	response := map[string]interface{}{
-		"total":          total,
-		"days":           days,
-		"service_groups": serviceGroups,
-		"levels":         levels,
-		"since":          since,
+	response := models.LogStatsResponse{
+		Total:         total,
+		Days:          days,
+		ServiceGroups: serviceGroups,
+		Levels:        levels,
+		Since:         since,
 	}
 
 	return c.JSON(http.StatusOK, response)
@@ -257,10 +238,10 @@ func (s *LogsService) ClearOldLogs(c echo.Context) error {
 		slog.Int("days_retained", days),
 	)
 
-	response := map[string]interface{}{
-		"retention_days": days,
-		"before":         before,
-		"message":        "Logs older than " + before.Format("2006-01-02") + " have been deleted",
+	response := models.ClearOldLogsResponse{
+		RetentionDays: days,
+		Before:        before,
+		Message:       "Logs older than " + before.Format("2006-01-02") + " have been deleted",
 	}
 
 	return c.JSON(http.StatusOK, response)

@@ -20,7 +20,7 @@ import {
   Shield,
   Users,
   Settings,
-  LogSquare,
+  FileText,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Link, useNavigate } from "react-router";
@@ -149,7 +149,7 @@ export function AppSidebar() {
     {
       id: "logs",
       label: "Audit Logs",
-      icon: LogSquare,
+      icon: FileText,
       requiredPermission: RBAC_AUDIT_LOG_VIEWER,
     },
     {

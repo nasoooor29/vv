@@ -46,6 +46,102 @@ export const loginSchema = z.object({
 
 export const rbacPolicySchema = z.string();
 
+export const logResponseSchema = z.object({
+  id: z.number(),
+  user_id: z.number(),
+  action: z.string(),
+  details: z.string().optional(),
+  service_group: z.string(),
+  level: z.string(),
+  created_at: z.string(),
+});
+
+export const getLogsResponseSchema = z.object({
+  logs: z.array(logResponseSchema),
+  total: z.number(),
+  page: z.number(),
+  page_size: z.number(),
+  total_pages: z.number(),
+});
+
+export const logStatsResponseSchema = z.object({
+  total: z.number(),
+  days: z.number(),
+  service_groups: z.array(z.string()),
+  levels: z.array(z.string()),
+  since: z.string(),
+});
+
+export const clearOldLogsResponseSchema = z.object({
+  retention_days: z.number(),
+  before: z.string(),
+  message: z.string(),
+});
+
+export const metricsPeriodSchema = z.object({
+  days: z.number(),
+  since: z.string(),
+  until: z.string(),
+});
+
+export const errorRateByServiceSchema = z.object({
+  service_group: z.string(),
+  error_count: z.number(),
+  total_count: z.number(),
+  error_rate: z.number(),
+});
+
+export const logCountByHourSchema = z.object({
+  hour: z.string(),
+  log_count: z.number(),
+});
+
+export const logLevelStatsSchema = z.object({
+  level: z.string(),
+  count: z.number(),
+  percentage: z.number(),
+});
+
+export const serviceStatsSchema = z.object({
+  service_group: z.string(),
+  count: z.number(),
+  percentage: z.number(),
+});
+
+export const metricsResponseSchema = z.object({
+  error_rate_by_service: z.array(errorRateByServiceSchema),
+  log_count_by_hour: z.array(logCountByHourSchema),
+  log_level_distribution: z.array(logLevelStatsSchema),
+  service_group_distribution: z.array(serviceStatsSchema),
+  period: metricsPeriodSchema,
+});
+
+export const serviceMetricsResponseSchema = z.object({
+  service_group: z.string(),
+  days: z.number(),
+  since: z.string(),
+  total_logs: z.number(),
+  error_count: z.number(),
+  error_rate: z.number(),
+  level_distribution: z.array(logLevelStatsSchema),
+});
+
+export const serviceHealthSchema = z.object({
+  service_group: z.string(),
+  error_rate: z.number(),
+  error_count: z.number(),
+  total_count: z.number(),
+  status: z.string(),
+});
+
+export const healthMetricsResponseSchema = z.object({
+  timestamp: z.string(),
+  period: z.string(),
+  services: z.array(serviceHealthSchema),
+  overall_status: z.string(),
+  alerts: z.array(z.string()),
+});
+
 export const countLogsByLevelParamsSchema = z.object({
   level: z.string(),
   created_at: z.string(),
@@ -70,6 +166,43 @@ export const createLogParamsSchema = z.object({
   level: z.string(),
 });
 
+export const getAverageLogCountByHourRowSchema = z.object({
+  hour: z.any(),
+  log_count: z.number(),
+});
+
+export const getErrorRateByServiceRowSchema = z.object({
+  service_group: z.string(),
+  error_count: z.number(),
+  total_count: z.number(),
+  error_rate: z.number(),
+});
+
+export const getLogLevelDistributionParamsSchema = z.object({
+  created_at: z.string(),
+  created_at_2: z.string(),
+});
+
+export const getLogLevelDistributionRowSchema = z.object({
+  level: z.string(),
+  count: z.number(),
+  percentage: z.number(),
+});
+
+export const getLogsByLevelParamsSchema = z.object({
+  level: z.string(),
+  created_at: z.string(),
+  limit: z.number(),
+  offset: z.number(),
+});
+
+export const getLogsByServiceGroupParamsSchema = z.object({
+  service_group: z.string(),
+  created_at: z.string(),
+  limit: z.number(),
+  offset: z.number(),
+});
+
 export const getLogsByServiceGroupAndLevelParamsSchema = z.object({
   service_group: z.string(),
   level: z.string(),
@@ -82,6 +215,17 @@ export const getLogsPaginatedParamsSchema = z.object({
   created_at: z.string(),
   limit: z.number(),
   offset: z.number(),
+});
+
+export const getServiceGroupDistributionParamsSchema = z.object({
+  created_at: z.string(),
+  created_at_2: z.string(),
+});
+
+export const getServiceGroupDistributionRowSchema = z.object({
+  service_group: z.string(),
+  count: z.number(),
+  percentage: z.number(),
 });
 
 export const upsertSessionParamsSchema = z.object({

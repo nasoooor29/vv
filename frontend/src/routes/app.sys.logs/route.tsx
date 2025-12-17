@@ -4,12 +4,9 @@ import { orpc } from "@/lib/orpc";
 import { usePermission } from "@/components/protected-content";
 import { RBAC_AUDIT_LOG_VIEWER } from "@/types/types.gen";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trash2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -54,7 +51,7 @@ export default function LogsPage() {
   // Fetch logs
   const logsQuery = useQuery(
     orpc.logs.getLogs.queryOptions({
-      query: {
+      input: {
         service_group: filters.service_group || "",
         level: filters.level || "",
         page: filters.page,
@@ -67,7 +64,7 @@ export default function LogsPage() {
   // Fetch log stats for filter options
   const statsQuery = useQuery(
     orpc.logs.getLogStats.queryOptions({
-      query: {
+      input: {
         days: filters.days,
       },
     }),
@@ -86,7 +83,7 @@ export default function LogsPage() {
 
   const logs = logsQuery.data?.logs || [];
   const total = logsQuery.data?.total || 0;
-  const totalPages = logsQuery.data?.totalPages || 0;
+  const totalPages = logsQuery.data?.total_pages || 0;
   const stats = statsQuery.data;
 
   const levelColors: Record<string, string> = {
@@ -327,8 +324,12 @@ export default function LogsPage() {
                 <PaginationContent>
                   <PaginationItem>
                     <PaginationPrevious
-                      onClick={() => handlePageChange(filters.page - 1)}
-                      disabled={filters.page === 1}
+                      onClick={() => {
+                        if (filters.page > 1) {
+                          handlePageChange(filters.page - 1);
+                        }
+                      }}
+                      className={filters.page === 1 ? "pointer-events-none opacity-50" : ""}
                     />
                   </PaginationItem>
 
@@ -348,8 +349,12 @@ export default function LogsPage() {
 
                   <PaginationItem>
                     <PaginationNext
-                      onClick={() => handlePageChange(filters.page + 1)}
-                      disabled={filters.page === totalPages}
+                      onClick={() => {
+                        if (filters.page < totalPages) {
+                          handlePageChange(filters.page + 1);
+                        }
+                      }}
+                      className={filters.page === totalPages ? "pointer-events-none opacity-50" : ""}
                     />
                   </PaginationItem>
                 </PaginationContent>

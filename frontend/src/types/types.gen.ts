@@ -61,6 +61,89 @@ export const RBAC_USER_ADMIN: RBACPolicy = "user_admin";
 export const RBAC_SETTINGS_MANAGER: RBACPolicy = "settings_manager";
 export const RBAC_AUDIT_LOG_VIEWER: RBACPolicy = "audit_log_viewer";
 export const RBAC_HEALTH_CHECKER: RBACPolicy = "health_checker";
+export interface LogResponse {
+  id: number /* int64 */;
+  user_id: number /* int64 */;
+  action: string;
+  details?: string;
+  service_group: string;
+  level: string;
+  created_at: string;
+}
+export interface GetLogsResponse {
+  logs: LogResponse[];
+  total: number /* int64 */;
+  page: number /* int */;
+  page_size: number /* int */;
+  total_pages: number /* int64 */;
+}
+export interface LogStatsResponse {
+  total: number /* int64 */;
+  days: number /* int */;
+  service_groups: string[];
+  levels: string[];
+  since: string;
+}
+export interface ClearOldLogsResponse {
+  retention_days: number /* int */;
+  before: string;
+  message: string;
+}
+export interface MetricsPeriod {
+  days: number /* int */;
+  since: string;
+  until: string;
+}
+export interface ErrorRateByService {
+  service_group: string;
+  error_count: number /* int64 */;
+  total_count: number /* int64 */;
+  error_rate: number /* float64 */;
+}
+export interface LogCountByHour {
+  hour: string;
+  log_count: number /* int64 */;
+}
+export interface LogLevelStats {
+  level: string;
+  count: number /* int64 */;
+  percentage: number /* float64 */;
+}
+export interface ServiceStats {
+  service_group: string;
+  count: number /* int64 */;
+  percentage: number /* float64 */;
+}
+export interface MetricsResponse {
+  error_rate_by_service: ErrorRateByService[];
+  log_count_by_hour: LogCountByHour[];
+  log_level_distribution: LogLevelStats[];
+  service_group_distribution: ServiceStats[];
+  period: MetricsPeriod;
+}
+export interface ServiceMetricsResponse {
+  service_group: string;
+  days: number /* int */;
+  since: string;
+  total_logs: number /* int64 */;
+  error_count: number /* int64 */;
+  error_rate: number /* float64 */;
+  level_distribution: LogLevelStats[];
+}
+export interface ServiceHealth {
+  service_group: string;
+  error_rate: number /* float64 */;
+  error_count: number /* int64 */;
+  total_count: number /* int64 */;
+  status: string;
+}
+export interface HealthMetricsResponse {
+  timestamp: string;
+  period: string;
+  services: ServiceHealth[];
+  overall_status: string;
+  alerts: string[];
+}
 export interface CountLogsByLevelParams {
   level: string;
   created_at: string;
@@ -81,6 +164,37 @@ export interface CreateLogParams {
   service_group: string;
   level: string;
 }
+export interface GetAverageLogCountByHourRow {
+  hour: any;
+  log_count: number /* int64 */;
+}
+export interface GetErrorRateByServiceRow {
+  service_group: string;
+  error_count: number /* int64 */;
+  total_count: number /* int64 */;
+  error_rate: number /* float64 */;
+}
+export interface GetLogLevelDistributionParams {
+  created_at: string;
+  created_at_2: string;
+}
+export interface GetLogLevelDistributionRow {
+  level: string;
+  count: number /* int64 */;
+  percentage: number /* float64 */;
+}
+export interface GetLogsByLevelParams {
+  level: string;
+  created_at: string;
+  limit: number /* int64 */;
+  offset: number /* int64 */;
+}
+export interface GetLogsByServiceGroupParams {
+  service_group: string;
+  created_at: string;
+  limit: number /* int64 */;
+  offset: number /* int64 */;
+}
 export interface GetLogsByServiceGroupAndLevelParams {
   service_group: string;
   level: string;
@@ -92,6 +206,15 @@ export interface GetLogsPaginatedParams {
   created_at: string;
   limit: number /* int64 */;
   offset: number /* int64 */;
+}
+export interface GetServiceGroupDistributionParams {
+  created_at: string;
+  created_at_2: string;
+}
+export interface GetServiceGroupDistributionRow {
+  service_group: string;
+  count: number /* int64 */;
+  percentage: number /* float64 */;
 }
 export interface UpsertSessionParams {
   user_id: number /* int64 */;

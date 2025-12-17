@@ -96,3 +96,44 @@ ORDER BY level;
 -- name: DeleteLogsOlderThan :exec
 DELETE FROM logs
 WHERE created_at < ?;
+
+-- name: GetErrorRateByService :many
+SELECT 
+  service_group,
+  COUNT(CASE WHEN level = 'ERROR' THEN 1 END) as error_count,
+  COUNT(*) as total_count,
+  ROUND(100.0 * COUNT(CASE WHEN level = 'ERROR' THEN 1 END) / COUNT(*), 2) as error_rate
+FROM logs
+WHERE created_at >= ?
+GROUP BY service_group
+ORDER BY error_rate DESC;
+
+-- name: GetAverageLogCountByHour :many
+SELECT 
+  strftime('%Y-%m-%d %H:00:00', created_at) as hour,
+  COUNT(*) as log_count
+FROM logs
+WHERE created_at >= ?
+GROUP BY hour
+ORDER BY hour DESC
+LIMIT 24;
+
+-- name: GetLogLevelDistribution :many
+SELECT 
+  level,
+  COUNT(*) as count,
+  ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM logs WHERE logs.created_at >= ?), 2) as percentage
+FROM logs
+WHERE logs.created_at >= ?
+GROUP BY level
+ORDER BY count DESC;
+
+-- name: GetServiceGroupDistribution :many
+SELECT 
+  service_group,
+  COUNT(*) as count,
+  ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM logs WHERE logs.created_at >= ?), 2) as percentage
+FROM logs
+WHERE logs.created_at >= ?
+GROUP BY service_group
+ORDER BY count DESC;

@@ -26,6 +26,7 @@ type Server struct {
 	usersService     *services.UsersService
 	storageService   *services.StorageService
 	logsService      *services.LogsService
+	metricsService   *services.MetricsService
 	retentionService *services.LogRetentionService
 }
 
@@ -41,6 +42,7 @@ func NewServer() *http.Server {
 	usersService := services.NewUsersService(db, logger)
 	storageService := services.NewStorageService(logger)
 	logsService := services.NewLogsService(db, logger)
+	metricsService := services.NewMetricsService(db, logger)
 	retentionService := services.NewLogRetentionService(db, logger)
 
 	// Start log retention service (30 days retention, cleanup at 2 AM UTC)
@@ -55,6 +57,7 @@ func NewServer() *http.Server {
 		usersService:     usersService,
 		storageService:   storageService,
 		logsService:      logsService,
+		metricsService:   metricsService,
 		retentionService: retentionService,
 	}
 

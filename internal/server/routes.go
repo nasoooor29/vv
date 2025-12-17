@@ -75,6 +75,13 @@ func (s *Server) RegisterRoutes() http.Handler {
 	logsGroup.GET("/stats", s.logsService.GetLogStats, s.RBAC(models.RBAC_AUDIT_LOG_VIEWER))
 	logsGroup.DELETE("/cleanup", s.logsService.ClearOldLogs, s.RBAC(models.RBAC_USER_ADMIN))
 
+	// Metrics routes
+	metricsGroup := api.Group("/metrics")
+	metricsGroup.Use(s.Auth)
+	metricsGroup.GET("", s.metricsService.GetMetrics, s.RBAC(models.RBAC_AUDIT_LOG_VIEWER))
+	metricsGroup.GET("/health", s.metricsService.GetHealthMetrics, s.RBAC(models.RBAC_HEALTH_CHECKER))
+	metricsGroup.GET("/:service", s.metricsService.GetServiceMetrics, s.RBAC(models.RBAC_AUDIT_LOG_VIEWER))
+
 	return e
 }
 

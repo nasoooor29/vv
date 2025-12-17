@@ -161,6 +161,45 @@ func (q *Queries) GetAllLogs(ctx context.Context) ([]Log, error) {
 	return items, nil
 }
 
+const getAverageLogCountByHour = `-- name: GetAverageLogCountByHour :many
+SELECT 
+  strftime('%Y-%m-%d %H:00:00', created_at) as hour,
+  COUNT(*) as log_count
+FROM logs
+WHERE created_at >= ?
+GROUP BY hour
+ORDER BY hour DESC
+LIMIT 24
+`
+
+type GetAverageLogCountByHourRow struct {
+	Hour     interface{} `json:"hour"`
+	LogCount int64       `json:"log_count"`
+}
+
+func (q *Queries) GetAverageLogCountByHour(ctx context.Context, createdAt time.Time) ([]GetAverageLogCountByHourRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAverageLogCountByHour, createdAt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAverageLogCountByHourRow
+	for rows.Next() {
+		var i GetAverageLogCountByHourRow
+		if err := rows.Scan(&i.Hour, &i.LogCount); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getDistinctLevels = `-- name: GetDistinctLevels :many
 SELECT DISTINCT level
 FROM logs
@@ -221,6 +260,53 @@ func (q *Queries) GetDistinctServiceGroups(ctx context.Context, createdAt time.T
 	return items, nil
 }
 
+const getErrorRateByService = `-- name: GetErrorRateByService :many
+SELECT 
+  service_group,
+  COUNT(CASE WHEN level = 'ERROR' THEN 1 END) as error_count,
+  COUNT(*) as total_count,
+  ROUND(100.0 * COUNT(CASE WHEN level = 'ERROR' THEN 1 END) / COUNT(*), 2) as error_rate
+FROM logs
+WHERE created_at >= ?
+GROUP BY service_group
+ORDER BY error_rate DESC
+`
+
+type GetErrorRateByServiceRow struct {
+	ServiceGroup string  `json:"service_group"`
+	ErrorCount   int64   `json:"error_count"`
+	TotalCount   int64   `json:"total_count"`
+	ErrorRate    float64 `json:"error_rate"`
+}
+
+func (q *Queries) GetErrorRateByService(ctx context.Context, createdAt time.Time) ([]GetErrorRateByServiceRow, error) {
+	rows, err := q.db.QueryContext(ctx, getErrorRateByService, createdAt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetErrorRateByServiceRow
+	for rows.Next() {
+		var i GetErrorRateByServiceRow
+		if err := rows.Scan(
+			&i.ServiceGroup,
+			&i.ErrorCount,
+			&i.TotalCount,
+			&i.ErrorRate,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getLogByID = `-- name: GetLogByID :many
 SELECT
   id, user_id, "action", details, created_at, service_group, level
@@ -248,6 +334,51 @@ func (q *Queries) GetLogByID(ctx context.Context, id int64) ([]Log, error) {
 			&i.ServiceGroup,
 			&i.Level,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getLogLevelDistribution = `-- name: GetLogLevelDistribution :many
+SELECT 
+  level,
+  COUNT(*) as count,
+  ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM logs WHERE logs.created_at >= ?), 2) as percentage
+FROM logs
+WHERE logs.created_at >= ?
+GROUP BY level
+ORDER BY count DESC
+`
+
+type GetLogLevelDistributionParams struct {
+	CreatedAt   time.Time `json:"created_at"`
+	CreatedAt_2 time.Time `json:"created_at_2"`
+}
+
+type GetLogLevelDistributionRow struct {
+	Level      string  `json:"level"`
+	Count      int64   `json:"count"`
+	Percentage float64 `json:"percentage"`
+}
+
+func (q *Queries) GetLogLevelDistribution(ctx context.Context, arg GetLogLevelDistributionParams) ([]GetLogLevelDistributionRow, error) {
+	rows, err := q.db.QueryContext(ctx, getLogLevelDistribution, arg.CreatedAt, arg.CreatedAt_2)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetLogLevelDistributionRow
+	for rows.Next() {
+		var i GetLogLevelDistributionRow
+		if err := rows.Scan(&i.Level, &i.Count, &i.Percentage); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -464,6 +595,51 @@ func (q *Queries) GetLogsPaginated(ctx context.Context, arg GetLogsPaginatedPara
 			&i.ServiceGroup,
 			&i.Level,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getServiceGroupDistribution = `-- name: GetServiceGroupDistribution :many
+SELECT 
+  service_group,
+  COUNT(*) as count,
+  ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM logs WHERE logs.created_at >= ?), 2) as percentage
+FROM logs
+WHERE logs.created_at >= ?
+GROUP BY service_group
+ORDER BY count DESC
+`
+
+type GetServiceGroupDistributionParams struct {
+	CreatedAt   time.Time `json:"created_at"`
+	CreatedAt_2 time.Time `json:"created_at_2"`
+}
+
+type GetServiceGroupDistributionRow struct {
+	ServiceGroup string  `json:"service_group"`
+	Count        int64   `json:"count"`
+	Percentage   float64 `json:"percentage"`
+}
+
+func (q *Queries) GetServiceGroupDistribution(ctx context.Context, arg GetServiceGroupDistributionParams) ([]GetServiceGroupDistributionRow, error) {
+	rows, err := q.db.QueryContext(ctx, getServiceGroupDistribution, arg.CreatedAt, arg.CreatedAt_2)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetServiceGroupDistributionRow
+	for rows.Next() {
+		var i GetServiceGroupDistributionRow
+		if err := rows.Scan(&i.ServiceGroup, &i.Count, &i.Percentage); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

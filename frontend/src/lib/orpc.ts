@@ -10,6 +10,7 @@ import { authRouter } from "./routers/auth";
 import { storageRouter } from "./routers/storage";
 import { usersRouter } from "./routers/users";
 import { logsRouter } from "./routers/logs";
+import { metricsRouter } from "./routers/metrics";
 import { Z } from "@/types";
 
 export const queryClient = new QueryClient({
@@ -58,10 +59,11 @@ export const contract = {
   storage: storageRouter,
   users: usersRouter,
   logs: logsRouter,
+  metrics: metricsRouter,
 };
 
 const link = new OpenAPILink(contract, {
-  url: "http://localhost:9993/api",
+  url: "http://localhost:9999/api",
   fetch: (request, init) => {
     // when not 200-299, it will throw an ORPCError
     return globalThis.fetch(request, {
