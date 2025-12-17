@@ -1,3 +1,10 @@
+CREATE TABLE goose_db_version (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		version_id INTEGER NOT NULL,
+		is_applied INTEGER NOT NULL,
+		tstamp TIMESTAMP DEFAULT (datetime('now'))
+	);
+CREATE TABLE sqlite_sequence(name,seq);
 CREATE TABLE users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT NOT NULL,
@@ -7,7 +14,6 @@ CREATE TABLE users (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
-CREATE TABLE sqlite_sequence(name,seq);
 CREATE UNIQUE INDEX idx_users_email ON users (email);
 CREATE UNIQUE INDEX idx_users_username ON users (username);
 CREATE TABLE user_sessions (
@@ -33,8 +39,6 @@ CREATE TABLE logs (
   user_id INTEGER NOT NULL,
   action TEXT NOT NULL,
   details TEXT,
-  service_group TEXT NOT NULL DEFAULT 'general',
-  level TEXT NOT NULL DEFAULT 'info',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, service_group TEXT NOT NULL DEFAULT 'general', level TEXT NOT NULL DEFAULT 'info',
   FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );

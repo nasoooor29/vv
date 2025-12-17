@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
 	"visory/internal/database"
 	"visory/internal/models"
 	"visory/internal/services"
+	"visory/internal/utils"
 
 	"github.com/markbates/goth"
 )
@@ -31,7 +33,15 @@ type Server struct {
 
 func NewServer() *http.Server {
 	port, _ := strconv.Atoi(models.ENV_VARS.Port)
-	logger := slog.Default()
+	logger := slog.New(utils.NewDaLog(
+		os.Stdout,
+		utils.DaLogStyleLongType1,
+		&slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		},
+	))
+	slog.SetDefault(logger)
+	slog.SetLogLoggerLevel(slog.LevelDebug)
 
 	// Add server group to logger
 	logger = logger.WithGroup("server")

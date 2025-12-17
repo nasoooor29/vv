@@ -1,10 +1,14 @@
 package server
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
+	"visory/internal/database/logs"
 	"visory/internal/models"
 
 	"github.com/labstack/echo/v4"
@@ -16,10 +20,102 @@ import (
 func (s *Server) RegisterRoutes() http.Handler {
 	e := echo.New()
 
-	// Add custom logging middleware before other middlewares
-	e.Use(s.logsService.LoggingMiddleware())
+	// RequestLogger middleware with slog integration
+	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogStatus:   true,
+		LogURI:      true,
+		LogMethod:   true,
+		LogRemoteIP: true,
+		LogError:    true,
+		LogLatency:  true,
+		HandleError: true,
+		Skipper: func(c echo.Context) bool {
+			// if options endpoint, skip logging
+			if c.Request().Method == http.MethodOptions {
+				return true
+			}
+			// Skip logging for health check and auth/me endpoints
+			SKIP_ENDPOINTS := map[string]bool{
+				"/api/health":  true,
+				"/api/auth/me": true,
+			}
+			_, skip := SKIP_ENDPOINTS[c.Request().URL.Path]
+			return skip
+		},
+		BeforeNextFunc: func(c echo.Context) {
+			// Try to extract user ID from session cookie
+			var userID int64
+			cookie, err := c.Cookie("session_token")
+			if err == nil {
+				// Try to get user from session
+				user, err := s.db.User.GetBySessionToken(c.Request().Context(), cookie.Value)
+				if err == nil {
+					userID = user.ID
+				}
+			}
+			// Add user ID to context for later use
+			ctx := context.WithValue(c.Request().Context(), "userID", userID)
+			c.SetRequest(c.Request().WithContext(ctx))
+		},
+		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+			userID, _ := c.Get("userID").(int64)
 
-	e.Use(middleware.Logger())
+			// Determine log level based on status code
+			logLevel := getLevelFromStatusCode(v.Status)
+
+			// Log to slog with appropriate level
+			if v.Error != nil {
+				s.logger.Error("HTTP request",
+					"status", v.Status,
+					"method", v.Method,
+					"uri", v.URI,
+					"latency_ms", v.Latency.Milliseconds(),
+					"user_id", userID,
+					"remote_ip", v.RemoteIP,
+					"error", v.Error.Error(),
+				)
+			} else {
+				// Use the appropriate log level based on status code
+				s.logger.Log(c.Request().Context(), logLevel, "HTTP request",
+					"status", v.Status,
+					"method", v.Method,
+					"uri", v.URI,
+					"latency_ms", v.Latency.Milliseconds(),
+					"user_id", userID,
+					"remote_ip", v.RemoteIP,
+				)
+			}
+
+			// Log to database asynchronously with background context to avoid cancellation
+			go func() {
+				// details := fmt.Sprintf("Method: %s, URI: %s, Status: %d, Latency: %dms, Remote: %s",
+				// 	v.Method, v.URI, v.Status, v.Latency.Milliseconds(), v.RemoteIP)
+				jsonifiedDetails, err := json.Marshal(v)
+				if err != nil {
+					slog.Error("error happened", "err", err)
+					return
+				}
+
+				action := fmt.Sprintf("HTTP %s %s", v.Method, v.URI)
+				details := string(jsonifiedDetails)
+
+				// Use background context to prevent cancellation issues
+				_, err = s.db.Log.CreateLog(context.Background(), logs.CreateLogParams{
+					UserID:       userID,
+					Action:       action,
+					Details:      &details,
+					ServiceGroup: "http",
+					Level:        logLevel.String(),
+				})
+				if err != nil {
+					s.logger.Debug("could not create log entry", "error", err)
+				}
+			}()
+
+			return nil
+		},
+	}))
+
 	e.Use(middleware.Recover())
 	api := e.Group("/api")
 
@@ -121,4 +217,18 @@ func (s *Server) websocketHandler(c echo.Context) error {
 		time.Sleep(time.Second * 2)
 	}
 	return nil
+}
+
+// getLevelFromStatusCode determines log level based on HTTP status code
+func getLevelFromStatusCode(statusCode int) slog.Level {
+	switch {
+	case statusCode >= 500:
+		return slog.LevelError
+	case statusCode >= 400:
+		return slog.LevelWarn
+	case statusCode >= 300:
+		return slog.LevelInfo
+	default:
+		return slog.LevelDebug
+	}
 }

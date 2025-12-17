@@ -12,7 +12,7 @@ import { useNavigate } from "react-router";
 import OAuthMenu from "@/components/oauth";
 
 const loginSchema = z.object({
-  username: z.email("Please enter a valid email"),
+  username: z.string(),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -78,8 +78,7 @@ export default function Login() {
                   <Input
                     {...register("username")}
                     id="email"
-                    type="email"
-                    placeholder="Enter your email"
+                    placeholder="Enter your email or username"
                     autoComplete="off"
                   />
                   {errors.username && (

@@ -46,6 +46,9 @@ type Pages = {
   "/app/sys/users": {
     params: {};
   };
+  "/app/sys/logs": {
+    params: {};
+  };
   "/app/monitor": {
     params: {};
   };
@@ -57,7 +60,7 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/auth" | "/auth/register" | "/auth/login" | "/app" | "/app/sys/networking" | "/app/sys/settings" | "/app/sys/storage" | "/app/docker/:id" | "/app/dashboard" | "/app/sys/users" | "/app/monitor" | "/app/vms";
+    page: "/" | "/auth" | "/auth/register" | "/auth/login" | "/app" | "/app/sys/networking" | "/app/sys/settings" | "/app/sys/storage" | "/app/docker/:id" | "/app/dashboard" | "/app/sys/users" | "/app/sys/logs" | "/app/monitor" | "/app/vms";
   };
   "routes/_landing.tsx": {
     id: "routes/_landing";
@@ -81,7 +84,7 @@ type RouteFiles = {
   };
   "routes/app.tsx": {
     id: "routes/app";
-    page: "/app" | "/app/sys/networking" | "/app/sys/settings" | "/app/sys/storage" | "/app/docker/:id" | "/app/dashboard" | "/app/sys/users" | "/app/monitor" | "/app/vms";
+    page: "/app" | "/app/sys/networking" | "/app/sys/settings" | "/app/sys/storage" | "/app/docker/:id" | "/app/dashboard" | "/app/sys/users" | "/app/sys/logs" | "/app/monitor" | "/app/vms";
   };
   "routes/app.sys.networking.tsx": {
     id: "routes/app.sys.networking";
@@ -95,10 +98,6 @@ type RouteFiles = {
     id: "routes/app.sys.storage";
     page: "/app/sys/storage";
   };
-  "routes/app.sys.storage._index.tsx": {
-    id: "routes/app.sys.storage._index";
-    page: "/app/sys/storage";
-  };
   "routes/app.docker.$id.tsx": {
     id: "routes/app.docker.$id";
     page: "/app/docker/:id";
@@ -110,6 +109,10 @@ type RouteFiles = {
   "routes/app.sys.users/route.tsx": {
     id: "routes/app.sys.users";
     page: "/app/sys/users";
+  };
+  "routes/app.sys.logs/route.tsx": {
+    id: "routes/app.sys.logs";
+    page: "/app/sys/logs";
   };
   "routes/app.monitor.tsx": {
     id: "routes/app.monitor";
@@ -136,10 +139,10 @@ type RouteModules = {
   "routes/app.sys.networking": typeof import("./src/routes/app.sys.networking.tsx");
   "routes/app.sys.settings": typeof import("./src/routes/app.sys.settings.tsx");
   "routes/app.sys.storage": typeof import("./src/routes/app.sys.storage/route.tsx");
-  "routes/app.sys.storage._index": typeof import("./src/routes/app.sys.storage._index.tsx");
   "routes/app.docker.$id": typeof import("./src/routes/app.docker.$id.tsx");
   "routes/app.dashboard": typeof import("./src/routes/app.dashboard.tsx");
   "routes/app.sys.users": typeof import("./src/routes/app.sys.users/route.tsx");
+  "routes/app.sys.logs": typeof import("./src/routes/app.sys.logs/route.tsx");
   "routes/app.monitor": typeof import("./src/routes/app.monitor.tsx");
   "routes/app._index": typeof import("./src/routes/app._index.tsx");
   "routes/app.vms": typeof import("./src/routes/app.vms.tsx");
