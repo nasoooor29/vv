@@ -88,19 +88,19 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 			// Log to database asynchronously with background context to avoid cancellation
 			go func() {
-				// details := fmt.Sprintf("Method: %s, URI: %s, Status: %d, Latency: %dms, Remote: %s",
-				// 	v.Method, v.URI, v.Status, v.Latency.Milliseconds(), v.RemoteIP)
 				jsonifiedDetails, err := json.Marshal(v)
 				if err != nil {
 					slog.Error("error happened", "err", err)
 					return
 				}
 
-				action := fmt.Sprintf("HTTP %s %s", v.Method, v.URI)
+				action := fmt.Sprintf("%v %v", v.Method, v.URI)
 				details := string(jsonifiedDetails)
+				ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
 
 				// Use background context to prevent cancellation issues
-				_, err = s.db.Log.CreateLog(context.Background(), logs.CreateLogParams{
+				_, err = s.db.Log.CreateLog(ctxWithTimeout, logs.CreateLogParams{
 					UserID:       userID,
 					Action:       action,
 					Details:      &details,
@@ -226,9 +226,7 @@ func getLevelFromStatusCode(statusCode int) slog.Level {
 		return slog.LevelError
 	case statusCode >= 400:
 		return slog.LevelWarn
-	case statusCode >= 300:
-		return slog.LevelInfo
 	default:
-		return slog.LevelDebug
+		return slog.LevelInfo
 	}
 }
