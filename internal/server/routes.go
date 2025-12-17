@@ -17,103 +17,7 @@ import (
 func (s *Server) RegisterRoutes() http.Handler {
 	e := echo.New()
 
-	e.Use(RequestLogger(s.logger, s.dispatcher))
-
-	// RequestLogger middleware with slog integration
-	// e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
-	// 	LogStatus:   true,
-	// 	LogURI:      true,
-	// 	LogMethod:   true,
-	// 	LogRemoteIP: true,
-	// 	LogError:    true,
-	// 	LogLatency:  true,
-	// 	HandleError: true,
-	// 	Skipper: func(c echo.Context) bool {
-	// 		// if options endpoint, skip logging
-	// 		if c.Request().Method == http.MethodOptions {
-	// 			return true
-	// 		}
-	// 		// Skip logging for health check and auth/me endpoints
-	// 		SKIP_ENDPOINTS := map[string]bool{
-	// 			"/api/health":  true,
-	// 			"/api/auth/me": true,
-	// 		}
-	// 		_, skip := SKIP_ENDPOINTS[c.Request().URL.Path]
-	// 		return skip
-	// 	},
-	// 	BeforeNextFunc: func(c echo.Context) {
-	// 		// Try to extract user ID from session cookie
-	// 		var userID int64
-	// 		cookie, err := c.Cookie("session_token")
-	// 		if err == nil {
-	// 			// Try to get user from session
-	// 			user, err := s.db.User.GetBySessionToken(c.Request().Context(), cookie.Value)
-	// 			if err == nil {
-	// 				userID = user.ID
-	// 			}
-	// 		}
-	// 		// Add user ID to context for later use
-	// 		ctx := context.WithValue(c.Request().Context(), "userID", userID)
-	// 		c.SetRequest(c.Request().WithContext(ctx))
-	// 	},
-	// 	LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
-	// 		userID, _ := c.Get("userID").(int64)
-	//
-	// 		// Determine log level based on status code
-	// 		logLevel := getLevelFromStatusCode(v.Status)
-	//
-	// 		// Log to slog with appropriate level
-	// 		if v.Error != nil {
-	// 			s.logger.Error("HTTP request",
-	// 				"status", v.Status,
-	// 				"method", v.Method,
-	// 				"uri", v.URI,
-	// 				"latency_ms", v.Latency.Milliseconds(),
-	// 				"user_id", userID,
-	// 				"remote_ip", v.RemoteIP,
-	// 				"error", v.Error.Error(),
-	// 			)
-	// 		} else {
-	// 			// Use the appropriate log level based on status code
-	// 			s.logger.Log(c.Request().Context(), logLevel, "HTTP request",
-	// 				"status", v.Status,
-	// 				"method", v.Method,
-	// 				"uri", v.URI,
-	// 				"latency_ms", v.Latency.Milliseconds(),
-	// 				"user_id", userID,
-	// 				"remote_ip", v.RemoteIP,
-	// 			)
-	// 		}
-	//
-	// 		// Log to database asynchronously with background context to avoid cancellation
-	// 		go func() {
-	// 			jsonifiedDetails, err := json.Marshal(v)
-	// 			if err != nil {
-	// 				slog.Error("error happened", "err", err)
-	// 				return
-	// 			}
-	//
-	// 			action := fmt.Sprintf("%v %v", v.Method, v.URI)
-	// 			details := string(jsonifiedDetails)
-	// 			ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	// 			defer cancel()
-	//
-	// 			// Use background context to prevent cancellation issues
-	// 			_, err = s.db.Log.CreateLog(ctxWithTimeout, logs.CreateLogParams{
-	// 				UserID:       userID,
-	// 				Action:       action,
-	// 				Details:      &details,
-	// 				ServiceGroup: "http",
-	// 				Level:        logLevel.String(),
-	// 			})
-	// 			if err != nil {
-	// 				s.logger.Debug("could not create log entry", "error", err)
-	// 			}
-	// 		}()
-	//
-	// 		return nil
-	// 	},
-	// }))
+	baseRequestLogger := RequestLogger(s.logger, s.dispatcher)
 
 	e.Use(middleware.Recover())
 	api := e.Group("/api")
@@ -126,9 +30,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 		MaxAge:           300,
 	}))
 
-	api.GET("/", s.HelloWorldHandler)
+	api.GET("/", s.HelloWorldHandler, baseRequestLogger)
 	Roles := s.authService.RBACMiddleware
-	api.GET("/health", s.healthHandler)
+	api.GET("/health", s.healthHandler, baseRequestLogger)
 
 	api.GET("/websocket", s.websocketHandler)
 
@@ -163,15 +67,13 @@ func (s *Server) RegisterRoutes() http.Handler {
 	usersGroup.PATCH("/:id/role", s.usersService.UpdateUserRole, Roles(models.RBAC_USER_ADMIN))
 
 	// Logs routes
-	logsGroup := api.Group("/logs")
-	logsGroup.Use(s.authService.AuthMiddleware, RequestLogger(s.logsService.Logger, s.logsService.Dispatcher))
+	logsGroup := api.Group("/logs", s.authService.AuthMiddleware, RequestLogger(s.logsService.Logger, s.logsService.Dispatcher))
 	logsGroup.GET("", s.logsService.GetLogs, Roles(models.RBAC_AUDIT_LOG_VIEWER))
 	logsGroup.GET("/stats", s.logsService.GetLogStats, Roles(models.RBAC_AUDIT_LOG_VIEWER))
 	logsGroup.DELETE("/cleanup", s.logsService.ClearOldLogs, Roles(models.RBAC_USER_ADMIN))
 
 	// Metrics routes
-	metricsGroup := api.Group("/metrics")
-	metricsGroup.Use(s.authService.AuthMiddleware, RequestLogger(s.metricsService.Logger, s.metricsService.Dispatcher))
+	metricsGroup := api.Group("/metrics", s.authService.AuthMiddleware, RequestLogger(s.metricsService.Logger, s.metricsService.Dispatcher))
 	metricsGroup.GET("", s.metricsService.GetMetrics, Roles(models.RBAC_AUDIT_LOG_VIEWER))
 	metricsGroup.GET("/health", s.metricsService.GetHealthMetrics, Roles(models.RBAC_HEALTH_CHECKER))
 	metricsGroup.GET("/:service", s.metricsService.GetServiceMetrics, Roles(models.RBAC_AUDIT_LOG_VIEWER))
