@@ -16,9 +16,10 @@ then
     echo "sql-differ could not be found, please install it first."
     exit 1
 fi
+TS=$(date -u +"%Y%m%d%H%M%S") 
 
-sql-differ migrate ./visory.db ./internal/database/visory.sql "./internal/database/migrations/$MIGRATION_NAME" --prefix numbering # change later to the yyyyMMddHHMM format
+sql-differ migrate ./visory.db ./internal/database/visory.sql "./internal/database/migrations/${TS}_${MIGRATION_NAME}"
 
 # # Generate visory.sql from the database
 # goose -dir ./internal/database/migrations sqlite3 visory.db up
-sql-differ generate ./visory.db ./internal/database/visory.sql
+# sql-differ generate ./visory.db ./internal/database/visory.sql
