@@ -17,7 +17,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	e := echo.New()
 
 	// Add custom logging middleware before other middlewares
-	e.Use(s.LoggingMiddleware())
+	e.Use(s.logsService.LoggingMiddleware())
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
@@ -32,8 +32,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	}))
 
 	api.GET("/", s.HelloWorldHandler)
-
-	// api.GET("/health", s.healthHandler, s.RBAC(models.RBAC_HEALTH_CHECKER))
+	RBAC := RBAC("/health", s.healthHandler, RBAC(models.RBAC_HEALTH_CHECKER))
 	api.GET("/health", s.healthHandler)
 
 	api.GET("/websocket", s.websocketHandler)
@@ -46,41 +45,41 @@ func (s *Server) RegisterRoutes() http.Handler {
 	api.GET("/auth/oauth/callback/:provider", s.authService.OAuthCallback)
 
 	authGroup := api.Group("/auth")
-	authGroup.Use(s.Auth)
+	authGroup.Use(s.authService.AuthMiddleware)
 	authGroup.GET("/me", s.authService.Me)
 	authGroup.POST("/logout", s.authService.Logout)
 
 	// Storage routes
 	storageGroup := api.Group("/storage")
-	storageGroup.Use(s.Auth)
-	storageGroup.Use(s.RBAC(models.RBAC_SETTINGS_MANAGER))
+	storageGroup.Use(s.authService.AuthMiddleware)
+	storageGroup.Use(RBAC(models.RBAC_SETTINGS_MANAGER))
 	storageGroup.GET("/devices", s.storageService.GetStorageDevices)
 	storageGroup.GET("/mount-points", s.storageService.GetMountPoints)
 
 	// Users routes
 	usersGroup := api.Group("/users")
-	usersGroup.Use(s.Auth)
-	usersGroup.GET("", s.usersService.GetAllUsers, s.RBAC(models.RBAC_USER_ADMIN))
-	usersGroup.GET("/", s.usersService.GetAllUsers, s.RBAC(models.RBAC_USER_ADMIN))
-	usersGroup.GET("/:id", s.usersService.GetUserById, s.RBAC(models.RBAC_USER_ADMIN))
-	usersGroup.POST("", s.usersService.CreateUser, s.RBAC(models.RBAC_USER_ADMIN))
-	usersGroup.PUT("/:id", s.usersService.UpdateUser, s.RBAC(models.RBAC_USER_ADMIN))
-	usersGroup.DELETE("/:id", s.usersService.DeleteUser, s.RBAC(models.RBAC_USER_ADMIN))
-	usersGroup.PATCH("/:id/role", s.usersService.UpdateUserRole, s.RBAC(models.RBAC_USER_ADMIN))
+	usersGroup.Use(s.authService.AuthMiddleware)
+	usersGroup.GET("", s.usersService.GetAllUsers, RBAC(models.RBAC_USER_ADMIN))
+	usersGroup.GET("/", s.usersService.GetAllUsers, RBAC(models.RBAC_USER_ADMIN))
+	usersGroup.GET("/:id", s.usersService.GetUserById, RBAC(models.RBAC_USER_ADMIN))
+	usersGroup.POST("", s.usersService.CreateUser, RBAC(models.RBAC_USER_ADMIN))
+	usersGroup.PUT("/:id", s.usersService.UpdateUser, RBAC(models.RBAC_USER_ADMIN))
+	usersGroup.DELETE("/:id", s.usersService.DeleteUser, RBAC(models.RBAC_USER_ADMIN))
+	usersGroup.PATCH("/:id/role", s.usersService.UpdateUserRole, RBAC(models.RBAC_USER_ADMIN))
 
 	// Logs routes
 	logsGroup := api.Group("/logs")
-	logsGroup.Use(s.Auth)
-	logsGroup.GET("", s.logsService.GetLogs, s.RBAC(models.RBAC_AUDIT_LOG_VIEWER))
-	logsGroup.GET("/stats", s.logsService.GetLogStats, s.RBAC(models.RBAC_AUDIT_LOG_VIEWER))
-	logsGroup.DELETE("/cleanup", s.logsService.ClearOldLogs, s.RBAC(models.RBAC_USER_ADMIN))
+	logsGroup.Use(s.authService.AuthMiddleware)
+	logsGroup.GET("", s.logsService.GetLogs, RBAC(models.RBAC_AUDIT_LOG_VIEWER))
+	logsGroup.GET("/stats", s.logsService.GetLogStats, RBAC(models.RBAC_AUDIT_LOG_VIEWER))
+	logsGroup.DELETE("/cleanup", s.logsService.ClearOldLogs, RBAC(models.RBAC_USER_ADMIN))
 
 	// Metrics routes
 	metricsGroup := api.Group("/metrics")
-	metricsGroup.Use(s.Auth)
-	metricsGroup.GET("", s.metricsService.GetMetrics, s.RBAC(models.RBAC_AUDIT_LOG_VIEWER))
-	metricsGroup.GET("/health", s.metricsService.GetHealthMetrics, s.RBAC(models.RBAC_HEALTH_CHECKER))
-	metricsGroup.GET("/:service", s.metricsService.GetServiceMetrics, s.RBAC(models.RBAC_AUDIT_LOG_VIEWER))
+	metricsGroup.Use(s.authService.AuthMiddleware)
+	metricsGroup.GET("", s.metricsService.GetMetrics, RBAC(models.RBAC_AUDIT_LOG_VIEWER))
+	metricsGroup.GET("/health", s.metricsService.GetHealthMetrics, RBAC(models.RBAC_HEALTH_CHECKER))
+	metricsGroup.GET("/:service", s.metricsService.GetServiceMetrics, RBAC(models.RBAC_AUDIT_LOG_VIEWER))
 
 	return e
 }

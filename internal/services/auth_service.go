@@ -30,20 +30,67 @@ type AuthService struct {
 	OAuthProviders map[string]goth.Provider
 }
 
-// NewAuthService creates a new AuthService with dependency injection
-func NewAuthService(db *database.Service, logger *slog.Logger) *AuthService {
-	providers := initializeOAuth()
-	// Create a grouped logger for auth service
-	authLogger := logger.WithGroup("auth")
-	return &AuthService{
-		db:             db,
-		logger:         authLogger,
-		OAuthProviders: providers,
+func (s *AuthService) AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		cookie, err := c.Cookie(models.COOKIE_NAME)
+		if err != nil {
+			s.logger.Error("error happened", "err", err)
+			return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
+		}
+		_, err = s.db.User.GetBySessionToken(c.Request().Context(), cookie.Value)
+		if err != nil {
+			s.logger.Error("error happened", "err", err)
+			return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
+		}
+
+		return next(c)
 	}
 }
 
+func (s *AuthService) RBACMiddleware(policies ...models.RBACPolicy) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			cookie, err := c.Cookie(models.COOKIE_NAME)
+			if err != nil {
+				s.logger.Error("error happened", "err", err)
+				return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
+			}
+			user, err := s.db.User.GetBySessionToken(c.Request().Context(), cookie.Value)
+			if err != nil {
+				s.logger.Error("error happened", "err", err)
+				return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
+			}
+
+			user_roles := models.RoleToRBACPolicies(user.Role)
+			if _, ok := user_roles[models.RBAC_USER_ADMIN]; ok {
+				return next(c)
+			}
+			for _, policy := range policies {
+				if v, ok := user_roles[policy]; !ok || !v {
+					return echo.NewHTTPError(http.StatusForbidden, "Insufficient permissions")
+				}
+			}
+
+			return next(c)
+		}
+	}
+}
+
+// NewAuthService creates a new AuthService with dependency injection
+func NewAuthService(db *database.Service, logger *slog.Logger) *AuthService {
+	// Create a grouped logger for auth service
+	authLogger := logger.WithGroup("auth")
+	authService := &AuthService{
+		db:     db,
+		logger: authLogger,
+	}
+	providers := authService.initializeOAuth()
+	authService.OAuthProviders = providers
+	return authService
+}
+
 // initializeOAuth sets up OAuth providers with environment variables
-func initializeOAuth() map[string]goth.Provider {
+func (s *AuthService) initializeOAuth() map[string]goth.Provider {
 	gothic.Store = sessions.NewCookieStore([]byte(models.ENV_VARS.SessionSecret))
 	baseCallbackURL := models.ENV_VARS.BaseUrlWithPort + "/api/auth/oauth/callback"
 
