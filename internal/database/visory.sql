@@ -33,6 +33,8 @@ CREATE TABLE logs (
   user_id INTEGER NOT NULL,
   action TEXT NOT NULL,
   details TEXT,
+  service_group TEXT NOT NULL DEFAULT 'general',
+  level TEXT NOT NULL DEFAULT 'info',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );

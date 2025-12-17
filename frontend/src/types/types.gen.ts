@@ -61,6 +61,17 @@ export const RBAC_USER_ADMIN: RBACPolicy = "user_admin";
 export const RBAC_SETTINGS_MANAGER: RBACPolicy = "settings_manager";
 export const RBAC_AUDIT_LOG_VIEWER: RBACPolicy = "audit_log_viewer";
 export const RBAC_HEALTH_CHECKER: RBACPolicy = "health_checker";
+export interface CreateLogParams {
+  user_id: number /* int64 */;
+  action: string;
+  details?: string;
+  service_group: string;
+  level: string;
+}
+export interface GetLogsByServiceGroupAndLevelParams {
+  service_group: string;
+  level: string;
+}
 export interface UpsertSessionParams {
   user_id: number /* int64 */;
   session_token: string;
@@ -128,6 +139,8 @@ export interface Log {
   action: string;
   details?: string;
   created_at: string;
+  service_group: string;
+  level: string;
 }
 export interface Notification {
   id: number /* int64 */;

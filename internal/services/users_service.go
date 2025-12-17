@@ -19,9 +19,11 @@ type UsersService struct {
 
 // NewUsersService creates a new UsersService with dependency injection
 func NewUsersService(db *database.Service, logger *slog.Logger) *UsersService {
+	// Create a grouped logger for users service
+	usersLogger := logger.WithGroup("users")
 	return &UsersService{
 		db:     db,
-		logger: logger,
+		logger: usersLogger,
 	}
 }
 

@@ -15,6 +15,10 @@ import (
 
 func (s *Server) RegisterRoutes() http.Handler {
 	e := echo.New()
+
+	// Add custom logging middleware before other middlewares
+	e.Use(s.LoggingMiddleware())
+
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	api := e.Group("/api")

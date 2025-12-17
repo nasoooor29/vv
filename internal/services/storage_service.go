@@ -15,8 +15,10 @@ type StorageService struct {
 
 // NewStorageService creates a new StorageService with dependency injection
 func NewStorageService(logger *slog.Logger) *StorageService {
+	// Create a grouped logger for storage service
+	storageLogger := logger.WithGroup("storage")
 	return &StorageService{
-		logger: logger,
+		logger: storageLogger,
 	}
 }
 

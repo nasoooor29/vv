@@ -9,9 +9,44 @@ import (
 	"context"
 )
 
+const createLog = `-- name: CreateLog :one
+INSERT INTO logs (user_id, "action", details, service_group, level)
+VALUES (?, ?, ?, ?, ?)
+RETURNING id, user_id, "action", details, created_at, service_group, level
+`
+
+type CreateLogParams struct {
+	UserID       int64   `json:"user_id"`
+	Action       string  `json:"action"`
+	Details      *string `json:"details"`
+	ServiceGroup string  `json:"service_group"`
+	Level        string  `json:"level"`
+}
+
+func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (Log, error) {
+	row := q.db.QueryRowContext(ctx, createLog,
+		arg.UserID,
+		arg.Action,
+		arg.Details,
+		arg.ServiceGroup,
+		arg.Level,
+	)
+	var i Log
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Action,
+		&i.Details,
+		&i.CreatedAt,
+		&i.ServiceGroup,
+		&i.Level,
+	)
+	return i, err
+}
+
 const getAllLogs = `-- name: GetAllLogs :many
 SELECT
-  id, user_id, "action", details, created_at
+  id, user_id, "action", details, created_at, service_group, level
 FROM
   logs
 `
@@ -31,6 +66,8 @@ func (q *Queries) GetAllLogs(ctx context.Context) ([]Log, error) {
 			&i.Action,
 			&i.Details,
 			&i.CreatedAt,
+			&i.ServiceGroup,
+			&i.Level,
 		); err != nil {
 			return nil, err
 		}
@@ -47,7 +84,7 @@ func (q *Queries) GetAllLogs(ctx context.Context) ([]Log, error) {
 
 const getLogByID = `-- name: GetLogByID :many
 SELECT
-  id, user_id, "action", details, created_at
+  id, user_id, "action", details, created_at, service_group, level
 FROM
   logs
 WHERE
@@ -69,6 +106,139 @@ func (q *Queries) GetLogByID(ctx context.Context, id int64) ([]Log, error) {
 			&i.Action,
 			&i.Details,
 			&i.CreatedAt,
+			&i.ServiceGroup,
+			&i.Level,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getLogsByLevel = `-- name: GetLogsByLevel :many
+SELECT
+  id, user_id, "action", details, created_at, service_group, level
+FROM
+  logs
+WHERE
+  level = ?
+ORDER BY
+  created_at DESC
+`
+
+func (q *Queries) GetLogsByLevel(ctx context.Context, level string) ([]Log, error) {
+	rows, err := q.db.QueryContext(ctx, getLogsByLevel, level)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Log
+	for rows.Next() {
+		var i Log
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Action,
+			&i.Details,
+			&i.CreatedAt,
+			&i.ServiceGroup,
+			&i.Level,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getLogsByServiceGroup = `-- name: GetLogsByServiceGroup :many
+SELECT
+  id, user_id, "action", details, created_at, service_group, level
+FROM
+  logs
+WHERE
+  service_group = ?
+ORDER BY
+  created_at DESC
+`
+
+func (q *Queries) GetLogsByServiceGroup(ctx context.Context, serviceGroup string) ([]Log, error) {
+	rows, err := q.db.QueryContext(ctx, getLogsByServiceGroup, serviceGroup)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Log
+	for rows.Next() {
+		var i Log
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Action,
+			&i.Details,
+			&i.CreatedAt,
+			&i.ServiceGroup,
+			&i.Level,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getLogsByServiceGroupAndLevel = `-- name: GetLogsByServiceGroupAndLevel :many
+SELECT
+  id, user_id, "action", details, created_at, service_group, level
+FROM
+  logs
+WHERE
+  service_group = ? AND level = ?
+ORDER BY
+  created_at DESC
+`
+
+type GetLogsByServiceGroupAndLevelParams struct {
+	ServiceGroup string `json:"service_group"`
+	Level        string `json:"level"`
+}
+
+func (q *Queries) GetLogsByServiceGroupAndLevel(ctx context.Context, arg GetLogsByServiceGroupAndLevelParams) ([]Log, error) {
+	rows, err := q.db.QueryContext(ctx, getLogsByServiceGroupAndLevel, arg.ServiceGroup, arg.Level)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Log
+	for rows.Next() {
+		var i Log
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Action,
+			&i.Details,
+			&i.CreatedAt,
+			&i.ServiceGroup,
+			&i.Level,
 		); err != nil {
 			return nil, err
 		}

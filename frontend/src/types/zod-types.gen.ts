@@ -46,6 +46,19 @@ export const loginSchema = z.object({
 
 export const rbacPolicySchema = z.string();
 
+export const createLogParamsSchema = z.object({
+  user_id: z.number(),
+  action: z.string(),
+  details: z.string().optional(),
+  service_group: z.string(),
+  level: z.string(),
+});
+
+export const getLogsByServiceGroupAndLevelParamsSchema = z.object({
+  service_group: z.string(),
+  level: z.string(),
+});
+
 export const upsertSessionParamsSchema = z.object({
   user_id: z.number(),
   session_token: z.string(),
@@ -128,6 +141,8 @@ export const logSchema = z.object({
   action: z.string(),
   details: z.string().optional(),
   created_at: z.string(),
+  service_group: z.string(),
+  level: z.string(),
 });
 
 export const notificationSchema = z.object({

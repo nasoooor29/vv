@@ -33,9 +33,11 @@ type AuthService struct {
 // NewAuthService creates a new AuthService with dependency injection
 func NewAuthService(db *database.Service, logger *slog.Logger) *AuthService {
 	providers := initializeOAuth()
+	// Create a grouped logger for auth service
+	authLogger := logger.WithGroup("auth")
 	return &AuthService{
 		db:             db,
-		logger:         logger,
+		logger:         authLogger,
 		OAuthProviders: providers,
 	}
 }

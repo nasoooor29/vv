@@ -31,6 +31,9 @@ func NewServer() *http.Server {
 	port, _ := strconv.Atoi(models.ENV_VARS.Port)
 	logger := slog.Default()
 
+	// Add server group to logger
+	logger = logger.WithGroup("server")
+
 	db := database.New()
 	authService := services.NewAuthService(db, logger)
 	usersService := services.NewUsersService(db, logger)
