@@ -5,7 +5,7 @@ import type { ErrorMap } from "@orpc/contract";
 
 const e = {
   data: Z.httpErrorSchema,
-};
+} satisfies ErrorMap[string];
 
 const errors = Object.fromEntries(
   Object.keys(COMMON_ORPC_ERROR_DEFS).map((key) => [key, e]),
