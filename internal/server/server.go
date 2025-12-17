@@ -22,10 +22,11 @@ type Server struct {
 	OAuthProviders map[string]goth.Provider
 
 	// Services
-	authService    *services.AuthService
-	usersService   *services.UsersService
-	storageService *services.StorageService
-	logsService    *services.LogsService
+	authService      *services.AuthService
+	usersService     *services.UsersService
+	storageService   *services.StorageService
+	logsService      *services.LogsService
+	retentionService *services.LogRetentionService
 }
 
 func NewServer() *http.Server {
@@ -40,16 +41,21 @@ func NewServer() *http.Server {
 	usersService := services.NewUsersService(db, logger)
 	storageService := services.NewStorageService(logger)
 	logsService := services.NewLogsService(db, logger)
+	retentionService := services.NewLogRetentionService(db, logger)
+
+	// Start log retention service (30 days retention, cleanup at 2 AM UTC)
+	retentionService.Start(30, 2)
 
 	NewServer := &Server{
-		port:           port,
-		db:             db,
-		logger:         logger,
-		OAuthProviders: authService.OAuthProviders,
-		authService:    authService,
-		usersService:   usersService,
-		storageService: storageService,
-		logsService:    logsService,
+		port:             port,
+		db:               db,
+		logger:           logger,
+		OAuthProviders:   authService.OAuthProviders,
+		authService:      authService,
+		usersService:     usersService,
+		storageService:   storageService,
+		logsService:      logsService,
+		retentionService: retentionService,
 	}
 
 	// Declare Server config
