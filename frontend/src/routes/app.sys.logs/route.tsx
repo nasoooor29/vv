@@ -179,43 +179,43 @@ export default function LogsPage() {
           <div className="grid grid-cols-4 gap-4">
             <div>
               <label className="text-sm font-medium">Service Group</label>
-              <Select
-                value={filters.service_group || ""}
-                onValueChange={(value) =>
-                  handleFilterChange("service_group", value)
-                }
-              >
+               <Select
+                 value={filters.service_group === "" || !filters.service_group ? "all" : filters.service_group}
+                 onValueChange={(value) =>
+                   handleFilterChange("service_group", value === "all" ? "" : value)
+                 }
+               >
                 <SelectTrigger className="mt-2">
                   <SelectValue placeholder="All Services" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Services</SelectItem>
-                  {stats?.service_groups?.map((service) => (
-                    <SelectItem key={service} value={service}>
-                      {service}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                   <SelectItem value="all">All Services</SelectItem>
+                   {stats?.service_groups?.map((service) => (
+                     <SelectItem key={service} value={service}>
+                       {service}
+                     </SelectItem>
+                   ))}
+                 </SelectContent>
               </Select>
             </div>
 
             <div>
               <label className="text-sm font-medium">Log Level</label>
-              <Select
-                value={filters.level || ""}
-                onValueChange={(value) => handleFilterChange("level", value)}
-              >
+               <Select
+                 value={filters.level === "" || !filters.level ? "all" : filters.level}
+                 onValueChange={(value) => handleFilterChange("level", value === "all" ? "" : value)}
+               >
                 <SelectTrigger className="mt-2">
                   <SelectValue placeholder="All Levels" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Levels</SelectItem>
-                  {stats?.levels?.map((level) => (
-                    <SelectItem key={level} value={level}>
-                      {level}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                   <SelectItem value="all">All Levels</SelectItem>
+                   {stats?.levels?.map((level) => (
+                     <SelectItem key={level} value={level}>
+                       {level}
+                     </SelectItem>
+                   ))}
+                 </SelectContent>
               </Select>
             </div>
 
