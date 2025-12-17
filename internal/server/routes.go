@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"log/slog"
 	"net/http"
 	"time"
 
@@ -13,52 +12,6 @@ import (
 
 	"github.com/coder/websocket"
 )
-
-func (s *Server) Auth(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		cookie, err := c.Cookie(models.COOKIE_NAME)
-		if err != nil {
-			slog.Error("error happened", "err", err)
-			return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
-		}
-		_, err = s.db.User.GetBySessionToken(c.Request().Context(), cookie.Value)
-		if err != nil {
-			slog.Error("error happened", "err", err)
-			return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
-		}
-
-		return next(c)
-	}
-}
-
-func (s *Server) RBAC(policies ...models.RBACPolicy) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			cookie, err := c.Cookie(models.COOKIE_NAME)
-			if err != nil {
-				slog.Error("error happened", "err", err)
-				return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
-			}
-			user, err := s.db.User.GetBySessionToken(c.Request().Context(), cookie.Value)
-			if err != nil {
-				slog.Error("error happened", "err", err)
-				return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
-			}
-
-			user_roles := models.RoleToRBACPolicies(user.Role)
-			if _, ok := user_roles[models.RBAC_USER_ADMIN]; ok {
-				return next(c)
-			}
-			for _, policy := range policies {
-				if v, ok := user_roles[policy]; !ok || !v {
-					return echo.NewHTTPError(http.StatusForbidden, "Insufficient permissions")
-				}
-			}
-
-			return next(c)
-		}
-	}
-}
 
 func (s *Server) RegisterRoutes() http.Handler {
 	e := echo.New()
@@ -81,32 +34,35 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	api.GET("/websocket", s.websocketHandler)
 
-	api.POST("/auth/register", s.Register)
-	api.POST("/auth/login", s.Login)
+	api.POST("/auth/register", s.authService.Register)
+	api.POST("/auth/login", s.authService.Login)
 
 	// OAuth routes
-	api.GET("/auth/oauth/:provider", s.OAuthLogin)
-	api.GET("/auth/oauth/callback/:provider", s.OAuthCallback)
+	api.GET("/auth/oauth/:provider", s.authService.OAuthLogin)
+	api.GET("/auth/oauth/callback/:provider", s.authService.OAuthCallback)
 
 	authGroup := api.Group("/auth")
 	authGroup.Use(s.Auth)
-	authGroup.GET("/me", s.Me)
-	authGroup.POST("/logout", s.Logout)
+	authGroup.GET("/me", s.authService.Me)
+	authGroup.POST("/logout", s.authService.Logout)
 
 	// Storage routes
 	storageGroup := api.Group("/storage")
 	storageGroup.Use(s.Auth)
 	storageGroup.Use(s.RBAC(models.RBAC_SETTINGS_MANAGER))
-	storageGroup.GET("/devices", s.GetStorageDevices)
-	storageGroup.GET("/mount-points", s.GetMountPoints)
+	storageGroup.GET("/devices", s.storageService.GetStorageDevices)
+	storageGroup.GET("/mount-points", s.storageService.GetMountPoints)
+
+	// Users routes
 	usersGroup := api.Group("/users")
 	usersGroup.Use(s.Auth)
-	usersGroup.GET("", s.GetAllUsers, s.RBAC(models.RBAC_USER_ADMIN))
-	usersGroup.GET("/", s.GetAllUsers, s.RBAC(models.RBAC_USER_ADMIN))
-	usersGroup.POST("", s.CreateUser, s.RBAC(models.RBAC_USER_ADMIN))
-	usersGroup.PUT("/:id", s.UpdateUser, s.RBAC(models.RBAC_USER_ADMIN))
-	usersGroup.DELETE("/:id", s.DeleteUser, s.RBAC(models.RBAC_USER_ADMIN))
-	usersGroup.PATCH("/:id/role", s.UpdateUserRole, s.RBAC(models.RBAC_USER_ADMIN))
+	usersGroup.GET("", s.usersService.GetAllUsers, s.RBAC(models.RBAC_USER_ADMIN))
+	usersGroup.GET("/", s.usersService.GetAllUsers, s.RBAC(models.RBAC_USER_ADMIN))
+	usersGroup.GET("/:id", s.usersService.GetUserById, s.RBAC(models.RBAC_USER_ADMIN))
+	usersGroup.POST("", s.usersService.CreateUser, s.RBAC(models.RBAC_USER_ADMIN))
+	usersGroup.PUT("/:id", s.usersService.UpdateUser, s.RBAC(models.RBAC_USER_ADMIN))
+	usersGroup.DELETE("/:id", s.usersService.DeleteUser, s.RBAC(models.RBAC_USER_ADMIN))
+	usersGroup.PATCH("/:id/role", s.usersService.UpdateUserRole, s.RBAC(models.RBAC_USER_ADMIN))
 
 	return e
 }
@@ -128,7 +84,7 @@ func (s *Server) websocketHandler(c echo.Context) error {
 	r := c.Request()
 	socket, err := websocket.Accept(w, r, nil)
 	if err != nil {
-		slog.Error("could not open websocket", "error", err)
+		s.logger.Error("could not open websocket", "error", err)
 		_, _ = w.Write([]byte("could not open websocket"))
 		w.WriteHeader(http.StatusInternalServerError)
 		return nil

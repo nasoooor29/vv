@@ -2,20 +2,41 @@ package server
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"reflect"
 	"testing"
+
+	"visory/internal/database"
+	"visory/internal/services"
 
 	"github.com/labstack/echo/v4"
 )
 
 func TestHandler(t *testing.T) {
+	// Create mock dependencies
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
+
+	// Create a server with minimal dependencies for testing
+	db := database.New()
+	s := &Server{
+		port:           9999,
+		logger:         logger,
+		db:             db,
+		authService:    services.NewAuthService(db, logger),
+		usersService:   services.NewUsersService(db, logger),
+		storageService: services.NewStorageService(logger),
+	}
+
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	resp := httptest.NewRecorder()
 	c := e.NewContext(req, resp)
-	s := &Server{}
+
 	// Assertions
 	if err := s.HelloWorldHandler(c); err != nil {
 		t.Errorf("handler() error = %v", err)

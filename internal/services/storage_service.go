@@ -1,4 +1,4 @@
-package server
+package services
 
 import (
 	"log/slog"
@@ -9,11 +9,22 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+type StorageService struct {
+	logger *slog.Logger
+}
+
+// NewStorageService creates a new StorageService with dependency injection
+func NewStorageService(logger *slog.Logger) *StorageService {
+	return &StorageService{
+		logger: logger,
+	}
+}
+
 // GetStorageDevices returns list of storage devices
-func (s *Server) GetStorageDevices(c echo.Context) error {
+func (s *StorageService) GetStorageDevices(c echo.Context) error {
 	devices, err := storageService.GetBlockDevices()
 	if err != nil {
-		slog.Error("failed to get block devices", "err", err)
+		s.logger.Error("failed to get block devices", "err", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get storage devices").SetInternal(err)
 	}
 
@@ -21,10 +32,10 @@ func (s *Server) GetStorageDevices(c echo.Context) error {
 }
 
 // GetMountPoints returns list of mount points
-func (s *Server) GetMountPoints(c echo.Context) error {
+func (s *StorageService) GetMountPoints(c echo.Context) error {
 	mountPoints, err := storageService.GetMountPoints()
 	if err != nil {
-		slog.Error("failed to get mount points", "err", err)
+		s.logger.Error("failed to get mount points", "err", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get mount points").SetInternal(err)
 	}
 
