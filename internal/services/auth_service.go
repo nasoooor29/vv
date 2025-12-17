@@ -13,6 +13,7 @@ import (
 	dbsessions "visory/internal/database/sessions"
 	"visory/internal/database/user"
 	"visory/internal/models"
+	"visory/internal/utils"
 
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/sessions"
@@ -26,7 +27,7 @@ import (
 
 type AuthService struct {
 	db             *database.Service
-	logger         *slog.Logger
+	logger         *utils.MySlog
 	OAuthProviders map[string]goth.Provider
 }
 
@@ -35,13 +36,14 @@ func (s *AuthService) AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		cookie, err := c.Cookie(models.COOKIE_NAME)
 		if err != nil {
 			s.logger.Error("error happened", "err", err)
-			return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
+			return s.logger.NewUnauthorized("Failed to get user by session token", err)
 		}
-		_, err = s.db.User.GetBySessionToken(c.Request().Context(), cookie.Value)
+		userWithSession, err := s.db.User.GetUserAndSessionByToken(c.Request().Context(), cookie.Value)
 		if err != nil {
-			s.logger.Error("error happened", "err", err)
-			return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
+			return s.logger.NewUnauthorized("Failed to get user by session token", err)
 		}
+		// NOTE: check if session is expired
+		c.Set("userWithSession", userWithSession)
 
 		return next(c)
 	}
@@ -52,7 +54,6 @@ func (s *AuthService) RBACMiddleware(policies ...models.RBACPolicy) echo.Middlew
 		return func(c echo.Context) error {
 			cookie, err := c.Cookie(models.COOKIE_NAME)
 			if err != nil {
-				s.logger.Error("error happened", "err", err)
 				return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
 			}
 			user, err := s.db.User.GetBySessionToken(c.Request().Context(), cookie.Value)
@@ -77,7 +78,7 @@ func (s *AuthService) RBACMiddleware(policies ...models.RBACPolicy) echo.Middlew
 }
 
 // NewAuthService creates a new AuthService with dependency injection
-func NewAuthService(db *database.Service, logger *slog.Logger) *AuthService {
+func NewAuthService(db *database.Service, logger *utils.MySlog) *AuthService {
 	// Create a grouped logger for auth service
 	authLogger := logger.WithGroup("auth")
 	authService := &AuthService{
@@ -196,7 +197,8 @@ func (s *AuthService) Login(c echo.Context) error {
 		Username: p.Username,
 	})
 	if err == sql.ErrNoRows {
-		return echo.NewHTTPError(http.StatusNotFound, "You don't have an account please register").SetInternal(err)
+		s.logger.Error("user not found", "username", p.Username)
+		return s.logger.NewNotFound("You don't have an account please register", err)
 	}
 	if err != nil {
 		s.logger.Error("error happened", "err", err)

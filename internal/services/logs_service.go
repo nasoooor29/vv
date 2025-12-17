@@ -3,6 +3,8 @@ package services
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -10,8 +12,10 @@ import (
 
 	"visory/internal/database"
 	"visory/internal/database/logs"
+	"visory/internal/database/user"
 	"visory/internal/models"
 
+	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -35,6 +39,49 @@ type GetLogsRequest struct {
 	Page         int    `query:"page"`
 	PageSize     int    `query:"page_size"`
 	Days         int    `query:"days"` // Filter logs from last N days
+}
+
+func (s *LogsService) LoggingMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		start := time.Now()
+		rid, err := uuid.NewV4()
+		if err != nil {
+			s.logger.Error("failed to generate request ID", "error", err)
+			rid = uuid.Nil
+		}
+		c.Set("RequestId", rid.String())
+
+		err = next(c)
+		data := map[string]any{
+			"UserID":    -1,
+			"RequestId": rid.String(),
+			"Latency":   time.Duration(time.Since(start).Milliseconds()),
+			"headers":   c.Request().Header,
+			"protocol":  c.Request().Proto,
+			"method":    c.Request().Method,
+			"uri":       c.Request().RequestURI,
+			"remoteIP":  c.RealIP(),
+			"host":      c.Request().Host,
+			"startTime": start.Format(time.RFC3339),
+			"userAgent": c.Request().UserAgent(),
+			"status":    c.Response().Status,
+			"error":     nil,
+		}
+
+		userWithSession, ok := c.Get("userWithSession").(*user.GetUserAndSessionByTokenRow)
+		if ok && userWithSession != nil {
+			data["UserID"] = userWithSession.User.ID
+		}
+		// pretty print
+		jsonifiedDetails, err := json.MarshalIndent(data, "", "  ")
+		if err != nil {
+			s.logger.Error("failed to marshal log details", "error", err)
+			return err
+		}
+		fmt.Printf("Request Log:\n%s\n", string(jsonifiedDetails))
+
+		return err
+	}
 }
 
 // GetLogs retrieves logs with filtering and pagination

@@ -11,6 +11,7 @@ import (
 
 	"visory/internal/database"
 	"visory/internal/services"
+	"visory/internal/utils"
 
 	"github.com/labstack/echo/v4"
 )
@@ -23,11 +24,12 @@ func TestHandler(t *testing.T) {
 
 	// Create a server with minimal dependencies for testing
 	db := database.New()
+	mySlog := utils.NewMySlog(logger, db)
 	s := &Server{
 		port:           9999,
 		logger:         logger,
 		db:             db,
-		authService:    services.NewAuthService(db, logger),
+		authService:    services.NewAuthService(db, mySlog),
 		usersService:   services.NewUsersService(db, logger),
 		storageService: services.NewStorageService(logger),
 	}
