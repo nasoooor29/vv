@@ -23,9 +23,10 @@ SELECT
 FROM
   logs
 WHERE
-  service_group = ?
+  service_group = ? AND created_at >= ?
 ORDER BY
-  created_at DESC;
+  created_at DESC
+LIMIT ? OFFSET ?;
 
 -- name: GetLogsByLevel :many
 SELECT
@@ -33,9 +34,10 @@ SELECT
 FROM
   logs
 WHERE
-  level = ?
+  level = ? AND created_at >= ?
 ORDER BY
-  created_at DESC;
+  created_at DESC
+LIMIT ? OFFSET ?;
 
 -- name: GetLogsByServiceGroupAndLevel :many
 SELECT
@@ -43,6 +45,54 @@ SELECT
 FROM
   logs
 WHERE
-  service_group = ? AND level = ?
+  service_group = ? AND level = ? AND created_at >= ?
 ORDER BY
-  created_at DESC;
+  created_at DESC
+LIMIT ? OFFSET ?;
+
+-- name: GetLogsPaginated :many
+SELECT
+  *
+FROM
+  logs
+WHERE
+  created_at >= ?
+ORDER BY
+  created_at DESC
+LIMIT ? OFFSET ?;
+
+-- name: CountLogs :one
+SELECT COUNT(*) as count
+FROM logs
+WHERE created_at >= ?;
+
+-- name: CountLogsByServiceGroup :one
+SELECT COUNT(*) as count
+FROM logs
+WHERE service_group = ? AND created_at >= ?;
+
+-- name: CountLogsByLevel :one
+SELECT COUNT(*) as count
+FROM logs
+WHERE level = ? AND created_at >= ?;
+
+-- name: CountLogsByServiceGroupAndLevel :one
+SELECT COUNT(*) as count
+FROM logs
+WHERE service_group = ? AND level = ? AND created_at >= ?;
+
+-- name: GetDistinctServiceGroups :many
+SELECT DISTINCT service_group
+FROM logs
+WHERE created_at >= ?
+ORDER BY service_group;
+
+-- name: GetDistinctLevels :many
+SELECT DISTINCT level
+FROM logs
+WHERE created_at >= ?
+ORDER BY level;
+
+-- name: DeleteLogsOlderThan :exec
+DELETE FROM logs
+WHERE created_at < ?;

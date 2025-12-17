@@ -85,7 +85,6 @@ func (h *DatabaseLogHandler) logToDatabase(ctx context.Context, rec slog.Record)
 		ServiceGroup: h.serviceGroup,
 		Level:        rec.Level.String(),
 	})
-
 	if err != nil {
 		// If we can't insert to database, just continue - don't panic
 		fmt.Fprintf(os.Stderr, "failed to insert log to database: %v\n", err)

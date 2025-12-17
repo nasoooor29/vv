@@ -68,6 +68,13 @@ func (s *Server) RegisterRoutes() http.Handler {
 	usersGroup.DELETE("/:id", s.usersService.DeleteUser, s.RBAC(models.RBAC_USER_ADMIN))
 	usersGroup.PATCH("/:id/role", s.usersService.UpdateUserRole, s.RBAC(models.RBAC_USER_ADMIN))
 
+	// Logs routes
+	logsGroup := api.Group("/logs")
+	logsGroup.Use(s.Auth)
+	logsGroup.GET("", s.logsService.GetLogs, s.RBAC(models.RBAC_AUDIT_LOG_VIEWER))
+	logsGroup.GET("/stats", s.logsService.GetLogStats, s.RBAC(models.RBAC_AUDIT_LOG_VIEWER))
+	logsGroup.DELETE("/cleanup", s.logsService.ClearOldLogs, s.RBAC(models.RBAC_USER_ADMIN))
+
 	return e
 }
 

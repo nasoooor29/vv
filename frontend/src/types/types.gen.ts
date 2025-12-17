@@ -61,6 +61,19 @@ export const RBAC_USER_ADMIN: RBACPolicy = "user_admin";
 export const RBAC_SETTINGS_MANAGER: RBACPolicy = "settings_manager";
 export const RBAC_AUDIT_LOG_VIEWER: RBACPolicy = "audit_log_viewer";
 export const RBAC_HEALTH_CHECKER: RBACPolicy = "health_checker";
+export interface CountLogsByLevelParams {
+  level: string;
+  created_at: string;
+}
+export interface CountLogsByServiceGroupParams {
+  service_group: string;
+  created_at: string;
+}
+export interface CountLogsByServiceGroupAndLevelParams {
+  service_group: string;
+  level: string;
+  created_at: string;
+}
 export interface CreateLogParams {
   user_id: number /* int64 */;
   action: string;
@@ -71,6 +84,14 @@ export interface CreateLogParams {
 export interface GetLogsByServiceGroupAndLevelParams {
   service_group: string;
   level: string;
+  created_at: string;
+  limit: number /* int64 */;
+  offset: number /* int64 */;
+}
+export interface GetLogsPaginatedParams {
+  created_at: string;
+  limit: number /* int64 */;
+  offset: number /* int64 */;
 }
 export interface UpsertSessionParams {
   user_id: number /* int64 */;

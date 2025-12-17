@@ -7,7 +7,76 @@ package logs
 
 import (
 	"context"
+	"time"
 )
+
+const countLogs = `-- name: CountLogs :one
+SELECT COUNT(*) as count
+FROM logs
+WHERE created_at >= ?
+`
+
+func (q *Queries) CountLogs(ctx context.Context, createdAt time.Time) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countLogs, createdAt)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countLogsByLevel = `-- name: CountLogsByLevel :one
+SELECT COUNT(*) as count
+FROM logs
+WHERE level = ? AND created_at >= ?
+`
+
+type CountLogsByLevelParams struct {
+	Level     string    `json:"level"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+func (q *Queries) CountLogsByLevel(ctx context.Context, arg CountLogsByLevelParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countLogsByLevel, arg.Level, arg.CreatedAt)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countLogsByServiceGroup = `-- name: CountLogsByServiceGroup :one
+SELECT COUNT(*) as count
+FROM logs
+WHERE service_group = ? AND created_at >= ?
+`
+
+type CountLogsByServiceGroupParams struct {
+	ServiceGroup string    `json:"service_group"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+func (q *Queries) CountLogsByServiceGroup(ctx context.Context, arg CountLogsByServiceGroupParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countLogsByServiceGroup, arg.ServiceGroup, arg.CreatedAt)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countLogsByServiceGroupAndLevel = `-- name: CountLogsByServiceGroupAndLevel :one
+SELECT COUNT(*) as count
+FROM logs
+WHERE service_group = ? AND level = ? AND created_at >= ?
+`
+
+type CountLogsByServiceGroupAndLevelParams struct {
+	ServiceGroup string    `json:"service_group"`
+	Level        string    `json:"level"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+func (q *Queries) CountLogsByServiceGroupAndLevel(ctx context.Context, arg CountLogsByServiceGroupAndLevelParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countLogsByServiceGroupAndLevel, arg.ServiceGroup, arg.Level, arg.CreatedAt)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
 
 const createLog = `-- name: CreateLog :one
 INSERT INTO logs (user_id, "action", details, service_group, level)
@@ -44,6 +113,16 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (Log, erro
 	return i, err
 }
 
+const deleteLogsOlderThan = `-- name: DeleteLogsOlderThan :exec
+DELETE FROM logs
+WHERE created_at < ?
+`
+
+func (q *Queries) DeleteLogsOlderThan(ctx context.Context, createdAt time.Time) error {
+	_, err := q.db.ExecContext(ctx, deleteLogsOlderThan, createdAt)
+	return err
+}
+
 const getAllLogs = `-- name: GetAllLogs :many
 SELECT
   id, user_id, "action", details, created_at, service_group, level
@@ -72,6 +151,66 @@ func (q *Queries) GetAllLogs(ctx context.Context) ([]Log, error) {
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getDistinctLevels = `-- name: GetDistinctLevels :many
+SELECT DISTINCT level
+FROM logs
+WHERE created_at >= ?
+ORDER BY level
+`
+
+func (q *Queries) GetDistinctLevels(ctx context.Context, createdAt time.Time) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getDistinctLevels, createdAt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var level string
+		if err := rows.Scan(&level); err != nil {
+			return nil, err
+		}
+		items = append(items, level)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getDistinctServiceGroups = `-- name: GetDistinctServiceGroups :many
+SELECT DISTINCT service_group
+FROM logs
+WHERE created_at >= ?
+ORDER BY service_group
+`
+
+func (q *Queries) GetDistinctServiceGroups(ctx context.Context, createdAt time.Time) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getDistinctServiceGroups, createdAt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var service_group string
+		if err := rows.Scan(&service_group); err != nil {
+			return nil, err
+		}
+		items = append(items, service_group)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -128,13 +267,26 @@ SELECT
 FROM
   logs
 WHERE
-  level = ?
+  level = ? AND created_at >= ?
 ORDER BY
   created_at DESC
+LIMIT ? OFFSET ?
 `
 
-func (q *Queries) GetLogsByLevel(ctx context.Context, level string) ([]Log, error) {
-	rows, err := q.db.QueryContext(ctx, getLogsByLevel, level)
+type GetLogsByLevelParams struct {
+	Level     string    `json:"level"`
+	CreatedAt time.Time `json:"created_at"`
+	Limit     int64     `json:"limit"`
+	Offset    int64     `json:"offset"`
+}
+
+func (q *Queries) GetLogsByLevel(ctx context.Context, arg GetLogsByLevelParams) ([]Log, error) {
+	rows, err := q.db.QueryContext(ctx, getLogsByLevel,
+		arg.Level,
+		arg.CreatedAt,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -170,13 +322,26 @@ SELECT
 FROM
   logs
 WHERE
-  service_group = ?
+  service_group = ? AND created_at >= ?
 ORDER BY
   created_at DESC
+LIMIT ? OFFSET ?
 `
 
-func (q *Queries) GetLogsByServiceGroup(ctx context.Context, serviceGroup string) ([]Log, error) {
-	rows, err := q.db.QueryContext(ctx, getLogsByServiceGroup, serviceGroup)
+type GetLogsByServiceGroupParams struct {
+	ServiceGroup string    `json:"service_group"`
+	CreatedAt    time.Time `json:"created_at"`
+	Limit        int64     `json:"limit"`
+	Offset       int64     `json:"offset"`
+}
+
+func (q *Queries) GetLogsByServiceGroup(ctx context.Context, arg GetLogsByServiceGroupParams) ([]Log, error) {
+	rows, err := q.db.QueryContext(ctx, getLogsByServiceGroup,
+		arg.ServiceGroup,
+		arg.CreatedAt,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -212,18 +377,77 @@ SELECT
 FROM
   logs
 WHERE
-  service_group = ? AND level = ?
+  service_group = ? AND level = ? AND created_at >= ?
 ORDER BY
   created_at DESC
+LIMIT ? OFFSET ?
 `
 
 type GetLogsByServiceGroupAndLevelParams struct {
-	ServiceGroup string `json:"service_group"`
-	Level        string `json:"level"`
+	ServiceGroup string    `json:"service_group"`
+	Level        string    `json:"level"`
+	CreatedAt    time.Time `json:"created_at"`
+	Limit        int64     `json:"limit"`
+	Offset       int64     `json:"offset"`
 }
 
 func (q *Queries) GetLogsByServiceGroupAndLevel(ctx context.Context, arg GetLogsByServiceGroupAndLevelParams) ([]Log, error) {
-	rows, err := q.db.QueryContext(ctx, getLogsByServiceGroupAndLevel, arg.ServiceGroup, arg.Level)
+	rows, err := q.db.QueryContext(ctx, getLogsByServiceGroupAndLevel,
+		arg.ServiceGroup,
+		arg.Level,
+		arg.CreatedAt,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Log
+	for rows.Next() {
+		var i Log
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Action,
+			&i.Details,
+			&i.CreatedAt,
+			&i.ServiceGroup,
+			&i.Level,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getLogsPaginated = `-- name: GetLogsPaginated :many
+SELECT
+  id, user_id, "action", details, created_at, service_group, level
+FROM
+  logs
+WHERE
+  created_at >= ?
+ORDER BY
+  created_at DESC
+LIMIT ? OFFSET ?
+`
+
+type GetLogsPaginatedParams struct {
+	CreatedAt time.Time `json:"created_at"`
+	Limit     int64     `json:"limit"`
+	Offset    int64     `json:"offset"`
+}
+
+func (q *Queries) GetLogsPaginated(ctx context.Context, arg GetLogsPaginatedParams) ([]Log, error) {
+	rows, err := q.db.QueryContext(ctx, getLogsPaginated, arg.CreatedAt, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

@@ -46,6 +46,22 @@ export const loginSchema = z.object({
 
 export const rbacPolicySchema = z.string();
 
+export const countLogsByLevelParamsSchema = z.object({
+  level: z.string(),
+  created_at: z.string(),
+});
+
+export const countLogsByServiceGroupParamsSchema = z.object({
+  service_group: z.string(),
+  created_at: z.string(),
+});
+
+export const countLogsByServiceGroupAndLevelParamsSchema = z.object({
+  service_group: z.string(),
+  level: z.string(),
+  created_at: z.string(),
+});
+
 export const createLogParamsSchema = z.object({
   user_id: z.number(),
   action: z.string(),
@@ -57,6 +73,15 @@ export const createLogParamsSchema = z.object({
 export const getLogsByServiceGroupAndLevelParamsSchema = z.object({
   service_group: z.string(),
   level: z.string(),
+  created_at: z.string(),
+  limit: z.number(),
+  offset: z.number(),
+});
+
+export const getLogsPaginatedParamsSchema = z.object({
+  created_at: z.string(),
+  limit: z.number(),
+  offset: z.number(),
 });
 
 export const upsertSessionParamsSchema = z.object({

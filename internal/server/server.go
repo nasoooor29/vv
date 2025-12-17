@@ -25,6 +25,7 @@ type Server struct {
 	authService    *services.AuthService
 	usersService   *services.UsersService
 	storageService *services.StorageService
+	logsService    *services.LogsService
 }
 
 func NewServer() *http.Server {
@@ -38,6 +39,7 @@ func NewServer() *http.Server {
 	authService := services.NewAuthService(db, logger)
 	usersService := services.NewUsersService(db, logger)
 	storageService := services.NewStorageService(logger)
+	logsService := services.NewLogsService(db, logger)
 
 	NewServer := &Server{
 		port:           port,
@@ -47,6 +49,7 @@ func NewServer() *http.Server {
 		authService:    authService,
 		usersService:   usersService,
 		storageService: storageService,
+		logsService:    logsService,
 	}
 
 	// Declare Server config
