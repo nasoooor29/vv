@@ -31,7 +31,7 @@ func NewUsersService(db *database.Service, dispatcher *utils.ErrorDispatcher) *U
 func (s *UsersService) GetAllUsers(c echo.Context) error {
 	users, err := s.db.User.GetAllUsers(c.Request().Context())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch users").SetInternal(err)
+		return s.dispatcher.NewInternalServerError("Failed to fetch users", err)
 	}
 
 	return c.JSON(http.StatusOK, users)
@@ -47,7 +47,7 @@ func (s *UsersService) GetUserById(c echo.Context) error {
 	// For now, this is a placeholder that assumes such a method exists
 	users, err := s.db.User.GetAllUsers(c.Request().Context())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch users").SetInternal(err)
+		return s.dispatcher.NewInternalServerError("Failed to fetch users", err)
 	}
 
 	for _, u := range users {
@@ -56,14 +56,14 @@ func (s *UsersService) GetUserById(c echo.Context) error {
 		}
 	}
 
-	return echo.NewHTTPError(http.StatusNotFound, "User not found")
+	return s.dispatcher.NewNotFound("User not found", nil)
 }
 
 // CreateUser creates a new user
 func (s *UsersService) CreateUser(c echo.Context) error {
 	p := user.CreateUserParams{}
 	if err := c.Bind(&p); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body").SetInternal(err)
+		return s.dispatcher.NewBadRequest("Invalid request body", err)
 	}
 
 	// Check if user already exists
@@ -72,8 +72,7 @@ func (s *UsersService) CreateUser(c echo.Context) error {
 		Username: p.Username,
 	})
 	if err == nil {
-		s.logger.Error("user already exists", "email", p.Email, "username", p.Username)
-		return echo.NewHTTPError(http.StatusConflict, "User already exists")
+		return s.dispatcher.NewConflict("User already exists", fmt.Errorf("user already exists: %v %v", p.Email, p.Username))
 	}
 
 	// If user doesn't have a role, assign "user" role
@@ -84,13 +83,13 @@ func (s *UsersService) CreateUser(c echo.Context) error {
 	// Hash password
 	bcryptPassword, err := bcrypt.GenerateFromPassword([]byte(p.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to hash password").SetInternal(err)
+		return s.dispatcher.NewInternalServerError("Failed to hash password", err)
 	}
 	p.Password = string(bcryptPassword)
 
 	newUser, err := s.db.User.CreateUser(c.Request().Context(), p)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create user").SetInternal(err)
+		return s.dispatcher.NewInternalServerError("Failed to create user", err)
 	}
 
 	return c.JSON(http.StatusOK, newUser)
@@ -106,7 +105,7 @@ func (s *UsersService) UpdateUser(c echo.Context) error {
 	}{}
 
 	if err := c.Bind(&p); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body").SetInternal(err)
+		return s.dispatcher.NewBadRequest("Invalid request body", err)
 	}
 
 	// Parse ID from URL param
@@ -125,7 +124,7 @@ func (s *UsersService) UpdateUser(c echo.Context) error {
 		ID:       id,
 	})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update user").SetInternal(err)
+		return s.dispatcher.NewInternalServerError("Failed to update user", err)
 	}
 
 	return c.JSON(http.StatusOK, updatedUser)
@@ -139,7 +138,7 @@ func (s *UsersService) DeleteUser(c echo.Context) error {
 
 	err := s.db.User.DeleteUser(c.Request().Context(), id)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete user").SetInternal(err)
+		return s.dispatcher.NewInternalServerError("Failed to delete user", err)
 	}
 
 	return c.NoContent(http.StatusOK)
@@ -153,7 +152,7 @@ func (s *UsersService) UpdateUserRole(c echo.Context) error {
 	}{}
 
 	if err := c.Bind(&p); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body").SetInternal(err)
+		return s.dispatcher.NewBadRequest("Invalid request body", err)
 	}
 
 	var id int64
@@ -169,7 +168,7 @@ func (s *UsersService) UpdateUserRole(c echo.Context) error {
 		ID:   id,
 	})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update user role").SetInternal(err)
+		return s.dispatcher.NewInternalServerError("Failed to update user role", err)
 	}
 
 	return c.JSON(http.StatusOK, updatedUser)

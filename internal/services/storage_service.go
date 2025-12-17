@@ -1,24 +1,24 @@
 package services
 
 import (
-	"log/slog"
 	"net/http"
 
 	storageService "visory/internal/storage"
+	"visory/internal/utils"
 
 	"github.com/labstack/echo/v4"
 )
 
 type StorageService struct {
-	logger *slog.Logger
+	dispatcher *utils.ErrorDispatcher
 }
 
 // NewStorageService creates a new StorageService with dependency injection
-func NewStorageService(logger *slog.Logger) *StorageService {
+func NewStorageService(logger *utils.ErrorDispatcher) *StorageService {
 	// Create a grouped logger for storage service
 	storageLogger := logger.WithGroup("storage")
 	return &StorageService{
-		logger: storageLogger,
+		dispatcher: storageLogger,
 	}
 }
 
@@ -26,8 +26,7 @@ func NewStorageService(logger *slog.Logger) *StorageService {
 func (s *StorageService) GetStorageDevices(c echo.Context) error {
 	devices, err := storageService.GetBlockDevices()
 	if err != nil {
-		s.logger.Error("failed to get block devices", "err", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get storage devices").SetInternal(err)
+		return s.dispatcher.NewInternalServerError("Failed to get storage devices", err)
 	}
 
 	return c.JSON(http.StatusOK, devices)
@@ -37,8 +36,7 @@ func (s *StorageService) GetStorageDevices(c echo.Context) error {
 func (s *StorageService) GetMountPoints(c echo.Context) error {
 	mountPoints, err := storageService.GetMountPoints()
 	if err != nil {
-		s.logger.Error("failed to get mount points", "err", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get mount points").SetInternal(err)
+		return s.dispatcher.NewInternalServerError("Failed to get mount points", err)
 	}
 
 	return c.JSON(http.StatusOK, mountPoints)
