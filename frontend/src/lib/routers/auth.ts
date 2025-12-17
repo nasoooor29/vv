@@ -8,7 +8,7 @@ export const authRouter = {
       path: "/auth/login",
     })
     .input(Z.loginSchema)
-    .output(Z.userSchema),
+    .output(Z.getUserAndSessionByTokenRowSchema),
 
   logout: base.route({
     method: "POST",
@@ -20,7 +20,7 @@ export const authRouter = {
       path: "/auth/register",
     })
     .input(Z.upsertUserParamsSchema)
-    .output(Z.userSchema),
+    .output(Z.getUserAndSessionByTokenRowSchema),
   me: base
     .route({
       method: "GET",

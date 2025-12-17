@@ -29,6 +29,13 @@ export const useSession = create<Store>()(
 // Poll every second to update session info AND initialize on load
 const initSession = async () => {
   try {
+    const pathName = window.location.pathname;
+    console.log("Current path:", pathName);
+    // if on auth page and no session, skip fetching
+    if (pathName.startsWith("/auth") && !useSession.getState().session) {
+      console.log("On auth page with no session, skipping session fetch");
+      return;
+    }
     const session = await client.auth.me();
     if (session) {
       useSession.getState().setSession(session);

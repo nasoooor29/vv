@@ -14,6 +14,7 @@ function AppLayout() {
   const data = useQuery(
     orpc.auth.me.queryOptions({
       staleTime: 1 * 1000, // 1 second
+      retry: 1,
     }),
   );
   const navigate = useNavigate();
