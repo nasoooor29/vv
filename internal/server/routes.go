@@ -16,7 +16,8 @@ import (
 
 func (s *Server) RegisterRoutes() http.Handler {
 	e := echo.New()
-	e.Use(s.logsService.LoggingMiddleware)
+
+	e.Use(s.RequestLogger())
 
 	// RequestLogger middleware with slog integration
 	// e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{

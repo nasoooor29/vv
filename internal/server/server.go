@@ -33,47 +33,11 @@ type Server struct {
 
 func NewServer() *http.Server {
 	port, _ := strconv.Atoi(models.ENV_VARS.Port)
-	// serverLogger := slog.New(utils.NewDaLog(
-	// 	os.Stdout,
-	// 	utils.DaLogStyleLongType1,
-	// 	&slog.HandlerOptions{
-	// 		Level: slog.LevelDebug,
-	// 	},
-	// ))
-	// serverLogger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-	// 	AddSource: true,
-	// 	Level:     slog.LevelDebug,
-	// 	ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
-	// 		if a.Key == slog.SourceKey {
-	// 			_, file, line, ok := runtime.Caller(6)
-	// 			if !ok {
-	// 				return a
-	// 			}
-	// 			shortFile := file
-	// 			lastSlash := -1
-	// 			for i := len(file) - 1; i >= 0; i-- {
-	// 				if file[i] == '/' {
-	// 					lastSlash = i
-	// 					break
-	// 				}
-	// 			}
-	// 			if lastSlash != -1 {
-	// 				shortFile = file[lastSlash+1:]
-	// 			}
-	// 			a.Value = slog.StringValue(fmt.Sprintf("%s:%d", shortFile, line))
-	// 			return a
-	// 		}
-	// 		if a.Key == "error" {
-	// 			a.Value = slog.StringValue(fmt.Sprintf("%v", a.Value))
-	// 			return a
-	// 		}
-	// 		return a
-	// 	},
-	// }))
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		AddSource: true,
-		Level:     slog.LevelDebug,
-	}))
+	logger := slog.New(utils.NewDaLog(
+		os.Stdout, utils.DaLogStyleLongType1, &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		},
+	))
 	slog.SetDefault(logger)
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 	db := database.New()
@@ -86,7 +50,7 @@ func NewServer() *http.Server {
 	authService := services.NewAuthService(db, serverLogger)
 	usersService := services.NewUsersService(db, logger)
 	storageService := services.NewStorageService(logger)
-	logsService := services.NewLogsService(db, logger)
+	logsService := services.NewLogsService(db, serverLogger)
 	metricsService := services.NewMetricsService(db, logger)
 
 	NewServer := &Server{

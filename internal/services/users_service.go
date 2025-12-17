@@ -2,28 +2,28 @@ package services
 
 import (
 	"fmt"
-	"log/slog"
 	"net/http"
 
 	"visory/internal/database"
 	"visory/internal/database/user"
+	"visory/internal/utils"
 
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UsersService struct {
-	db     *database.Service
-	logger *slog.Logger
+	db         *database.Service
+	dispatcher *utils.ErrorDispatcher
 }
 
 // NewUsersService creates a new UsersService with dependency injection
-func NewUsersService(db *database.Service, logger *slog.Logger) *UsersService {
+func NewUsersService(db *database.Service, dispatcher *utils.ErrorDispatcher) *UsersService {
 	// Create a grouped logger for users service
-	usersLogger := logger.WithGroup("users")
+	usersDispatcher := dispatcher.WithGroup("users")
 	return &UsersService{
-		db:     db,
-		logger: usersLogger,
+		db:         db,
+		dispatcher: usersDispatcher,
 	}
 }
 
@@ -31,7 +31,6 @@ func NewUsersService(db *database.Service, logger *slog.Logger) *UsersService {
 func (s *UsersService) GetAllUsers(c echo.Context) error {
 	users, err := s.db.User.GetAllUsers(c.Request().Context())
 	if err != nil {
-		s.logger.Error("error fetching users", "err", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch users").SetInternal(err)
 	}
 
@@ -48,7 +47,6 @@ func (s *UsersService) GetUserById(c echo.Context) error {
 	// For now, this is a placeholder that assumes such a method exists
 	users, err := s.db.User.GetAllUsers(c.Request().Context())
 	if err != nil {
-		s.logger.Error("error fetching users", "err", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch users").SetInternal(err)
 	}
 
@@ -86,14 +84,12 @@ func (s *UsersService) CreateUser(c echo.Context) error {
 	// Hash password
 	bcryptPassword, err := bcrypt.GenerateFromPassword([]byte(p.Password), bcrypt.DefaultCost)
 	if err != nil {
-		s.logger.Error("error hashing password", "err", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to hash password").SetInternal(err)
 	}
 	p.Password = string(bcryptPassword)
 
 	newUser, err := s.db.User.CreateUser(c.Request().Context(), p)
 	if err != nil {
-		s.logger.Error("error creating user", "err", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create user").SetInternal(err)
 	}
 
@@ -129,7 +125,6 @@ func (s *UsersService) UpdateUser(c echo.Context) error {
 		ID:       id,
 	})
 	if err != nil {
-		s.logger.Error("error updating user", "err", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update user").SetInternal(err)
 	}
 
@@ -144,7 +139,6 @@ func (s *UsersService) DeleteUser(c echo.Context) error {
 
 	err := s.db.User.DeleteUser(c.Request().Context(), id)
 	if err != nil {
-		s.logger.Error("error deleting user", "err", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete user").SetInternal(err)
 	}
 
@@ -175,7 +169,6 @@ func (s *UsersService) UpdateUserRole(c echo.Context) error {
 		ID:   id,
 	})
 	if err != nil {
-		s.logger.Error("error updating user role", "err", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update user role").SetInternal(err)
 	}
 

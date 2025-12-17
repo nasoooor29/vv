@@ -12,6 +12,20 @@ type LogResponse struct {
 	CreatedAt    time.Time `json:"created_at"`
 }
 
+type LogRequestData struct {
+	RequestId string        `json:"Request_id"`
+	UserId    int64         `json:"User_id"`
+	Method    string        `json:"Method"`
+	Path      string        `json:"Path"`
+	Uri       string        `json:"Uri"`
+	Status    int           `json:"Status"`
+	Latency   time.Duration `json:"Latency"`
+	RemoteIp  string        `json:"Remote_ip"`
+	UserAgent string        `json:"User_agent"`
+	Protocol  string        `json:"Protocol"`
+	Bytes     int64         `json:"Bytes"`
+	Error     any           `json:"Error"`
+}
 type GetLogsResponse struct {
 	Logs       []LogResponse `json:"logs"`
 	Total      int64         `json:"total"`

@@ -27,11 +27,13 @@ func TestHandler(t *testing.T) {
 	mySlog := utils.NewMySlog(logger, db)
 	s := &Server{
 		port:           9999,
-		logger:         logger,
+		logger:         mySlog,
 		db:             db,
 		authService:    services.NewAuthService(db, mySlog),
 		usersService:   services.NewUsersService(db, logger),
 		storageService: services.NewStorageService(logger),
+		logsService:    services.NewLogsService(db, logger),
+		metricsService: services.NewMetricsService(db, logger),
 	}
 
 	e := echo.New()

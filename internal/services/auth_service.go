@@ -2,6 +2,7 @@ package services
 
 import (
 	"database/sql"
+	"fmt"
 	"log/slog"
 	"maps"
 	"net/http"
@@ -35,7 +36,6 @@ func (s *AuthService) AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		cookie, err := c.Cookie(models.COOKIE_NAME)
 		if err != nil {
-			s.logger.Error("error happened", "err", err)
 			return s.logger.NewUnauthorized("Failed to get user by session token", err)
 		}
 		userWithSession, err := s.db.User.GetUserAndSessionByToken(c.Request().Context(), cookie.Value)
@@ -54,12 +54,11 @@ func (s *AuthService) RBACMiddleware(policies ...models.RBACPolicy) echo.Middlew
 		return func(c echo.Context) error {
 			cookie, err := c.Cookie(models.COOKIE_NAME)
 			if err != nil {
-				return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
+				return s.logger.NewUnauthorized("Failed to get user by session token", err)
 			}
 			user, err := s.db.User.GetBySessionToken(c.Request().Context(), cookie.Value)
 			if err != nil {
-				s.logger.Error("error happened", "err", err)
-				return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
+				return s.logger.NewUnauthorized("Failed to get user by session token", err)
 			}
 
 			user_roles := models.RoleToRBACPolicies(user.Role)
@@ -68,7 +67,7 @@ func (s *AuthService) RBACMiddleware(policies ...models.RBACPolicy) echo.Middlew
 			}
 			for _, policy := range policies {
 				if v, ok := user_roles[policy]; !ok || !v {
-					return echo.NewHTTPError(http.StatusForbidden, "Insufficient permissions")
+					return s.logger.NewForbidden("Insufficient permissions", err)
 				}
 			}
 
@@ -123,13 +122,11 @@ func (s *AuthService) initializeOAuth() map[string]goth.Provider {
 func (s *AuthService) Me(c echo.Context) error {
 	cookie, err := c.Cookie(models.COOKIE_NAME)
 	if err != nil {
-		s.logger.Error("error happened", "err", err)
-		return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
+		return s.logger.NewUnauthorized("Failed to get user by session token", err)
 	}
 	userWithSession, err := s.db.User.GetUserAndSessionByToken(c.Request().Context(), cookie.Value)
 	if err != nil {
-		s.logger.Error("error happened", "err", err)
-		return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
+		return s.logger.NewUnauthorized("Failed to get user by session token", err)
 	}
 	return c.JSON(http.StatusOK, userWithSession)
 }
@@ -138,13 +135,11 @@ func (s *AuthService) Me(c echo.Context) error {
 func (s *AuthService) Logout(c echo.Context) error {
 	cookie, err := c.Cookie(models.COOKIE_NAME)
 	if err != nil {
-		s.logger.Error("error happened", "err", err)
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid cookie").SetInternal(err)
+		return s.logger.NewBadRequest("Invalid cookie", err)
 	}
 
 	if err := s.db.Session.DeleteBySessionToken(c.Request().Context(), cookie.Value); err != nil {
-		s.logger.Error("error happened", "err", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to logout").SetInternal(err)
+		return s.logger.NewInternalServerError("Failed to logout", err)
 	}
 
 	cookie.MaxAge = -1 // Expire the cookie
@@ -157,30 +152,28 @@ func (s *AuthService) Logout(c echo.Context) error {
 func (s *AuthService) Register(c echo.Context) error {
 	p := user.UpsertUserParams{}
 	if err := c.Bind(&p); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body").SetInternal(err)
+		return s.logger.NewBadRequest("Invalid request body", err)
 	}
 	_, err := s.db.User.GetByEmailOrUsername(c.Request().Context(), user.GetByEmailOrUsernameParams{
 		Email:    p.Email,
 		Username: p.Username,
 	})
 	if err == nil {
-		s.logger.Error("user already exists", "email", p.Email, "username", p.Username)
-		return echo.NewHTTPError(http.StatusConflict, "User already exists")
+		return s.logger.NewConflict("User already exists", nil)
 	}
 	bcryptPassword, err := bcrypt.GenerateFromPassword([]byte(p.Password), bcrypt.DefaultCost)
 	if err != nil {
 		s.logger.Error("error hashing password", "err", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to hash password").SetInternal(err)
+		return s.logger.NewInternalServerError("Failed to hash password", err)
 	}
 	p.Password = string(bcryptPassword)
 	val, err := s.db.User.UpsertUser(c.Request().Context(), p)
 	if err != nil {
-		s.logger.Error("error happened", "err", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to register user").SetInternal(err)
+		return s.logger.NewInternalServerError("Failed to register user", err)
 	}
 	if err := s.generateCookie(c, val.ID); err != nil {
 		s.logger.Error("error generating cookie", "err", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to generate cookie").SetInternal(err)
+		return s.logger.NewInternalServerError("Failed to generate cookie", err)
 	}
 
 	return c.JSON(http.StatusOK, val)
@@ -190,30 +183,26 @@ func (s *AuthService) Register(c echo.Context) error {
 func (s *AuthService) Login(c echo.Context) error {
 	p := models.Login{}
 	if err := c.Bind(&p); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body").SetInternal(err)
+		return s.logger.NewBadRequest("Invalid request body", err)
 	}
 	val, err := s.db.User.GetByEmailOrUsername(c.Request().Context(), user.GetByEmailOrUsernameParams{
 		Email:    p.Username,
 		Username: p.Username,
 	})
 	if err == sql.ErrNoRows {
-		s.logger.Error("user not found", "username", p.Username)
 		return s.logger.NewNotFound("You don't have an account please register", err)
 	}
 	if err != nil {
-		s.logger.Error("error happened", "err", err)
-		return echo.NewHTTPError(http.StatusUnauthorized, "Failed to login user").SetInternal(err)
+		return s.logger.NewUnauthorized("Failed to login user", err)
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(val.Password), []byte(p.Password))
 	if err != nil {
-		s.logger.Error("your username or password is wrong", "err", err)
-		return echo.NewHTTPError(http.StatusUnauthorized, "your username or password is wrong").SetInternal(err)
+		return s.logger.NewUnauthorized("your username or password is wrong", err)
 	}
 
 	if err := s.generateCookie(c, val.ID); err != nil {
-		s.logger.Error("error generating cookie", "err", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to generate cookie").SetInternal(err)
+		return s.logger.NewInternalServerError("Failed to generate cookie", err)
 	}
 
 	return c.JSON(http.StatusOK, val)
@@ -224,7 +213,7 @@ func (s *AuthService) OAuthLogin(c echo.Context) error {
 	provider := c.Param("provider")
 	_, ok := s.OAuthProviders[provider]
 	if !ok {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid OAuth provider")
+		return s.logger.NewBadRequest("Invalid OAuth provider", fmt.Errorf("provider %s not supported", provider))
 	}
 
 	// Add provider context to the request
@@ -235,7 +224,7 @@ func (s *AuthService) OAuthLogin(c echo.Context) error {
 	authURL, err := gothic.GetAuthURL(c.Response(), c.Request())
 	if err != nil {
 		s.logger.Error("failed to get authorization URL", "provider", provider, "err", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to initiate OAuth")
+		return s.logger.NewInternalServerError("Failed to initiate OAuth", err)
 	}
 
 	return c.Redirect(http.StatusFound, authURL)
@@ -246,7 +235,7 @@ func (s *AuthService) OAuthCallback(c echo.Context) error {
 	provider := c.Param("provider")
 	_, ok := s.OAuthProviders[provider]
 	if !ok {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid OAuth provider")
+		return s.logger.NewBadRequest("Invalid OAuth provider", nil)
 	}
 
 	// Add provider context to the request
@@ -256,8 +245,7 @@ func (s *AuthService) OAuthCallback(c echo.Context) error {
 	// Get the gothic user from the callback using the request and response
 	gothUser, err := gothic.CompleteUserAuth(c.Response(), c.Request())
 	if err != nil {
-		s.logger.Error("failed to complete user auth", "provider", provider, "err", err)
-		return echo.NewHTTPError(http.StatusUnauthorized, "Failed to authorize with OAuth provider")
+		return s.logger.NewUnauthorized("Failed to authorize with OAuth provider", nil)
 	}
 
 	// Check if user already exists
@@ -272,14 +260,13 @@ func (s *AuthService) OAuthCallback(c echo.Context) error {
 		// Generate a random password for OAuth users
 		randomPassword, err := uuid.NewV4()
 		if err != nil {
-			s.logger.Error("failed to generate random password", "err", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to generate user")
+			return s.logger.NewInternalServerError("Failed to generate user", err)
 		}
 
 		bcryptPassword, err := bcrypt.GenerateFromPassword([]byte(randomPassword.String()), bcrypt.DefaultCost)
 		if err != nil {
 			s.logger.Error("error hashing password", "err", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to hash password")
+			return s.logger.NewInternalServerError("Failed to hash password", err)
 		}
 
 		newUser, err := s.db.User.UpsertUser(c.Request().Context(), user.UpsertUserParams{
@@ -289,13 +276,12 @@ func (s *AuthService) OAuthCallback(c echo.Context) error {
 			Role:     "user",
 		})
 		if err != nil {
-			s.logger.Error("failed to create user", "email", gothUser.Email, "err", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create user")
+			return s.logger.NewInternalServerError("Failed to create user", err)
 		}
 		userId = newUser.ID
 	} else if err != nil {
 		s.logger.Error("failed to check user existence", "err", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to check user")
+		return s.logger.NewInternalServerError("Failed to check user", err)
 	} else {
 		// User exists, use their ID
 		userId = existingUser.ID
@@ -304,7 +290,7 @@ func (s *AuthService) OAuthCallback(c echo.Context) error {
 	// Generate session cookie
 	if err := s.generateCookie(c, userId); err != nil {
 		s.logger.Error("error generating cookie", "err", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to generate session")
+		return s.logger.NewInternalServerError("Failed to generate session", err)
 	}
 
 	// Redirect to dashboard on frontend
@@ -315,8 +301,7 @@ func (s *AuthService) OAuthCallback(c echo.Context) error {
 func (s *AuthService) generateCookie(c echo.Context, userId int64) error {
 	uid, err := uuid.NewV4()
 	if err != nil {
-		s.logger.Error("error happened", "err", err)
-		return err
+		return s.logger.NewInternalServerError("Failed to generate session token", err)
 	}
 
 	_, err = s.db.Session.UpsertSession(c.Request().Context(), dbsessions.UpsertSessionParams{
@@ -324,8 +309,7 @@ func (s *AuthService) generateCookie(c echo.Context, userId int64) error {
 		SessionToken: uid.String(),
 	})
 	if err != nil {
-		s.logger.Error("error happened", "err", err)
-		return err
+		return s.logger.NewInternalServerError("Failed to create session", err)
 	}
 
 	cookie := http.Cookie{

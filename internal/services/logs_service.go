@@ -3,32 +3,28 @@ package services
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
-	"fmt"
-	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
 
 	"visory/internal/database"
 	"visory/internal/database/logs"
-	"visory/internal/database/user"
 	"visory/internal/models"
+	"visory/internal/utils"
 
-	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 )
 
 type LogsService struct {
-	db     *database.Service
-	logger *slog.Logger
+	db         *database.Service
+	dispatcher *utils.ErrorDispatcher
 }
 
 // NewLogsService creates a new LogsService with dependency injection
-func NewLogsService(db *database.Service, logger *slog.Logger) *LogsService {
+func NewLogsService(db *database.Service, logger *utils.ErrorDispatcher) *LogsService {
 	return &LogsService{
-		db:     db,
-		logger: logger.WithGroup("logs"),
+		db:         db,
+		dispatcher: logger.WithGroup("logs"),
 	}
 }
 
@@ -41,55 +37,12 @@ type GetLogsRequest struct {
 	Days         int    `query:"days"` // Filter logs from last N days
 }
 
-func (s *LogsService) LoggingMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		start := time.Now()
-		rid, err := uuid.NewV4()
-		if err != nil {
-			s.logger.Error("failed to generate request ID", "error", err)
-			rid = uuid.Nil
-		}
-		c.Set("RequestId", rid.String())
-
-		err = next(c)
-		data := map[string]any{
-			"UserID":    -1,
-			"RequestId": rid.String(),
-			"Latency":   time.Duration(time.Since(start).Milliseconds()),
-			"headers":   c.Request().Header,
-			"protocol":  c.Request().Proto,
-			"method":    c.Request().Method,
-			"uri":       c.Request().RequestURI,
-			"remoteIP":  c.RealIP(),
-			"host":      c.Request().Host,
-			"startTime": start.Format(time.RFC3339),
-			"userAgent": c.Request().UserAgent(),
-			"status":    c.Response().Status,
-			"error":     nil,
-		}
-
-		userWithSession, ok := c.Get("userWithSession").(*user.GetUserAndSessionByTokenRow)
-		if ok && userWithSession != nil {
-			data["UserID"] = userWithSession.User.ID
-		}
-		// pretty print
-		jsonifiedDetails, err := json.MarshalIndent(data, "", "  ")
-		if err != nil {
-			s.logger.Error("failed to marshal log details", "error", err)
-			return err
-		}
-		fmt.Printf("Request Log:\n%s\n", string(jsonifiedDetails))
-
-		return err
-	}
-}
-
 // GetLogs retrieves logs with filtering and pagination
 func (s *LogsService) GetLogs(c echo.Context) error {
 	req := new(GetLogsRequest)
 	if err := c.Bind(req); err != nil {
-		s.logger.Error("failed to parse query params", "error", err)
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid query parameters")
+		// s.dispatcher.Error("failed to parse query params", "error", err)
+		return s.dispatcher.NewBadRequest("invalid query parameters", err)
 	}
 
 	// Set defaults
@@ -125,8 +78,7 @@ func (s *LogsService) GetLogs(c echo.Context) error {
 			Offset:       offset,
 		})
 		if err != nil && err != sql.ErrNoRows {
-			s.logger.Error("failed to get logs", "error", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to retrieve logs")
+			return s.dispatcher.NewInternalServerError("failed to retrieve logs", err)
 		}
 		// Get total count
 		total, err = s.db.Log.CountLogsByServiceGroupAndLevel(ctx, logs.CountLogsByServiceGroupAndLevelParams{
@@ -143,8 +95,7 @@ func (s *LogsService) GetLogs(c echo.Context) error {
 			Offset:       offset,
 		})
 		if err != nil && err != sql.ErrNoRows {
-			s.logger.Error("failed to get logs", "error", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to retrieve logs")
+			return s.dispatcher.NewInternalServerError("failed to retrieve logs", err)
 		}
 		total, err = s.db.Log.CountLogsByServiceGroup(ctx, logs.CountLogsByServiceGroupParams{
 			ServiceGroup: req.ServiceGroup,
@@ -159,8 +110,7 @@ func (s *LogsService) GetLogs(c echo.Context) error {
 			Offset:    offset,
 		})
 		if err != nil && err != sql.ErrNoRows {
-			s.logger.Error("failed to get logs", "error", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to retrieve logs")
+			return s.dispatcher.NewInternalServerError("failed to retrieve logs", err)
 		}
 		total, err = s.db.Log.CountLogsByLevel(ctx, logs.CountLogsByLevelParams{
 			Level:     req.Level,
@@ -174,15 +124,13 @@ func (s *LogsService) GetLogs(c echo.Context) error {
 			Offset:    offset,
 		})
 		if err != nil && err != sql.ErrNoRows {
-			s.logger.Error("failed to get logs", "error", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to retrieve logs")
+			return s.dispatcher.NewInternalServerError("failed to retrieve logs", err)
 		}
 		total, err = s.db.Log.CountLogs(ctx, since)
 	}
 
 	if err != nil && err != sql.ErrNoRows {
-		s.logger.Error("failed to count logs", "error", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to count logs")
+		return s.dispatcher.NewInternalServerError("failed to count logs", err)
 	}
 
 	// Convert to response format
@@ -209,12 +157,12 @@ func (s *LogsService) GetLogs(c echo.Context) error {
 		TotalPages: totalPages,
 	}
 
-	s.logger.Info("logs retrieved",
-		slog.Int("count", len(logsList)),
-		slog.Int64("total", total),
-		slog.String("service_group", req.ServiceGroup),
-		slog.String("level", req.Level),
-	)
+	// s.dispatcher.Info("logs retrieved",
+	// 	slog.Int("count", len(logsList)),
+	// 	slog.Int64("total", total),
+	// 	slog.String("service_group", req.ServiceGroup),
+	// 	slog.String("level", req.Level),
+	// )
 
 	return c.JSON(http.StatusOK, response)
 }
@@ -233,22 +181,19 @@ func (s *LogsService) GetLogStats(c echo.Context) error {
 	// Get total logs
 	total, err := s.db.Log.CountLogs(ctx, since)
 	if err != nil {
-		s.logger.Error("failed to count logs", "error", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to retrieve stats")
+		return s.dispatcher.NewInternalServerError("failed to retrieve stats", err)
 	}
 
 	// Get service groups
 	serviceGroups, err := s.db.Log.GetDistinctServiceGroups(ctx, since)
 	if err != nil && err != sql.ErrNoRows {
-		s.logger.Error("failed to get service groups", "error", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to retrieve stats")
+		return s.dispatcher.NewInternalServerError("failed to retrieve stats", err)
 	}
 
 	// Get log levels
 	levels, err := s.db.Log.GetDistinctLevels(ctx, since)
 	if err != nil && err != sql.ErrNoRows {
-		s.logger.Error("failed to get levels", "error", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to retrieve stats")
+		return s.dispatcher.NewInternalServerError("failed to retrieve stats", err)
 	}
 
 	response := models.LogStatsResponse{
@@ -277,13 +222,12 @@ func (s *LogsService) ClearOldLogs(c echo.Context) error {
 	// Delete logs older than retention period
 	err := s.db.Log.DeleteLogsOlderThan(ctx, before)
 	if err != nil {
-		s.logger.Error("failed to delete old logs", "error", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete logs")
+		return s.dispatcher.NewInternalServerError("failed to delete logs", err)
 	}
 
-	s.logger.Info("old logs deleted",
-		slog.Int("days_retained", days),
-	)
+	// s.dispatcher.Info("old logs deleted",
+	// 	slog.Int("days_retained", days),
+	// )
 
 	response := models.ClearOldLogsResponse{
 		RetentionDays: days,
