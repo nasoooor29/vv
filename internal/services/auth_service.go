@@ -28,7 +28,8 @@ import (
 
 type AuthService struct {
 	db             *database.Service
-	dispatcher     *utils.Dispatcher
+	Dispatcher     *utils.Dispatcher
+	Logger         *slog.Logger
 	OAuthProviders map[string]goth.Provider
 }
 
@@ -36,11 +37,11 @@ func (s *AuthService) AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		cookie, err := c.Cookie(models.COOKIE_NAME)
 		if err != nil {
-			return s.dispatcher.NewUnauthorized("Failed to get user by session token", err)
+			return s.Dispatcher.NewUnauthorized("Failed to get user by session token", err)
 		}
 		userWithSession, err := s.db.User.GetUserAndSessionByToken(c.Request().Context(), cookie.Value)
 		if err != nil {
-			return s.dispatcher.NewUnauthorized("Failed to get user by session token", err)
+			return s.Dispatcher.NewUnauthorized("Failed to get user by session token", err)
 		}
 		// NOTE: check if session is expired
 		c.Set("userWithSession", userWithSession)
@@ -54,11 +55,11 @@ func (s *AuthService) RBACMiddleware(policies ...models.RBACPolicy) echo.Middlew
 		return func(c echo.Context) error {
 			cookie, err := c.Cookie(models.COOKIE_NAME)
 			if err != nil {
-				return s.dispatcher.NewUnauthorized("Failed to get user by session token", err)
+				return s.Dispatcher.NewUnauthorized("Failed to get user by session token", err)
 			}
 			user, err := s.db.User.GetBySessionToken(c.Request().Context(), cookie.Value)
 			if err != nil {
-				return s.dispatcher.NewUnauthorized("Failed to get user by session token", err)
+				return s.Dispatcher.NewUnauthorized("Failed to get user by session token", err)
 			}
 
 			user_roles := models.RoleToRBACPolicies(user.Role)
@@ -67,7 +68,7 @@ func (s *AuthService) RBACMiddleware(policies ...models.RBACPolicy) echo.Middlew
 			}
 			for _, policy := range policies {
 				if v, ok := user_roles[policy]; !ok || !v {
-					return s.dispatcher.NewForbidden("Insufficient permissions", err)
+					return s.Dispatcher.NewForbidden("Insufficient permissions", err)
 				}
 			}
 
@@ -77,12 +78,12 @@ func (s *AuthService) RBACMiddleware(policies ...models.RBACPolicy) echo.Middlew
 }
 
 // NewAuthService creates a new AuthService with dependency injection
-func NewAuthService(db *database.Service, dispatcher *utils.Dispatcher) *AuthService {
+func NewAuthService(db *database.Service, dispatcher *utils.Dispatcher, logger *slog.Logger) *AuthService {
 	// Create a grouped logger for auth service
-	authDispatcher := dispatcher.WithGroup("auth")
 	authService := &AuthService{
 		db:         db,
-		dispatcher: authDispatcher,
+		Dispatcher: dispatcher.WithGroup("auth"),
+		Logger:     logger.WithGroup("auth"),
 	}
 	providers := authService.initializeOAuth()
 	authService.OAuthProviders = providers
@@ -122,11 +123,11 @@ func (s *AuthService) initializeOAuth() map[string]goth.Provider {
 func (s *AuthService) Me(c echo.Context) error {
 	cookie, err := c.Cookie(models.COOKIE_NAME)
 	if err != nil {
-		return s.dispatcher.NewUnauthorized("Failed to get user by session token", err)
+		return s.Dispatcher.NewUnauthorized("Failed to get user by session token", err)
 	}
 	userWithSession, err := s.db.User.GetUserAndSessionByToken(c.Request().Context(), cookie.Value)
 	if err != nil {
-		return s.dispatcher.NewUnauthorized("Failed to get user by session token", err)
+		return s.Dispatcher.NewUnauthorized("Failed to get user by session token", err)
 	}
 	return c.JSON(http.StatusOK, userWithSession)
 }
@@ -135,11 +136,11 @@ func (s *AuthService) Me(c echo.Context) error {
 func (s *AuthService) Logout(c echo.Context) error {
 	cookie, err := c.Cookie(models.COOKIE_NAME)
 	if err != nil {
-		return s.dispatcher.NewBadRequest("Invalid cookie", err)
+		return s.Dispatcher.NewBadRequest("Invalid cookie", err)
 	}
 
 	if err := s.db.Session.DeleteBySessionToken(c.Request().Context(), cookie.Value); err != nil {
-		return s.dispatcher.NewInternalServerError("Failed to logout", err)
+		return s.Dispatcher.NewInternalServerError("Failed to logout", err)
 	}
 
 	cookie.MaxAge = -1 // Expire the cookie
@@ -152,26 +153,26 @@ func (s *AuthService) Logout(c echo.Context) error {
 func (s *AuthService) Register(c echo.Context) error {
 	p := user.UpsertUserParams{}
 	if err := c.Bind(&p); err != nil {
-		return s.dispatcher.NewBadRequest("Invalid request body", err)
+		return s.Dispatcher.NewBadRequest("Invalid request body", err)
 	}
 	_, err := s.db.User.GetByEmailOrUsername(c.Request().Context(), user.GetByEmailOrUsernameParams{
 		Email:    p.Email,
 		Username: p.Username,
 	})
 	if err == nil {
-		return s.dispatcher.NewConflict("User already exists", nil)
+		return s.Dispatcher.NewConflict("User already exists", nil)
 	}
 	bcryptPassword, err := bcrypt.GenerateFromPassword([]byte(p.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return s.dispatcher.NewInternalServerError("Failed to hash password", err)
+		return s.Dispatcher.NewInternalServerError("Failed to hash password", err)
 	}
 	p.Password = string(bcryptPassword)
 	val, err := s.db.User.UpsertUser(c.Request().Context(), p)
 	if err != nil {
-		return s.dispatcher.NewInternalServerError("Failed to register user", err)
+		return s.Dispatcher.NewInternalServerError("Failed to register user", err)
 	}
 	if err := s.generateCookie(c, val.ID); err != nil {
-		return s.dispatcher.NewInternalServerError("Failed to generate cookie", err)
+		return s.Dispatcher.NewInternalServerError("Failed to generate cookie", err)
 	}
 
 	return c.JSON(http.StatusOK, val)
@@ -181,26 +182,26 @@ func (s *AuthService) Register(c echo.Context) error {
 func (s *AuthService) Login(c echo.Context) error {
 	p := models.Login{}
 	if err := c.Bind(&p); err != nil {
-		return s.dispatcher.NewBadRequest("Invalid request body", err)
+		return s.Dispatcher.NewBadRequest("Invalid request body", err)
 	}
 	val, err := s.db.User.GetByEmailOrUsername(c.Request().Context(), user.GetByEmailOrUsernameParams{
 		Email:    p.Username,
 		Username: p.Username,
 	})
 	if err == sql.ErrNoRows {
-		return s.dispatcher.NewNotFound("You don't have an account please register", err)
+		return s.Dispatcher.NewNotFound("You don't have an account please register", err)
 	}
 	if err != nil {
-		return s.dispatcher.NewUnauthorized("Failed to login user", err)
+		return s.Dispatcher.NewUnauthorized("Failed to login user", err)
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(val.Password), []byte(p.Password))
 	if err != nil {
-		return s.dispatcher.NewUnauthorized("your username or password is wrong", err)
+		return s.Dispatcher.NewUnauthorized("your username or password is wrong", err)
 	}
 
 	if err := s.generateCookie(c, val.ID); err != nil {
-		return s.dispatcher.NewInternalServerError("Failed to generate cookie", err)
+		return s.Dispatcher.NewInternalServerError("Failed to generate cookie", err)
 	}
 
 	return c.JSON(http.StatusOK, val)
@@ -211,7 +212,7 @@ func (s *AuthService) OAuthLogin(c echo.Context) error {
 	provider := c.Param("provider")
 	_, ok := s.OAuthProviders[provider]
 	if !ok {
-		return s.dispatcher.NewBadRequest("Invalid OAuth provider", fmt.Errorf("provider %s not supported", provider))
+		return s.Dispatcher.NewBadRequest("Invalid OAuth provider", fmt.Errorf("provider %s not supported", provider))
 	}
 
 	// Add provider context to the request
@@ -221,7 +222,7 @@ func (s *AuthService) OAuthLogin(c echo.Context) error {
 	// Get the OAuth URL using gothic
 	authURL, err := gothic.GetAuthURL(c.Response(), c.Request())
 	if err != nil {
-		return s.dispatcher.NewInternalServerError("Failed to initiate OAuth", nil, "failed to get authorization URL", "provider", provider, "err", err)
+		return s.Dispatcher.NewInternalServerError("Failed to initiate OAuth", nil, "failed to get authorization URL", "provider", provider, "err", err)
 	}
 
 	return c.Redirect(http.StatusFound, authURL)
@@ -232,7 +233,7 @@ func (s *AuthService) OAuthCallback(c echo.Context) error {
 	provider := c.Param("provider")
 	_, ok := s.OAuthProviders[provider]
 	if !ok {
-		return s.dispatcher.NewBadRequest("Invalid OAuth provider", nil)
+		return s.Dispatcher.NewBadRequest("Invalid OAuth provider", nil)
 	}
 
 	// Add provider context to the request
@@ -242,7 +243,7 @@ func (s *AuthService) OAuthCallback(c echo.Context) error {
 	// Get the gothic user from the callback using the request and response
 	gothUser, err := gothic.CompleteUserAuth(c.Response(), c.Request())
 	if err != nil {
-		return s.dispatcher.NewUnauthorized("Failed to authorize with OAuth provider", nil)
+		return s.Dispatcher.NewUnauthorized("Failed to authorize with OAuth provider", nil)
 	}
 
 	// Check if user already exists
@@ -257,12 +258,12 @@ func (s *AuthService) OAuthCallback(c echo.Context) error {
 		// Generate a random password for OAuth users
 		randomPassword, err := uuid.NewV4()
 		if err != nil {
-			return s.dispatcher.NewInternalServerError("Failed to generate user", err)
+			return s.Dispatcher.NewInternalServerError("Failed to generate user", err)
 		}
 
 		bcryptPassword, err := bcrypt.GenerateFromPassword([]byte(randomPassword.String()), bcrypt.DefaultCost)
 		if err != nil {
-			return s.dispatcher.NewInternalServerError("Failed to hash password", err)
+			return s.Dispatcher.NewInternalServerError("Failed to hash password", err)
 		}
 
 		newUser, err := s.db.User.UpsertUser(c.Request().Context(), user.UpsertUserParams{
@@ -272,11 +273,11 @@ func (s *AuthService) OAuthCallback(c echo.Context) error {
 			Role:     "user",
 		})
 		if err != nil {
-			return s.dispatcher.NewInternalServerError("Failed to create user", err)
+			return s.Dispatcher.NewInternalServerError("Failed to create user", err)
 		}
 		userId = newUser.ID
 	} else if err != nil {
-		return s.dispatcher.NewInternalServerError("Failed to check user", err)
+		return s.Dispatcher.NewInternalServerError("Failed to check user", err)
 	} else {
 		// User exists, use their ID
 		userId = existingUser.ID
@@ -284,7 +285,7 @@ func (s *AuthService) OAuthCallback(c echo.Context) error {
 
 	// Generate session cookie
 	if err := s.generateCookie(c, userId); err != nil {
-		return s.dispatcher.NewInternalServerError("Failed to generate session", err)
+		return s.Dispatcher.NewInternalServerError("Failed to generate session", err)
 	}
 
 	// Redirect to dashboard on frontend
@@ -295,7 +296,7 @@ func (s *AuthService) OAuthCallback(c echo.Context) error {
 func (s *AuthService) generateCookie(c echo.Context, userId int64) error {
 	uid, err := uuid.NewV4()
 	if err != nil {
-		return s.dispatcher.NewInternalServerError("Failed to generate session token", err)
+		return s.Dispatcher.NewInternalServerError("Failed to generate session token", err)
 	}
 
 	_, err = s.db.Session.UpsertSession(c.Request().Context(), dbsessions.UpsertSessionParams{
@@ -303,7 +304,7 @@ func (s *AuthService) generateCookie(c echo.Context, userId int64) error {
 		SessionToken: uid.String(),
 	})
 	if err != nil {
-		return s.dispatcher.NewInternalServerError("Failed to create session", err)
+		return s.Dispatcher.NewInternalServerError("Failed to create session", err)
 	}
 
 	cookie := http.Cookie{

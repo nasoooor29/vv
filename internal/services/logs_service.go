@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"database/sql"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
@@ -17,14 +18,16 @@ import (
 
 type LogsService struct {
 	db         *database.Service
-	dispatcher *utils.Dispatcher
+	Dispatcher *utils.Dispatcher
+	Logger     *slog.Logger
 }
 
 // NewLogsService creates a new LogsService with dependency injection
-func NewLogsService(db *database.Service, dispatcher *utils.Dispatcher) *LogsService {
+func NewLogsService(db *database.Service, dispatcher *utils.Dispatcher, logger *slog.Logger) *LogsService {
 	return &LogsService{
 		db:         db,
-		dispatcher: dispatcher.WithGroup("logs"),
+		Dispatcher: dispatcher.WithGroup("logs"),
+		Logger:     logger.WithGroup("logs"),
 	}
 }
 
@@ -42,7 +45,7 @@ func (s *LogsService) GetLogs(c echo.Context) error {
 	req := new(GetLogsRequest)
 	if err := c.Bind(req); err != nil {
 		// s.dispatcher.Error("failed to parse query params", "error", err)
-		return s.dispatcher.NewBadRequest("invalid query parameters", err)
+		return s.Dispatcher.NewBadRequest("invalid query parameters", err)
 	}
 
 	// Set defaults
@@ -78,7 +81,7 @@ func (s *LogsService) GetLogs(c echo.Context) error {
 			Offset:       offset,
 		})
 		if err != nil && err != sql.ErrNoRows {
-			return s.dispatcher.NewInternalServerError("failed to retrieve logs", err)
+			return s.Dispatcher.NewInternalServerError("failed to retrieve logs", err)
 		}
 		// Get total count
 		total, err = s.db.Log.CountLogsByServiceGroupAndLevel(ctx, logs.CountLogsByServiceGroupAndLevelParams{
@@ -95,7 +98,7 @@ func (s *LogsService) GetLogs(c echo.Context) error {
 			Offset:       offset,
 		})
 		if err != nil && err != sql.ErrNoRows {
-			return s.dispatcher.NewInternalServerError("failed to retrieve logs", err)
+			return s.Dispatcher.NewInternalServerError("failed to retrieve logs", err)
 		}
 		total, err = s.db.Log.CountLogsByServiceGroup(ctx, logs.CountLogsByServiceGroupParams{
 			ServiceGroup: req.ServiceGroup,
@@ -110,7 +113,7 @@ func (s *LogsService) GetLogs(c echo.Context) error {
 			Offset:    offset,
 		})
 		if err != nil && err != sql.ErrNoRows {
-			return s.dispatcher.NewInternalServerError("failed to retrieve logs", err)
+			return s.Dispatcher.NewInternalServerError("failed to retrieve logs", err)
 		}
 		total, err = s.db.Log.CountLogsByLevel(ctx, logs.CountLogsByLevelParams{
 			Level:     req.Level,
@@ -124,13 +127,13 @@ func (s *LogsService) GetLogs(c echo.Context) error {
 			Offset:    offset,
 		})
 		if err != nil && err != sql.ErrNoRows {
-			return s.dispatcher.NewInternalServerError("failed to retrieve logs", err)
+			return s.Dispatcher.NewInternalServerError("failed to retrieve logs", err)
 		}
 		total, err = s.db.Log.CountLogs(ctx, since)
 	}
 
 	if err != nil && err != sql.ErrNoRows {
-		return s.dispatcher.NewInternalServerError("failed to count logs", err)
+		return s.Dispatcher.NewInternalServerError("failed to count logs", err)
 	}
 
 	// Convert to response format
@@ -181,19 +184,19 @@ func (s *LogsService) GetLogStats(c echo.Context) error {
 	// Get total logs
 	total, err := s.db.Log.CountLogs(ctx, since)
 	if err != nil {
-		return s.dispatcher.NewInternalServerError("failed to retrieve stats", err)
+		return s.Dispatcher.NewInternalServerError("failed to retrieve stats", err)
 	}
 
 	// Get service groups
 	serviceGroups, err := s.db.Log.GetDistinctServiceGroups(ctx, since)
 	if err != nil && err != sql.ErrNoRows {
-		return s.dispatcher.NewInternalServerError("failed to retrieve stats", err)
+		return s.Dispatcher.NewInternalServerError("failed to retrieve stats", err)
 	}
 
 	// Get log levels
 	levels, err := s.db.Log.GetDistinctLevels(ctx, since)
 	if err != nil && err != sql.ErrNoRows {
-		return s.dispatcher.NewInternalServerError("failed to retrieve stats", err)
+		return s.Dispatcher.NewInternalServerError("failed to retrieve stats", err)
 	}
 
 	response := models.LogStatsResponse{
@@ -222,7 +225,7 @@ func (s *LogsService) ClearOldLogs(c echo.Context) error {
 	// Delete logs older than retention period
 	err := s.db.Log.DeleteLogsOlderThan(ctx, before)
 	if err != nil {
-		return s.dispatcher.NewInternalServerError("failed to delete logs", err)
+		return s.Dispatcher.NewInternalServerError("failed to delete logs", err)
 	}
 
 	// s.dispatcher.Info("old logs deleted",

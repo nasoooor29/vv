@@ -50,6 +50,7 @@ func (m *Dispatcher) InsertIntoDB(data models.LogRequestData) error {
 	if len(m.Groups) > 0 {
 		grp = m.Groups[len(m.Groups)-1]
 	}
+	fmt.Printf("m.Groups: %v\n", m.Groups)
 
 	levelStr, _ := StatusCodeToLogLevel(data.Status)
 

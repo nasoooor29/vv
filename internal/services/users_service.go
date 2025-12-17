@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"visory/internal/database"
@@ -14,16 +15,17 @@ import (
 
 type UsersService struct {
 	db         *database.Service
-	dispatcher *utils.Dispatcher
+	Dispatcher *utils.Dispatcher
+	Logger     *slog.Logger
 }
 
 // NewUsersService creates a new UsersService with dependency injection
-func NewUsersService(db *database.Service, dispatcher *utils.Dispatcher) *UsersService {
+func NewUsersService(db *database.Service, dispatcher *utils.Dispatcher, logger *slog.Logger) *UsersService {
 	// Create a grouped logger for users service
-	usersDispatcher := dispatcher.WithGroup("users")
 	return &UsersService{
 		db:         db,
-		dispatcher: usersDispatcher,
+		Dispatcher: dispatcher.WithGroup("users"),
+		Logger:     logger.WithGroup("users"),
 	}
 }
 
@@ -31,7 +33,7 @@ func NewUsersService(db *database.Service, dispatcher *utils.Dispatcher) *UsersS
 func (s *UsersService) GetAllUsers(c echo.Context) error {
 	users, err := s.db.User.GetAllUsers(c.Request().Context())
 	if err != nil {
-		return s.dispatcher.NewInternalServerError("Failed to fetch users", err)
+		return s.Dispatcher.NewInternalServerError("Failed to fetch users", err)
 	}
 
 	return c.JSON(http.StatusOK, users)
@@ -47,7 +49,7 @@ func (s *UsersService) GetUserById(c echo.Context) error {
 	// For now, this is a placeholder that assumes such a method exists
 	users, err := s.db.User.GetAllUsers(c.Request().Context())
 	if err != nil {
-		return s.dispatcher.NewInternalServerError("Failed to fetch users", err)
+		return s.Dispatcher.NewInternalServerError("Failed to fetch users", err)
 	}
 
 	for _, u := range users {
@@ -56,14 +58,14 @@ func (s *UsersService) GetUserById(c echo.Context) error {
 		}
 	}
 
-	return s.dispatcher.NewNotFound("User not found", nil)
+	return s.Dispatcher.NewNotFound("User not found", nil)
 }
 
 // CreateUser creates a new user
 func (s *UsersService) CreateUser(c echo.Context) error {
 	p := user.CreateUserParams{}
 	if err := c.Bind(&p); err != nil {
-		return s.dispatcher.NewBadRequest("Invalid request body", err)
+		return s.Dispatcher.NewBadRequest("Invalid request body", err)
 	}
 
 	// Check if user already exists
@@ -72,7 +74,7 @@ func (s *UsersService) CreateUser(c echo.Context) error {
 		Username: p.Username,
 	})
 	if err == nil {
-		return s.dispatcher.NewConflict("User already exists", fmt.Errorf("user already exists: %v %v", p.Email, p.Username))
+		return s.Dispatcher.NewConflict("User already exists", fmt.Errorf("user already exists: %v %v", p.Email, p.Username))
 	}
 
 	// If user doesn't have a role, assign "user" role
@@ -83,13 +85,13 @@ func (s *UsersService) CreateUser(c echo.Context) error {
 	// Hash password
 	bcryptPassword, err := bcrypt.GenerateFromPassword([]byte(p.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return s.dispatcher.NewInternalServerError("Failed to hash password", err)
+		return s.Dispatcher.NewInternalServerError("Failed to hash password", err)
 	}
 	p.Password = string(bcryptPassword)
 
 	newUser, err := s.db.User.CreateUser(c.Request().Context(), p)
 	if err != nil {
-		return s.dispatcher.NewInternalServerError("Failed to create user", err)
+		return s.Dispatcher.NewInternalServerError("Failed to create user", err)
 	}
 
 	return c.JSON(http.StatusOK, newUser)
@@ -105,7 +107,7 @@ func (s *UsersService) UpdateUser(c echo.Context) error {
 	}{}
 
 	if err := c.Bind(&p); err != nil {
-		return s.dispatcher.NewBadRequest("Invalid request body", err)
+		return s.Dispatcher.NewBadRequest("Invalid request body", err)
 	}
 
 	// Parse ID from URL param
@@ -124,7 +126,7 @@ func (s *UsersService) UpdateUser(c echo.Context) error {
 		ID:       id,
 	})
 	if err != nil {
-		return s.dispatcher.NewInternalServerError("Failed to update user", err)
+		return s.Dispatcher.NewInternalServerError("Failed to update user", err)
 	}
 
 	return c.JSON(http.StatusOK, updatedUser)
@@ -138,7 +140,7 @@ func (s *UsersService) DeleteUser(c echo.Context) error {
 
 	err := s.db.User.DeleteUser(c.Request().Context(), id)
 	if err != nil {
-		return s.dispatcher.NewInternalServerError("Failed to delete user", err)
+		return s.Dispatcher.NewInternalServerError("Failed to delete user", err)
 	}
 
 	return c.NoContent(http.StatusOK)
@@ -152,7 +154,7 @@ func (s *UsersService) UpdateUserRole(c echo.Context) error {
 	}{}
 
 	if err := c.Bind(&p); err != nil {
-		return s.dispatcher.NewBadRequest("Invalid request body", err)
+		return s.Dispatcher.NewBadRequest("Invalid request body", err)
 	}
 
 	var id int64
@@ -168,7 +170,7 @@ func (s *UsersService) UpdateUserRole(c echo.Context) error {
 		ID:   id,
 	})
 	if err != nil {
-		return s.dispatcher.NewInternalServerError("Failed to update user role", err)
+		return s.Dispatcher.NewInternalServerError("Failed to update user role", err)
 	}
 
 	return c.JSON(http.StatusOK, updatedUser)

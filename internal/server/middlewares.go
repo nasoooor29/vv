@@ -17,7 +17,7 @@ var IGNORED_ROUTES = map[string]bool{
 	"/api/auth/me": true,
 }
 
-func (s *Server) RequestLogger() echo.MiddlewareFunc {
+func RequestLogger(logger *slog.Logger, dispatcher *utils.Dispatcher) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			// if options endpoint, skip logging
@@ -31,7 +31,7 @@ func (s *Server) RequestLogger() echo.MiddlewareFunc {
 
 			rid := uuid.Nil
 			if id, err := uuid.NewV4(); err != nil {
-				s.logger.Error("failed to generate request id", "error", err)
+				logger.Error("failed to generate request id", "error", err)
 			} else {
 				rid = id
 			}
@@ -71,15 +71,15 @@ func (s *Server) RequestLogger() echo.MiddlewareFunc {
 				Bytes:     res.Size,
 				Error:     errMsg,
 			}
-			s.dispatcher.InsertIntoDB(data)
+			dispatcher.InsertIntoDB(data)
 
 			_, logLevel := utils.StatusCodeToLogLevel(data.Status)
 			if logLevel == slog.LevelError {
-				s.logger.Error("[REQUEST]", "data", data)
+				logger.Error("[REQUEST]", "data", data)
 			} else if logLevel == slog.LevelWarn {
-				s.logger.Warn("[REQUEST]", "data", data)
+				logger.Warn("[REQUEST]", "data", data)
 			} else {
-				s.logger.Info("[REQUEST]", "data", data)
+				logger.Info("[REQUEST]", "data", data)
 			}
 
 			return err

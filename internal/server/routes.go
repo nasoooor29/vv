@@ -17,7 +17,7 @@ import (
 func (s *Server) RegisterRoutes() http.Handler {
 	e := echo.New()
 
-	e.Use(s.RequestLogger())
+	e.Use(RequestLogger(s.logger, s.dispatcher))
 
 	// RequestLogger middleware with slog integration
 	// e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
@@ -132,27 +132,27 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	api.GET("/websocket", s.websocketHandler)
 
-	api.POST("/auth/register", s.authService.Register)
-	api.POST("/auth/login", s.authService.Login)
+	authlogger := RequestLogger(s.authService.Logger, s.authService.Dispatcher)
+	api.POST("/auth/register", s.authService.Register, authlogger)
+	api.POST("/auth/login", s.authService.Login, authlogger)
 
 	// OAuth routes
-	api.GET("/auth/oauth/:provider", s.authService.OAuthLogin)
-	api.GET("/auth/oauth/callback/:provider", s.authService.OAuthCallback)
+	api.GET("/auth/oauth/:provider", s.authService.OAuthLogin, authlogger)
+	api.GET("/auth/oauth/callback/:provider", s.authService.OAuthCallback, authlogger)
 
-	authGroup := api.Group("/auth")
-	authGroup.Use(s.authService.AuthMiddleware)
+	authGroup := api.Group("/auth", s.authService.AuthMiddleware, authlogger)
 	authGroup.GET("/me", s.authService.Me)
 	authGroup.POST("/logout", s.authService.Logout)
 
 	// Storage routes
-	storageGroup := api.Group("/storage")
+	storageGroup := api.Group("/storage", RequestLogger(s.storageService.Logger, s.storageService.Dispatcher))
 	storageGroup.Use(s.authService.AuthMiddleware)
 	storageGroup.Use(Roles(models.RBAC_SETTINGS_MANAGER))
 	storageGroup.GET("/devices", s.storageService.GetStorageDevices)
 	storageGroup.GET("/mount-points", s.storageService.GetMountPoints)
 
 	// Users routes
-	usersGroup := api.Group("/users")
+	usersGroup := api.Group("/users", RequestLogger(s.usersService.Logger, s.usersService.Dispatcher))
 	usersGroup.Use(s.authService.AuthMiddleware)
 	usersGroup.GET("", s.usersService.GetAllUsers, Roles(models.RBAC_USER_ADMIN))
 	usersGroup.GET("/", s.usersService.GetAllUsers, Roles(models.RBAC_USER_ADMIN))
@@ -164,14 +164,14 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	// Logs routes
 	logsGroup := api.Group("/logs")
-	logsGroup.Use(s.authService.AuthMiddleware)
+	logsGroup.Use(s.authService.AuthMiddleware, RequestLogger(s.logsService.Logger, s.logsService.Dispatcher))
 	logsGroup.GET("", s.logsService.GetLogs, Roles(models.RBAC_AUDIT_LOG_VIEWER))
 	logsGroup.GET("/stats", s.logsService.GetLogStats, Roles(models.RBAC_AUDIT_LOG_VIEWER))
 	logsGroup.DELETE("/cleanup", s.logsService.ClearOldLogs, Roles(models.RBAC_USER_ADMIN))
 
 	// Metrics routes
 	metricsGroup := api.Group("/metrics")
-	metricsGroup.Use(s.authService.AuthMiddleware)
+	metricsGroup.Use(s.authService.AuthMiddleware, RequestLogger(s.metricsService.Logger, s.metricsService.Dispatcher))
 	metricsGroup.GET("", s.metricsService.GetMetrics, Roles(models.RBAC_AUDIT_LOG_VIEWER))
 	metricsGroup.GET("/health", s.metricsService.GetHealthMetrics, Roles(models.RBAC_HEALTH_CHECKER))
 	metricsGroup.GET("/:service", s.metricsService.GetServiceMetrics, Roles(models.RBAC_AUDIT_LOG_VIEWER))

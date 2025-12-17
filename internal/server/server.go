@@ -48,11 +48,11 @@ func NewServer() *http.Server {
 	serverDispatcher := dispatcher.WithGroup("server")
 	// logger = logger.WithGroup("server")
 
-	authService := services.NewAuthService(db, serverDispatcher)
-	usersService := services.NewUsersService(db, serverDispatcher)
-	storageService := services.NewStorageService(serverDispatcher)
-	logsService := services.NewLogsService(db, serverDispatcher)
-	metricsService := services.NewMetricsService(db, serverDispatcher)
+	authService := services.NewAuthService(db, serverDispatcher, logger)
+	usersService := services.NewUsersService(db, serverDispatcher, logger)
+	storageService := services.NewStorageService(serverDispatcher, logger)
+	logsService := services.NewLogsService(db, serverDispatcher, logger)
+	metricsService := services.NewMetricsService(db, serverDispatcher, logger)
 
 	NewServer := &Server{
 		port:           port,
