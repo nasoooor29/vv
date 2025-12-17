@@ -12,5 +12,5 @@ echo "Creating migration: $MIGRATION_NAME"
 goose create -dir ./internal/database/migrations "$MIGRATION_NAME" sql
 
 # Generate visory.sql from the database
-goose -dir ./internal/database/migrations sqlite3 visory.db up
+# goose -dir ./internal/database/migrations sqlite3 visory.db up
 sqlite3 visory.db .schema > ./internal/database/visory.sql
