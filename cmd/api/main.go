@@ -1,3 +1,10 @@
+// @title			Visory API
+// @version			1.0
+// @description		Visory Management API
+// @contact.name		API Support
+// @host				localhost:9999
+// @basePath			/api
+// @schemes			http https
 package main
 
 import (

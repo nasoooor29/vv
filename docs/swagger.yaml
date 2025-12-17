@@ -1,0 +1,143 @@
+basePath: /api
+definitions:
+  models.HTTPError:
+    properties:
+      message:
+        type: string
+    type: object
+  user.GetUserAndSessionByTokenRow:
+    properties:
+      user:
+        $ref: '#/definitions/user.User'
+      user_session:
+        $ref: '#/definitions/user.UserSession'
+    type: object
+  user.UpsertUserParams:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      role:
+        type: string
+      username:
+        type: string
+    type: object
+  user.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      password:
+        type: string
+      role:
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+  user.UserSession:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      session_token:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+host: localhost:9999
+info:
+  contact:
+    name: API Support
+  description: Visory Management API
+  title: Visory API
+  version: "1.0"
+paths:
+  /auth/logout:
+    get:
+      description: delete the session and logout the current user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: "null"
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: logout
+      tags:
+      - accounts
+  /auth/me:
+    get:
+      description: Get current user info
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.GetUserAndSessionByTokenRow'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: my info
+      tags:
+      - accounts
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: registers a new user
+      parameters:
+      - description: User registration info
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/user.UpsertUserParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: register
+      tags:
+      - accounts
+schemes:
+- http
+- https
+swagger: "2.0"

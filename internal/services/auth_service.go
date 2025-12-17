@@ -119,6 +119,15 @@ func (s *AuthService) initializeOAuth() map[string]goth.Provider {
 	return providersMap
 }
 
+//	@Summary      my info
+//	@Description  Get current user info
+//	@Tags         accounts
+//	@Produce      json
+//	@Success      200  {object}  user.GetUserAndSessionByTokenRow
+//	@Failure      401  {object}  models.HTTPError
+//	@Failure      500  {object}  models.HTTPError
+//	@Router       /auth/me [get]
+//
 // Me returns the current authenticated user
 func (s *AuthService) Me(c echo.Context) error {
 	cookie, err := c.Cookie(models.COOKIE_NAME)
@@ -132,6 +141,15 @@ func (s *AuthService) Me(c echo.Context) error {
 	return c.JSON(http.StatusOK, userWithSession)
 }
 
+//	@Summary      logout
+//	@Description  delete the session and logout the current user
+//	@Tags         accounts
+//	@Produce      json
+//	@Success      200  {null} null
+//	@Failure      401  {object}  models.HTTPError
+//	@Failure      500  {object}  models.HTTPError
+//	@Router       /auth/logout [get]
+//
 // Logout logs out the current user
 func (s *AuthService) Logout(c echo.Context) error {
 	cookie, err := c.Cookie(models.COOKIE_NAME)
@@ -149,6 +167,17 @@ func (s *AuthService) Logout(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
+// @Summary      register
+// @Description  registers a new user
+// @Tags         accounts
+// @Accept       json
+// @Produce      json
+// @Param        user  body      user.UpsertUserParams  true  "User registration info"
+// @Success      200   {object}  user.User
+// @Failure      400   {object}  models.HTTPError
+// @Failure      409   {object}  models.HTTPError
+// @Failure      500   {object}  models.HTTPError
+// @Router       /auth/register [post]
 // Register registers a new user
 func (s *AuthService) Register(c echo.Context) error {
 	p := user.UpsertUserParams{}

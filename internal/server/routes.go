@@ -11,6 +11,10 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
+	_ "visory/docs"
+
+	"github.com/swaggo/echo-swagger"
+
 	"github.com/coder/websocket"
 )
 
@@ -78,6 +82,12 @@ func (s *Server) RegisterRoutes() http.Handler {
 	metricsGroup.GET("/health", s.metricsService.GetHealthMetrics, Roles(models.RBAC_HEALTH_CHECKER))
 	metricsGroup.GET("/:service", s.metricsService.GetServiceMetrics, Roles(models.RBAC_AUDIT_LOG_VIEWER))
 
+	// Swagger UI - use the proper echoSwagger handler for all swagger routes
+	swaggerHandler := echoSwagger.WrapHandler
+	e.GET("/swagger/*", swaggerHandler)
+	// Override the doc.json endpoint with our custom handler
+	e.GET("/swagger/doc.json", s.swaggerDocHandler)
+
 	return e
 }
 
@@ -130,4 +140,120 @@ func getLevelFromStatusCode(statusCode int) slog.Level {
 	default:
 		return slog.LevelInfo
 	}
+}
+
+// Swagger endpoint handlers
+func (s *Server) swaggerDocHandler(c echo.Context) error {
+	c.Response().Header().Set("Content-Type", "application/json")
+	return c.String(http.StatusOK, `{
+  "swagger": "2.0",
+  "info": {
+    "title": "Visory API",
+    "version": "1.0",
+    "description": "Visory Management API",
+    "contact": {
+      "name": "API Support"
+    }
+  },
+  "host": "localhost:9999",
+  "basePath": "/api",
+  "schemes": ["http", "https"],
+  "paths": {
+    "/auth/me": {
+      "get": {
+        "description": "Get current user info",
+        "produces": ["application/json"],
+        "tags": ["accounts"],
+        "summary": "my info",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/user.GetUserAndSessionByTokenRow"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.HTTPError"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/models.HTTPError"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "models.HTTPError": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "user.GetUserAndSessionByTokenRow": {
+      "type": "object",
+      "properties": {
+        "user": {
+          "$ref": "#/definitions/user.User"
+        },
+        "user_session": {
+          "$ref": "#/definitions/user.UserSession"
+        }
+      }
+    },
+    "user.User": {
+      "type": "object",
+      "properties": {
+        "created_at": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "password": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "updated_at": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        }
+      }
+    },
+    "user.UserSession": {
+      "type": "object",
+      "properties": {
+        "created_at": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "session_token": {
+          "type": "string"
+        },
+        "updated_at": {
+          "type": "string"
+        },
+        "user_id": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}`)
 }
