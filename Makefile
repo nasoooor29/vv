@@ -62,4 +62,7 @@ back:
 front:
 	@cd ./frontend && bun run dev
 
+tmux:
+	@tmux split-window -h 'make front' \; select-pane -L \; send-keys 'make back' C-m
+
 # .PHONY: all build release test watch front clean
