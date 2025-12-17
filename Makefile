@@ -62,4 +62,10 @@ back:
 front:
 	@cd ./frontend && bun run dev
 
+diff-gen:
+	@sql-differ generate ./visory.db ./internal/database/visory.sql
+
+gen-mig:
+	@./scripts/gen-mig-v2.sh
+
 # .PHONY: all build release test watch front clean
