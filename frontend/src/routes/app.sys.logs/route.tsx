@@ -1,5 +1,3 @@
-"use client";
-
 import { orpc } from "@/lib/orpc";
 import { usePermission } from "@/components/protected-content";
 import { RBAC_AUDIT_LOG_VIEWER } from "@/types/types.gen";
@@ -94,7 +92,10 @@ export default function LogsPage() {
     ERROR: "bg-red-100 text-red-800",
   };
 
-  const handleFilterChange = (key: keyof LogFilters, value: string | number) => {
+  const handleFilterChange = (
+    key: keyof LogFilters,
+    value: string | number,
+  ) => {
     setFilters((prev) => ({
       ...prev,
       [key]: value,
@@ -109,7 +110,8 @@ export default function LogsPage() {
     }));
   };
 
-  const levelColor = (level: string) => levelColors[level] || "bg-gray-100 text-gray-800";
+  const levelColor = (level: string) =>
+    levelColors[level] || "bg-gray-100 text-gray-800";
 
   return (
     <div className="space-y-4">
@@ -149,7 +151,9 @@ export default function LogsPage() {
               <CardTitle className="text-sm font-medium">Log Levels</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.levels?.length || 0}</div>
+              <div className="text-2xl font-bold">
+                {stats.levels?.length || 0}
+              </div>
               <p className="text-xs text-muted-foreground">Unique levels</p>
             </CardContent>
           </Card>
@@ -160,9 +164,7 @@ export default function LogsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{logs.length}</div>
-              <p className="text-xs text-muted-foreground">
-                of {total} total
-              </p>
+              <p className="text-xs text-muted-foreground">of {total} total</p>
             </CardContent>
           </Card>
         </div>
@@ -305,11 +307,15 @@ export default function LogsPage() {
                           {log.level}
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-medium">{log.action}</TableCell>
+                      <TableCell className="font-medium">
+                        {log.action}
+                      </TableCell>
                       <TableCell className="max-w-xs truncate text-sm">
                         {log.details || "-"}
                       </TableCell>
-                      <TableCell className="text-sm">{log.user_id || "-"}</TableCell>
+                      <TableCell className="text-sm">
+                        {log.user_id || "-"}
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -329,7 +335,11 @@ export default function LogsPage() {
                           handlePageChange(filters.page - 1);
                         }
                       }}
-                      className={filters.page === 1 ? "pointer-events-none opacity-50" : ""}
+                      className={
+                        filters.page === 1
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
                     />
                   </PaginationItem>
 
@@ -354,7 +364,11 @@ export default function LogsPage() {
                           handlePageChange(filters.page + 1);
                         }
                       }}
-                      className={filters.page === totalPages ? "pointer-events-none opacity-50" : ""}
+                      className={
+                        filters.page === totalPages
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
                     />
                   </PaginationItem>
                 </PaginationContent>

@@ -1,5 +1,3 @@
-"use client";
-
 import { orpc } from "@/lib/orpc";
 import { usePermission } from "@/components/protected-content";
 import { RBAC_USER_ADMIN } from "@/types/types.gen";
