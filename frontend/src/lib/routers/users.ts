@@ -1,5 +1,5 @@
 import { Z } from "@/types";
-import { base } from "./general";
+import { base, detailed } from "./general";
 import { z } from "zod";
 
 export const usersRouter = {
@@ -25,14 +25,14 @@ export const usersRouter = {
       inputStructure: "detailed",
     })
     .input(
-      z.object({
-        params: z.object({ id: z.string() }),
-        body: z.object({
+      detailed({
+        params: { id: z.string() },
+        body: {
           username: z.string(),
           email: z.string(),
           role: z.string().optional(),
-        }).optional(),
-      })
+        },
+      }),
     )
     .output(Z.userSchema),
 
@@ -42,9 +42,11 @@ export const usersRouter = {
       path: "/users/{id}",
       inputStructure: "detailed",
     })
-    .input(z.object({ 
-      params: z.object({ id: z.string() }),
-    })),
+    .input(
+      detailed({
+        params: { id: z.string() },
+      }),
+    ),
 
   updateUserRole: base
     .route({
@@ -53,12 +55,12 @@ export const usersRouter = {
       inputStructure: "detailed",
     })
     .input(
-      z.object({
-        params: z.object({ id: z.string() }),
-        body: z.object({
+      detailed({
+        params: { id: z.string() },
+        body: {
           role: z.string(),
-        }).optional(),
-      })
+        },
+      }),
     )
     .output(Z.userSchema),
 };

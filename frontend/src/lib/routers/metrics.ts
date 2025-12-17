@@ -1,7 +1,13 @@
 import { Z } from "@/types";
-import { base } from "./general";
+import { base, detailed } from "./general";
 import { z } from "zod";
-
+// Example usage:
+// const schema = detailed({
+//   params: { id: z.string() },
+//   query: { search: z.string().optional() },
+//   body: { name: z.string() },
+//   headers: { authorization: z.string() },
+// });
 export const metricsRouter = {
   getMetrics: base
     .route({
@@ -11,20 +17,21 @@ export const metricsRouter = {
     .input(
       z.object({
         days: z.number().optional().default(7),
-      })
+      }),
     )
     .output(Z.metricsResponseSchema),
 
   getServiceMetrics: base
     .route({
       method: "GET",
-      path: "/metrics/service/:service",
+      path: "/metrics/service/{service}",
+      inputStructure: "detailed",
     })
     .input(
-      z.object({
-        service: z.string(),
-        days: z.number().optional().default(7),
-      })
+      detailed({
+        params: { service: z.string() },
+        query: { days: z.number().optional().default(7) },
+      }),
     )
     .output(Z.serviceMetricsResponseSchema),
 
@@ -33,8 +40,6 @@ export const metricsRouter = {
       method: "GET",
       path: "/metrics/health",
     })
-    .input(
-      z.object({})
-    )
+    .input(z.object({}))
     .output(Z.healthMetricsResponseSchema),
 };
