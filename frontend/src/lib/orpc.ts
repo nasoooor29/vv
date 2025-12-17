@@ -9,6 +9,8 @@ import { healthRouter } from "./routers/health";
 import { authRouter } from "./routers/auth";
 import { storageRouter } from "./routers/storage";
 import { usersRouter } from "./routers/users";
+import { logsRouter } from "./routers/logs";
+import { metricsRouter } from "./routers/metrics";
 import { Z } from "@/types";
 import {
   RequestValidationPlugin,
@@ -60,6 +62,8 @@ export const contract = {
   auth: authRouter,
   storage: storageRouter,
   users: usersRouter,
+  logs: logsRouter,
+  metrics: metricsRouter,
 };
 
 const link = new OpenAPILink(contract, {

@@ -28,14 +28,16 @@ func NewDaLog(w io.Writer, s func(rec slog.Record) string, opts *slog.HandlerOpt
 		Writer:         w,
 		HandlerOptions: opts,
 		style:          s,
+		groups:         []string{},
 	}
 }
 
 type DaLog struct {
+	*slog.HandlerOptions
 	defaultHandler slog.Handler
 	Writer         io.Writer
-	*slog.HandlerOptions
-	style func(rec slog.Record) string
+	style          func(rec slog.Record) string
+	groups         []string
 }
 
 // Enabled implements slog.Handler.
@@ -55,12 +57,24 @@ func (d *DaLog) Handle(ctx context.Context, rec slog.Record) error {
 
 // WithAttrs implements slog.Handler.
 func (d *DaLog) WithAttrs(attrs []slog.Attr) slog.Handler {
-	return d.defaultHandler.WithAttrs(attrs)
+	return &DaLog{
+		defaultHandler: d.defaultHandler.WithAttrs(attrs),
+		Writer:         d.Writer,
+		HandlerOptions: d.HandlerOptions,
+		style:          d.style,
+	}
 }
 
 // WithGroup implements slog.Handler.
 func (d *DaLog) WithGroup(name string) slog.Handler {
-	return d.defaultHandler.WithGroup(name)
+	newGroups := append(d.groups, name)
+	return &DaLog{
+		defaultHandler: d.defaultHandler.WithGroup(name),
+		Writer:         d.Writer,
+		HandlerOptions: d.HandlerOptions,
+		style:          d.style,
+		groups:         newGroups,
+	}
 }
 
 func ColorByLevel(text string, rec slog.Level, isBold, isBG bool) string {

@@ -9,11 +9,13 @@ import (
 )
 
 type Log struct {
-	ID        int64     `json:"id"`
-	UserID    int64     `json:"user_id"`
-	Action    string    `json:"action"`
-	Details   *string   `json:"details"`
-	CreatedAt time.Time `json:"created_at"`
+	ID           int64     `json:"id"`
+	UserID       int64     `json:"user_id"`
+	Action       string    `json:"action"`
+	Details      *string   `json:"details"`
+	CreatedAt    time.Time `json:"created_at"`
+	ServiceGroup string    `json:"service_group"`
+	Level        string    `json:"level"`
 }
 
 type Notification struct {

@@ -20,6 +20,7 @@ import {
   Shield,
   Users,
   Settings,
+  FileText,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Link, useNavigate } from "react-router";
@@ -35,6 +36,7 @@ import {
   RBAC_EVENT_VIEWER,
   RBAC_SETTINGS_MANAGER,
   RBAC_USER_ADMIN,
+  RBAC_AUDIT_LOG_VIEWER,
 } from "@/types/types.gen";
 
 import { formatTimeDifference } from "@/lib/utils";
@@ -137,6 +139,12 @@ export function AppSidebar() {
       label: "Users",
       icon: Users,
       requiredPermission: RBAC_USER_ADMIN,
+    },
+    {
+      id: "logs",
+      label: "Audit Logs",
+      icon: FileText,
+      requiredPermission: RBAC_AUDIT_LOG_VIEWER,
     },
     {
       id: "settings",

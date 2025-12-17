@@ -50,7 +50,7 @@ func main() {
 			Level: slog.LevelDebug,
 		},
 	)
-	// utils.SetupLogger()
+	utils.SetupLogger()
 	slog.Info("loading environment variables")
 	server := server.NewServer()
 

@@ -14,55 +14,11 @@ import (
 	"github.com/coder/websocket"
 )
 
-func (s *Server) Auth(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		cookie, err := c.Cookie(models.COOKIE_NAME)
-		if err != nil {
-			slog.Error("error happened", "err", err)
-			return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
-		}
-		_, err = s.db.User.GetBySessionToken(c.Request().Context(), cookie.Value)
-		if err != nil {
-			slog.Error("error happened", "err", err)
-			return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
-		}
-
-		return next(c)
-	}
-}
-
-func (s *Server) RBAC(policies ...models.RBACPolicy) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			cookie, err := c.Cookie(models.COOKIE_NAME)
-			if err != nil {
-				slog.Error("error happened", "err", err)
-				return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
-			}
-			user, err := s.db.User.GetBySessionToken(c.Request().Context(), cookie.Value)
-			if err != nil {
-				slog.Error("error happened", "err", err)
-				return echo.NewHTTPError(http.StatusUnauthorized, "Failed to get user by session token").SetInternal(err)
-			}
-
-			user_roles := models.RoleToRBACPolicies(user.Role)
-			if _, ok := user_roles[models.RBAC_USER_ADMIN]; ok {
-				return next(c)
-			}
-			for _, policy := range policies {
-				if v, ok := user_roles[policy]; !ok || !v {
-					return echo.NewHTTPError(http.StatusForbidden, "Insufficient permissions")
-				}
-			}
-
-			return next(c)
-		}
-	}
-}
-
 func (s *Server) RegisterRoutes() http.Handler {
 	e := echo.New()
-	e.Use(middleware.Logger())
+
+	baseRequestLogger := RequestLogger(s.logger, s.dispatcher)
+
 	e.Use(middleware.Recover())
 	api := e.Group("/api")
 
@@ -74,39 +30,53 @@ func (s *Server) RegisterRoutes() http.Handler {
 		MaxAge:           300,
 	}))
 
-	api.GET("/", s.HelloWorldHandler)
-
-	// api.GET("/health", s.healthHandler, s.RBAC(models.RBAC_HEALTH_CHECKER))
-	api.GET("/health", s.healthHandler)
+	api.GET("/", s.HelloWorldHandler, baseRequestLogger)
+	Roles := s.authService.RBACMiddleware
+	api.GET("/health", s.healthHandler, baseRequestLogger)
 
 	api.GET("/websocket", s.websocketHandler)
 
-	api.POST("/auth/register", s.Register)
-	api.POST("/auth/login", s.Login)
+	authlogger := RequestLogger(s.authService.Logger, s.authService.Dispatcher)
+	api.POST("/auth/register", s.authService.Register, authlogger)
+	api.POST("/auth/login", s.authService.Login, authlogger)
 
 	// OAuth routes
-	api.GET("/auth/oauth/:provider", s.OAuthLogin)
-	api.GET("/auth/oauth/callback/:provider", s.OAuthCallback)
+	api.GET("/auth/oauth/:provider", s.authService.OAuthLogin, authlogger)
+	api.GET("/auth/oauth/callback/:provider", s.authService.OAuthCallback, authlogger)
 
-	authGroup := api.Group("/auth")
-	authGroup.Use(s.Auth)
-	authGroup.GET("/me", s.Me)
-	authGroup.POST("/logout", s.Logout)
+	authGroup := api.Group("/auth", s.authService.AuthMiddleware, authlogger)
+	authGroup.GET("/me", s.authService.Me)
+	authGroup.POST("/logout", s.authService.Logout)
 
 	// Storage routes
-	storageGroup := api.Group("/storage")
-	storageGroup.Use(s.Auth)
-	storageGroup.Use(s.RBAC(models.RBAC_SETTINGS_MANAGER))
-	storageGroup.GET("/devices", s.GetStorageDevices)
-	storageGroup.GET("/mount-points", s.GetMountPoints)
-	usersGroup := api.Group("/users")
-	usersGroup.Use(s.Auth)
-	usersGroup.GET("", s.GetAllUsers, s.RBAC(models.RBAC_USER_ADMIN))
-	usersGroup.GET("/", s.GetAllUsers, s.RBAC(models.RBAC_USER_ADMIN))
-	usersGroup.POST("", s.CreateUser, s.RBAC(models.RBAC_USER_ADMIN))
-	usersGroup.PUT("/:id", s.UpdateUser, s.RBAC(models.RBAC_USER_ADMIN))
-	usersGroup.DELETE("/:id", s.DeleteUser, s.RBAC(models.RBAC_USER_ADMIN))
-	usersGroup.PATCH("/:id/role", s.UpdateUserRole, s.RBAC(models.RBAC_USER_ADMIN))
+	storageGroup := api.Group("/storage", RequestLogger(s.storageService.Logger, s.storageService.Dispatcher))
+	storageGroup.Use(s.authService.AuthMiddleware)
+	storageGroup.Use(Roles(models.RBAC_SETTINGS_MANAGER))
+	storageGroup.GET("/devices", s.storageService.GetStorageDevices)
+	storageGroup.GET("/mount-points", s.storageService.GetMountPoints)
+
+	// Users routes
+	usersGroup := api.Group("/users", RequestLogger(s.usersService.Logger, s.usersService.Dispatcher))
+	usersGroup.Use(s.authService.AuthMiddleware)
+	usersGroup.GET("", s.usersService.GetAllUsers, Roles(models.RBAC_USER_ADMIN))
+	usersGroup.GET("/", s.usersService.GetAllUsers, Roles(models.RBAC_USER_ADMIN))
+	usersGroup.GET("/:id", s.usersService.GetUserById, Roles(models.RBAC_USER_ADMIN))
+	usersGroup.POST("", s.usersService.CreateUser, Roles(models.RBAC_USER_ADMIN))
+	usersGroup.PUT("/:id", s.usersService.UpdateUser, Roles(models.RBAC_USER_ADMIN))
+	usersGroup.DELETE("/:id", s.usersService.DeleteUser, Roles(models.RBAC_USER_ADMIN))
+	usersGroup.PATCH("/:id/role", s.usersService.UpdateUserRole, Roles(models.RBAC_USER_ADMIN))
+
+	// Logs routes
+	logsGroup := api.Group("/logs", s.authService.AuthMiddleware, RequestLogger(s.logsService.Logger, s.logsService.Dispatcher))
+	logsGroup.GET("", s.logsService.GetLogs, Roles(models.RBAC_AUDIT_LOG_VIEWER))
+	logsGroup.GET("/stats", s.logsService.GetLogStats, Roles(models.RBAC_AUDIT_LOG_VIEWER))
+	logsGroup.DELETE("/cleanup", s.logsService.ClearOldLogs, Roles(models.RBAC_USER_ADMIN))
+
+	// Metrics routes
+	metricsGroup := api.Group("/metrics", s.authService.AuthMiddleware, RequestLogger(s.metricsService.Logger, s.metricsService.Dispatcher))
+	metricsGroup.GET("", s.metricsService.GetMetrics, Roles(models.RBAC_AUDIT_LOG_VIEWER))
+	metricsGroup.GET("/health", s.metricsService.GetHealthMetrics, Roles(models.RBAC_HEALTH_CHECKER))
+	metricsGroup.GET("/:service", s.metricsService.GetServiceMetrics, Roles(models.RBAC_AUDIT_LOG_VIEWER))
 
 	return e
 }
@@ -128,7 +98,7 @@ func (s *Server) websocketHandler(c echo.Context) error {
 	r := c.Request()
 	socket, err := websocket.Accept(w, r, nil)
 	if err != nil {
-		slog.Error("could not open websocket", "error", err)
+		s.logger.Error("could not open websocket", "error", err)
 		_, _ = w.Write([]byte("could not open websocket"))
 		w.WriteHeader(http.StatusInternalServerError)
 		return nil
@@ -148,4 +118,16 @@ func (s *Server) websocketHandler(c echo.Context) error {
 		time.Sleep(time.Second * 2)
 	}
 	return nil
+}
+
+// getLevelFromStatusCode determines log level based on HTTP status code
+func getLevelFromStatusCode(statusCode int) slog.Level {
+	switch {
+	case statusCode >= 500:
+		return slog.LevelError
+	case statusCode >= 400:
+		return slog.LevelWarn
+	default:
+		return slog.LevelInfo
+	}
 }
