@@ -20,7 +20,8 @@ type Server struct {
 	port int
 
 	db             *database.Service
-	logger         *utils.MySlog
+	dispatcher     *utils.Dispatcher
+	logger         *slog.Logger
 	OAuthProviders map[string]goth.Provider
 
 	// Services
@@ -41,22 +42,22 @@ func NewServer() *http.Server {
 	slog.SetDefault(logger)
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 	db := database.New()
-	myLogger := utils.NewMySlog(logger, db)
+	dispatcher := utils.NewDispatcher(db)
 
 	// Add server group to logger
-	serverLogger := myLogger.WithGroup("server")
+	serverDispatcher := dispatcher.WithGroup("server")
 	// logger = logger.WithGroup("server")
 
-	authService := services.NewAuthService(db, serverLogger)
-	usersService := services.NewUsersService(db, logger)
-	storageService := services.NewStorageService(logger)
-	logsService := services.NewLogsService(db, serverLogger)
-	metricsService := services.NewMetricsService(db, logger)
+	authService := services.NewAuthService(db, serverDispatcher)
+	usersService := services.NewUsersService(db, serverDispatcher)
+	storageService := services.NewStorageService(serverDispatcher)
+	logsService := services.NewLogsService(db, serverDispatcher)
+	metricsService := services.NewMetricsService(db, serverDispatcher)
 
 	NewServer := &Server{
 		port:           port,
 		db:             db,
-		logger:         serverLogger,
+		dispatcher:     serverDispatcher,
 		OAuthProviders: authService.OAuthProviders,
 		authService:    authService,
 		usersService:   usersService,

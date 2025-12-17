@@ -28,7 +28,7 @@ import (
 
 type AuthService struct {
 	db             *database.Service
-	dispatcher     *utils.ErrorDispatcher
+	dispatcher     *utils.Dispatcher
 	OAuthProviders map[string]goth.Provider
 }
 
@@ -77,7 +77,7 @@ func (s *AuthService) RBACMiddleware(policies ...models.RBACPolicy) echo.Middlew
 }
 
 // NewAuthService creates a new AuthService with dependency injection
-func NewAuthService(db *database.Service, dispatcher *utils.ErrorDispatcher) *AuthService {
+func NewAuthService(db *database.Service, dispatcher *utils.Dispatcher) *AuthService {
 	// Create a grouped logger for auth service
 	authDispatcher := dispatcher.WithGroup("auth")
 	authService := &AuthService{

@@ -10,11 +10,11 @@ import (
 )
 
 type StorageService struct {
-	dispatcher *utils.ErrorDispatcher
+	dispatcher *utils.Dispatcher
 }
 
 // NewStorageService creates a new StorageService with dependency injection
-func NewStorageService(logger *utils.ErrorDispatcher) *StorageService {
+func NewStorageService(logger *utils.Dispatcher) *StorageService {
 	// Create a grouped logger for storage service
 	storageLogger := logger.WithGroup("storage")
 	return &StorageService{

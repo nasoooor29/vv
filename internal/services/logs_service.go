@@ -17,14 +17,14 @@ import (
 
 type LogsService struct {
 	db         *database.Service
-	dispatcher *utils.ErrorDispatcher
+	dispatcher *utils.Dispatcher
 }
 
 // NewLogsService creates a new LogsService with dependency injection
-func NewLogsService(db *database.Service, logger *utils.ErrorDispatcher) *LogsService {
+func NewLogsService(db *database.Service, dispatcher *utils.Dispatcher) *LogsService {
 	return &LogsService{
 		db:         db,
-		dispatcher: logger.WithGroup("logs"),
+		dispatcher: dispatcher.WithGroup("logs"),
 	}
 }
 

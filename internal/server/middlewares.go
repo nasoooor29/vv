@@ -71,7 +71,7 @@ func (s *Server) RequestLogger() echo.MiddlewareFunc {
 				Bytes:     res.Size,
 				Error:     errMsg,
 			}
-			s.logger.InsertIntoDB(data)
+			s.dispatcher.InsertIntoDB(data)
 
 			_, logLevel := utils.StatusCodeToLogLevel(data.Status)
 			if logLevel == slog.LevelError {

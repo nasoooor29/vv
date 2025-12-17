@@ -16,28 +16,28 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type ErrorDispatcher struct {
+type Dispatcher struct {
 	db     *database.Service
 	Groups []string
 }
 
-func NewErrorDispatcher(logger *slog.Logger, db *database.Service) *ErrorDispatcher {
-	return &ErrorDispatcher{
+func NewDispatcher(db *database.Service) *Dispatcher {
+	return &Dispatcher{
 		db:     db,
 		Groups: []string{},
 	}
 }
 
-func (m *ErrorDispatcher) WithGroup(name string) *ErrorDispatcher {
+func (m *Dispatcher) WithGroup(name string) *Dispatcher {
 	newGroups := append(m.Groups, name)
 
-	return &ErrorDispatcher{
+	return &Dispatcher{
 		db:     m.db,
 		Groups: newGroups,
 	}
 }
 
-func (m *ErrorDispatcher) InsertIntoDB(data models.LogRequestData) error {
+func (m *Dispatcher) InsertIntoDB(data models.LogRequestData) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 	jsonifiedDetails, err := json.Marshal(data)
@@ -67,7 +67,7 @@ func (m *ErrorDispatcher) InsertIntoDB(data models.LogRequestData) error {
 	return nil
 }
 
-func (m *ErrorDispatcher) NewHTTPError(status int, message string, internal error, otherInfo ...any) *echo.HTTPError {
+func (m *Dispatcher) NewHTTPError(status int, message string, internal error, otherInfo ...any) *echo.HTTPError {
 	// Convert otherInfo to strings and join them
 	var otherErrs []error
 	for _, info := range otherInfo {
@@ -80,27 +80,27 @@ func (m *ErrorDispatcher) NewHTTPError(status int, message string, internal erro
 	return echo.NewHTTPError(status, message).SetInternal(joinedErr)
 }
 
-func (m *ErrorDispatcher) NewBadRequest(message string, internal error, otherInfo ...any) *echo.HTTPError {
+func (m *Dispatcher) NewBadRequest(message string, internal error, otherInfo ...any) *echo.HTTPError {
 	return m.NewHTTPError(http.StatusBadRequest, message, internal, otherInfo...)
 }
 
-func (m *ErrorDispatcher) NewInternalServerError(message string, internal error, otherInfo ...any) *echo.HTTPError {
+func (m *Dispatcher) NewInternalServerError(message string, internal error, otherInfo ...any) *echo.HTTPError {
 	return m.NewHTTPError(http.StatusInternalServerError, message, internal, otherInfo...)
 }
 
-func (m *ErrorDispatcher) NewUnauthorized(message string, internal error, otherInfo ...any) *echo.HTTPError {
+func (m *Dispatcher) NewUnauthorized(message string, internal error, otherInfo ...any) *echo.HTTPError {
 	return m.NewHTTPError(http.StatusUnauthorized, message, internal, otherInfo...)
 }
 
-func (m *ErrorDispatcher) NewNotFound(message string, internal error, otherInfo ...any) *echo.HTTPError {
+func (m *Dispatcher) NewNotFound(message string, internal error, otherInfo ...any) *echo.HTTPError {
 	return m.NewHTTPError(http.StatusNotFound, message, internal, otherInfo...)
 }
 
-func (m *ErrorDispatcher) NewConflict(message string, internal error, otherInfo ...any) *echo.HTTPError {
+func (m *Dispatcher) NewConflict(message string, internal error, otherInfo ...any) *echo.HTTPError {
 	return m.NewHTTPError(http.StatusConflict, message, internal, otherInfo...)
 }
 
-func (m *ErrorDispatcher) NewForbidden(message string, internal error, otherInfo ...any) *echo.HTTPError {
+func (m *Dispatcher) NewForbidden(message string, internal error, otherInfo ...any) *echo.HTTPError {
 	return m.NewHTTPError(http.StatusForbidden, message, internal, otherInfo...)
 }
 

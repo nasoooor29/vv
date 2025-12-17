@@ -17,11 +17,11 @@ import (
 
 type MetricsService struct {
 	db         *database.Service
-	dispatcher *utils.ErrorDispatcher
+	dispatcher *utils.Dispatcher
 }
 
 // NewMetricsService creates a new MetricsService with dependency injection
-func NewMetricsService(db *database.Service, dispatcher *utils.ErrorDispatcher) *MetricsService {
+func NewMetricsService(db *database.Service, dispatcher *utils.Dispatcher) *MetricsService {
 	return &MetricsService{
 		db:         db,
 		dispatcher: dispatcher.WithGroup("metrics"),

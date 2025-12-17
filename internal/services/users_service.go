@@ -14,11 +14,11 @@ import (
 
 type UsersService struct {
 	db         *database.Service
-	dispatcher *utils.ErrorDispatcher
+	dispatcher *utils.Dispatcher
 }
 
 // NewUsersService creates a new UsersService with dependency injection
-func NewUsersService(db *database.Service, dispatcher *utils.ErrorDispatcher) *UsersService {
+func NewUsersService(db *database.Service, dispatcher *utils.Dispatcher) *UsersService {
 	// Create a grouped logger for users service
 	usersDispatcher := dispatcher.WithGroup("users")
 	return &UsersService{
