@@ -17,15 +17,40 @@ type DocsService struct {
 	db         *database.Service
 	Dispatcher *utils.Dispatcher
 	Logger     *slog.Logger
+	Spec       []byte
 }
 
 // NewDocsService creates a new DocsService with dependency injection
 func NewDocsService(db *database.Service, dispatcher *utils.Dispatcher, logger *slog.Logger) *DocsService {
-	return &DocsService{
+	s := &DocsService{
 		db:         db,
 		Dispatcher: dispatcher.WithGroup("docs"),
 		Logger:     logger.WithGroup("docs"),
 	}
+	// Try multiple paths in case tests are run from different directories
+	possiblePaths := []string{
+		"./docs/swagger.json",
+		"docs/swagger.json",
+		"../../docs/swagger.json",
+	}
+
+	var data []byte
+	var err error
+
+	for _, path := range possiblePaths {
+		data, err = os.ReadFile(path)
+		if err == nil {
+			s.Logger.Debug("loaded swagger spec", "path", path)
+			break
+		}
+	}
+
+	if err != nil {
+		s.Logger.Error("failed to read swagger.json", "error", err, "paths", possiblePaths)
+		panic("failed to read swagger.json")
+	}
+	s.Spec = data
+	return s
 }
 
 //	@Summary      swagger ui
@@ -125,31 +150,6 @@ func (s *DocsService) ServeRedoc(c echo.Context) error {
 //
 // ServeSpec serves the OpenAPI specification
 func (s *DocsService) ServeSpec(c echo.Context) error {
-	// Try multiple paths in case tests are run from different directories
-	possiblePaths := []string{
-		"./docs/swagger.json",
-		"docs/swagger.json",
-		"../../docs/swagger.json",
-	}
-
-	var data []byte
-	var err error
-	var successPath string
-
-	for _, path := range possiblePaths {
-		data, err = os.ReadFile(path)
-		if err == nil {
-			successPath = path
-			break
-		}
-	}
-
-	if err != nil {
-		s.Logger.Error("failed to read swagger.json", "error", err, "paths", possiblePaths)
-		return s.Dispatcher.NewInternalServerError("Failed to read API specification", err)
-	}
-
-	s.Logger.Debug("loaded swagger spec", "path", successPath)
 	c.Response().Header().Set("Content-Type", "application/json")
-	return c.Blob(http.StatusOK, "application/json", data)
+	return c.Blob(http.StatusOK, "application/json", s.Spec)
 }

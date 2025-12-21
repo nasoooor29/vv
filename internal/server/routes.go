@@ -79,6 +79,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	metricsGroup.GET("/:service", s.metricsService.GetServiceMetrics, Roles(models.RBAC_AUDIT_LOG_VIEWER))
 
 	docsGroup := api.Group("/docs", RequestLogger(s.docsService.Logger, s.docsService.Dispatcher))
+	docsGroup.GET("", s.docsService.ServeRedoc)
 	docsGroup.GET("/swagger", s.docsService.ServeSwagger)
 	docsGroup.GET("/redoc", s.docsService.ServeRedoc)
 	docsGroup.GET("/spec", s.docsService.ServeSpec)
