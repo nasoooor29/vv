@@ -48,11 +48,31 @@ func New() *Service {
 		slog.Error("Database environment variable not set", "variable", "BLUEPRINT_DB_DATABASE")
 		panic("environment variable BLUEPRINT_DB_DATABASE is not set")
 	}
-	db, err := sql.Open("sqlite3", database)
+	// Enable WAL mode for better concurrency and durability
+	dsn := fmt.Sprintf("file:%s?mode=rwc&journal=WAL&cache=shared&timeout=5000", database)
+	db, err := sql.Open("sqlite3", dsn)
 	if err != nil {
 		slog.Error("Failed to open database connection", "error", err)
 		panic(fmt.Sprintf("failed to open database connection: %s", err))
 	}
+
+	// Enable WAL mode explicitly
+	if _, err := db.Exec("PRAGMA journal_mode=WAL"); err != nil {
+		slog.Error("Failed to enable WAL mode", "error", err)
+		panic(fmt.Sprintf("failed to enable WAL mode: %s", err))
+	}
+
+	// Optimize WAL settings for better performance
+	if _, err := db.Exec("PRAGMA synchronous=NORMAL"); err != nil {
+		slog.Error("Failed to set synchronous mode", "error", err)
+		panic(fmt.Sprintf("failed to set synchronous mode: %s", err))
+	}
+
+	if _, err := db.Exec("PRAGMA wal_autocheckpoint=1000"); err != nil {
+		slog.Error("Failed to set WAL autocheckpoint", "error", err)
+		panic(fmt.Sprintf("failed to set WAL autocheckpoint: %s", err))
+	}
+
 	err = Migrate(db)
 	if err != nil {
 		slog.Error("Failed to run database migrations", "error", err)
