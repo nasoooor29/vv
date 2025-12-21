@@ -4,17 +4,12 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"os"
 	"time"
 
 	"visory/internal/models"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-
-	_ "visory/docs"
-
-	"github.com/swaggo/echo-swagger"
 
 	"github.com/coder/websocket"
 )
@@ -83,19 +78,20 @@ func (s *Server) RegisterRoutes() http.Handler {
 	metricsGroup.GET("/health", s.metricsService.GetHealthMetrics, Roles(models.RBAC_HEALTH_CHECKER))
 	metricsGroup.GET("/:service", s.metricsService.GetServiceMetrics, Roles(models.RBAC_AUDIT_LOG_VIEWER))
 
-	// Swagger UI
-	e.GET("/swagger/*", echoSwagger.WrapHandler)
-	// Custom endpoint for doc.json
-	e.GET("/swagger/doc.json", func(c echo.Context) error {
-		c.Response().Header().Set("Content-Type", "application/json")
-		// Read the swagger.json file directly
-		data, _ := os.ReadFile("./docs/swagger.json")
-		return c.Blob(http.StatusOK, "application/json", data)
-	})
+	docsGroup := api.Group("/docs", RequestLogger(s.docsService.Logger, s.docsService.Dispatcher))
+	docsGroup.GET("/swagger", s.docsService.ServeSwagger)
+	docsGroup.GET("/redoc", s.docsService.ServeRedoc)
+	docsGroup.GET("/spec", s.docsService.ServeSpec)
 
 	return e
 }
 
+// @Summary      hello world
+// @Description  simple hello world endpoint
+// @Tags         general
+// @Produce      json
+// @Success      200  {object}  map[string]string
+// @Router       / [get]
 func (s *Server) HelloWorldHandler(c echo.Context) error {
 	resp := map[string]string{
 		"message": "Hello World",
@@ -104,10 +100,23 @@ func (s *Server) HelloWorldHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+// @Summary      health check
+// @Description  check database health status
+// @Tags         health
+// @Produce      json
+// @Success      200  {object}  database.Health
+// @Failure      500  {object}  models.HTTPError
+// @Router       /health [get]
 func (s *Server) healthHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, s.db.Health())
 }
 
+// websocketHandler handles WebSocket connections
+//
+//	@Summary      websocket connection
+//	@Description  establishes websocket connection for real-time updates
+//	@Tags         websocket
+//	@Router       /websocket [get]
 func (s *Server) websocketHandler(c echo.Context) error {
 	w := c.Response().Writer
 	r := c.Request()

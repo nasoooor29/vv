@@ -7,6 +7,7 @@ import (
 
 	"visory/internal/database"
 	"visory/internal/database/user"
+	_ "visory/internal/models"
 	"visory/internal/utils"
 
 	"github.com/labstack/echo/v4"
@@ -202,6 +203,20 @@ func (s *UsersService) DeleteUser(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
+//	@Summary      update user role
+//	@Description  update a user's role (admin only)
+//	@Tags         users
+//	@Accept       json
+//	@Produce      json
+//	@Param        id    path      int                            true  "User ID"
+//	@Param        role  body      object{role=string}           true  "Role to assign"
+//	@Success      200   {object}  user.User
+//	@Failure      400   {object}  models.HTTPError
+//	@Failure      401   {object}  models.HTTPError
+//	@Failure      403   {object}  models.HTTPError
+//	@Failure      500   {object}  models.HTTPError
+//	@Router       /users/{id}/role [patch]
+//
 // UpdateUserRole updates a user's role
 func (s *UsersService) UpdateUserRole(c echo.Context) error {
 	userID := c.Param("id")

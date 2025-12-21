@@ -36,6 +36,18 @@ type GetMetricsRequest struct {
 	Days int `query:"days"`
 }
 
+//	@Summary      get metrics
+//	@Description  retrieve comprehensive performance metrics
+//	@Tags         metrics
+//	@Produce      json
+//	@Param        days  query    int     false  "Number of days to analyze (default 7)"
+//	@Success      200   {object}  models.MetricsResponse
+//	@Failure      400   {object}  models.HTTPError
+//	@Failure      401   {object}  models.HTTPError
+//	@Failure      403   {object}  models.HTTPError
+//	@Failure      500   {object}  models.HTTPError
+//	@Router       /metrics [get]
+//
 // GetMetrics retrieves comprehensive performance metrics
 func (s *MetricsService) GetMetrics(c echo.Context) error {
 	req := new(GetMetricsRequest)
@@ -126,6 +138,18 @@ func (s *MetricsService) GetMetrics(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
+//	@Summary      get service metrics
+//	@Description  retrieve metrics for a specific service
+//	@Tags         metrics
+//	@Produce      json
+//	@Param        service  path     string  true   "Service name"
+//	@Param        days     query    int     false  "Number of days to analyze (default 7)"
+//	@Success      200      {object}  models.ServiceMetricsResponse
+//	@Failure      401      {object}  models.HTTPError
+//	@Failure      403      {object}  models.HTTPError
+//	@Failure      500      {object}  models.HTTPError
+//	@Router       /metrics/{service} [get]
+//
 // GetServiceMetrics retrieves metrics for a specific service
 func (s *MetricsService) GetServiceMetrics(c echo.Context) error {
 	serviceGroup := c.Param("service")
@@ -195,6 +219,16 @@ func (s *MetricsService) GetServiceMetrics(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
+//	@Summary      get health metrics
+//	@Description  retrieve system health metrics based on error rates
+//	@Tags         metrics
+//	@Produce      json
+//	@Success      200   {object}  models.HealthMetricsResponse
+//	@Failure      401   {object}  models.HTTPError
+//	@Failure      403   {object}  models.HTTPError
+//	@Failure      500   {object}  models.HTTPError
+//	@Router       /metrics/health [get]
+//
 // GetHealthMetrics returns system health based on error rates
 func (s *MetricsService) GetHealthMetrics(c echo.Context) error {
 	ctx := context.Background()
