@@ -1,0 +1,1017 @@
+basePath: /api
+definitions:
+  database.Health:
+    properties:
+      app_version:
+        type: string
+      base_url:
+        type: string
+      error:
+        type: string
+      message:
+        type: string
+      stats:
+        $ref: '#/definitions/database.HealthStats'
+      status:
+        type: string
+    type: object
+  database.HealthStats:
+    properties:
+      idle:
+        type: integer
+      in_use:
+        type: integer
+      max_idle_closed:
+        type: integer
+      max_lifetime_closed:
+        type: integer
+      open_connections:
+        type: integer
+      wait_count:
+        type: integer
+      wait_duration:
+        type: string
+    type: object
+  models.ClearOldLogsResponse:
+    properties:
+      before:
+        type: string
+      message:
+        type: string
+      retention_days:
+        type: integer
+    type: object
+  models.ErrorRateByService:
+    properties:
+      error_count:
+        type: integer
+      error_rate:
+        type: number
+      service_group:
+        type: string
+      total_count:
+        type: integer
+    type: object
+  models.GetLogsResponse:
+    properties:
+      logs:
+        items:
+          $ref: '#/definitions/models.LogResponse'
+        type: array
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  models.HTTPError:
+    properties:
+      message:
+        type: string
+    type: object
+  models.HealthMetricsResponse:
+    properties:
+      alerts:
+        items:
+          type: string
+        type: array
+      overall_status:
+        type: string
+      period:
+        type: string
+      services:
+        items:
+          $ref: '#/definitions/models.ServiceHealth'
+        type: array
+      timestamp:
+        type: string
+    type: object
+  models.LogCountByHour:
+    properties:
+      hour:
+        type: string
+      log_count:
+        type: integer
+    type: object
+  models.LogLevelStats:
+    properties:
+      count:
+        type: integer
+      level:
+        type: string
+      percentage:
+        type: number
+    type: object
+  models.LogResponse:
+    properties:
+      action:
+        type: string
+      created_at:
+        type: string
+      details:
+        type: string
+      id:
+        type: integer
+      level:
+        type: string
+      service_group:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  models.LogStatsResponse:
+    properties:
+      days:
+        type: integer
+      levels:
+        items:
+          type: string
+        type: array
+      service_groups:
+        items:
+          type: string
+        type: array
+      since:
+        type: string
+      total:
+        type: integer
+    type: object
+  models.Login:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  models.MetricsPeriod:
+    properties:
+      days:
+        type: integer
+      since:
+        type: string
+      until:
+        type: string
+    type: object
+  models.MetricsResponse:
+    properties:
+      error_rate_by_service:
+        items:
+          $ref: '#/definitions/models.ErrorRateByService'
+        type: array
+      log_count_by_hour:
+        items:
+          $ref: '#/definitions/models.LogCountByHour'
+        type: array
+      log_level_distribution:
+        items:
+          $ref: '#/definitions/models.LogLevelStats'
+        type: array
+      period:
+        $ref: '#/definitions/models.MetricsPeriod'
+      service_group_distribution:
+        items:
+          $ref: '#/definitions/models.ServiceStats'
+        type: array
+    type: object
+  models.MountPoint:
+    properties:
+      available:
+        type: integer
+      device:
+        type: string
+      fs_type:
+        type: string
+      path:
+        type: string
+      total:
+        type: integer
+      use_percent:
+        type: integer
+      used:
+        type: integer
+    type: object
+  models.ServiceHealth:
+    properties:
+      error_count:
+        type: integer
+      error_rate:
+        type: number
+      service_group:
+        type: string
+      status:
+        type: string
+      total_count:
+        type: integer
+    type: object
+  models.ServiceMetricsResponse:
+    properties:
+      days:
+        type: integer
+      error_count:
+        type: integer
+      error_rate:
+        type: number
+      level_distribution:
+        items:
+          $ref: '#/definitions/models.LogLevelStats'
+        type: array
+      service_group:
+        type: string
+      since:
+        type: string
+      total_logs:
+        type: integer
+    type: object
+  models.ServiceStats:
+    properties:
+      count:
+        type: integer
+      percentage:
+        type: number
+      service_group:
+        type: string
+    type: object
+  models.StorageDevice:
+    properties:
+      mount_point:
+        type: string
+      name:
+        type: string
+      size:
+        type: string
+      size_bytes:
+        type: integer
+      type:
+        type: string
+      usage_percent:
+        type: integer
+    type: object
+  user.CreateUserParams:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      role:
+        type: string
+      username:
+        type: string
+    type: object
+  user.GetUserAndSessionByTokenRow:
+    properties:
+      user:
+        $ref: '#/definitions/user.User'
+      user_session:
+        $ref: '#/definitions/user.UserSession'
+    type: object
+  user.UpsertUserParams:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      role:
+        type: string
+      username:
+        type: string
+    type: object
+  user.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      password:
+        type: string
+      role:
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+  user.UserSession:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      session_token:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+host: localhost:9999
+info:
+  contact:
+    name: API Support
+  description: Visory Management API
+  title: Visory API
+  version: "1.0"
+paths:
+  /:
+    get:
+      description: simple hello world endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: hello world
+      tags:
+      - general
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: login with username/email and password
+      parameters:
+      - description: User login credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/models.Login'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: login
+      tags:
+      - accounts
+  /auth/logout:
+    get:
+      description: delete the session and logout the current user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: "null"
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: logout
+      tags:
+      - accounts
+  /auth/me:
+    get:
+      description: Get current user info
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.GetUserAndSessionByTokenRow'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: my info
+      tags:
+      - accounts
+  /auth/oauth/{provider}:
+    get:
+      description: initiate OAuth login flow
+      parameters:
+      - description: OAuth provider (google, github)
+        in: path
+        name: provider
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: OAuth login
+      tags:
+      - accounts
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: registers a new user
+      parameters:
+      - description: User registration info
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/user.UpsertUserParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: register
+      tags:
+      - accounts
+  /docs/redoc:
+    get:
+      description: serve redoc ui for api documentation
+      responses: {}
+      summary: redoc ui
+      tags:
+      - documentation
+  /docs/spec:
+    get:
+      description: serve openapi/swagger specification in json format
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: openapi spec
+      tags:
+      - documentation
+  /docs/swagger:
+    get:
+      description: serve swagger ui for api documentation
+      responses: {}
+      summary: swagger ui
+      tags:
+      - documentation
+  /health:
+    get:
+      description: check database health status
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/database.Health'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: health check
+      tags:
+      - health
+  /logs:
+    get:
+      description: retrieve logs with filtering and pagination
+      parameters:
+      - description: Filter by service group
+        in: query
+        name: service_group
+        type: string
+      - description: Filter by log level
+        in: query
+        name: level
+        type: string
+      - description: Page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Page size (default 20, max 100)
+        in: query
+        name: page_size
+        type: integer
+      - description: Number of days to filter (default 7)
+        in: query
+        name: days
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetLogsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: get logs
+      tags:
+      - logs
+  /logs/cleanup:
+    delete:
+      description: delete logs older than specified retention period
+      parameters:
+      - description: Retention days (default 30)
+        in: query
+        name: days
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ClearOldLogsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: clear old logs
+      tags:
+      - logs
+  /logs/stats:
+    get:
+      description: retrieve statistics about logs
+      parameters:
+      - description: Number of days to filter (default 7)
+        in: query
+        name: days
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.LogStatsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: get log statistics
+      tags:
+      - logs
+  /metrics:
+    get:
+      description: retrieve comprehensive performance metrics
+      parameters:
+      - description: Number of days to analyze (default 7)
+        in: query
+        name: days
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.MetricsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: get metrics
+      tags:
+      - metrics
+  /metrics/{service}:
+    get:
+      description: retrieve metrics for a specific service
+      parameters:
+      - description: Service name
+        in: path
+        name: service
+        required: true
+        type: string
+      - description: Number of days to analyze (default 7)
+        in: query
+        name: days
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ServiceMetricsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: get service metrics
+      tags:
+      - metrics
+  /metrics/health:
+    get:
+      description: retrieve system health metrics based on error rates
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.HealthMetricsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: get health metrics
+      tags:
+      - metrics
+  /storage/devices:
+    get:
+      description: get list of block storage devices
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.StorageDevice'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: list storage devices
+      tags:
+      - storage
+  /storage/mount-points:
+    get:
+      description: get list of mount points
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.MountPoint'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: list mount points
+      tags:
+      - storage
+  /users:
+    get:
+      description: fetch all users (admin only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/user.User'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: get all users
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: create a new user (admin only)
+      parameters:
+      - description: User creation info
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/user.CreateUserParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: create new user
+      tags:
+      - users
+  /users/{id}:
+    delete:
+      description: delete a user by ID (admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: delete user
+      tags:
+      - users
+    get:
+      description: fetch a specific user by their ID (admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.User'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: get user by ID
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: update an existing user (admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: User update info
+        in: body
+        name: user
+        required: true
+        schema:
+          properties:
+            email:
+              type: string
+            role:
+              type: string
+            username:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: update user
+      tags:
+      - users
+  /users/{id}/role:
+    patch:
+      consumes:
+      - application/json
+      description: update a user's role (admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Role to assign
+        in: body
+        name: role
+        required: true
+        schema:
+          properties:
+            role:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: update user role
+      tags:
+      - users
+  /websocket:
+    get:
+      description: establishes websocket connection for real-time updates
+      responses: {}
+      summary: websocket connection
+      tags:
+      - websocket
+schemes:
+- http
+- https
+swagger: "2.0"

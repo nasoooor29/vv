@@ -29,6 +29,7 @@ type Server struct {
 	usersService   *services.UsersService
 	storageService *services.StorageService
 	logsService    *services.LogsService
+	docsService    *services.DocsService
 	metricsService *services.MetricsService
 }
 
@@ -53,6 +54,7 @@ func NewServer() *http.Server {
 	storageService := services.NewStorageService(serverDispatcher, logger)
 	logsService := services.NewLogsService(db, serverDispatcher, logger)
 	metricsService := services.NewMetricsService(db, serverDispatcher, logger)
+	docsService := services.NewDocsService(db, serverDispatcher, logger)
 
 	NewServer := &Server{
 		port:           port,
@@ -65,6 +67,7 @@ func NewServer() *http.Server {
 		storageService: storageService,
 		logsService:    logsService,
 		metricsService: metricsService,
+		docsService:    docsService,
 	}
 
 	// Declare Server config
