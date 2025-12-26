@@ -35,5 +35,6 @@ main
 bin
 visory
 
-visory.db
+visory.db*
 api
+
