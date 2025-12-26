@@ -216,34 +216,32 @@ func (s *MetricsService) GetHealthMetrics(c echo.Context) error {
 	alerts := []string{}
 	maxErrorRate := 0.0
 
-	if errorRates != nil {
-		for _, rate := range errorRates {
-			service := models.ServiceHealth{
-				ServiceGroup: rate.ServiceGroup,
-				ErrorRate:    rate.ErrorRate,
-				ErrorCount:   rate.ErrorCount,
-				TotalCount:   rate.TotalCount,
-				Status:       "healthy",
-			}
-
-			// Mark as warning if error rate > 5%
-			if rate.ErrorRate > 5 {
-				service.Status = "warning"
-				alerts = append(alerts, rate.ServiceGroup+" has error rate of "+string(rune(int(rate.ErrorRate)))+"%")
-			}
-
-			// Mark as critical if error rate > 10%
-			if rate.ErrorRate > 10 {
-				service.Status = "critical"
-				alerts = append(alerts, rate.ServiceGroup+" has CRITICAL error rate of "+string(rune(int(rate.ErrorRate)))+"%")
-			}
-
-			if rate.ErrorRate > maxErrorRate {
-				maxErrorRate = rate.ErrorRate
-			}
-
-			health.Services = append(health.Services, service)
+	for _, rate := range errorRates {
+		service := models.ServiceHealth{
+			ServiceGroup: rate.ServiceGroup,
+			ErrorRate:    rate.ErrorRate,
+			ErrorCount:   rate.ErrorCount,
+			TotalCount:   rate.TotalCount,
+			Status:       "healthy",
 		}
+
+		// Mark as warning if error rate > 5%
+		if rate.ErrorRate > 5 {
+			service.Status = "warning"
+			alerts = append(alerts, rate.ServiceGroup+" has error rate of "+string(rune(int(rate.ErrorRate)))+"%")
+		}
+
+		// Mark as critical if error rate > 10%
+		if rate.ErrorRate > 10 {
+			service.Status = "critical"
+			alerts = append(alerts, rate.ServiceGroup+" has CRITICAL error rate of "+string(rune(int(rate.ErrorRate)))+"%")
+		}
+
+		if rate.ErrorRate > maxErrorRate {
+			maxErrorRate = rate.ErrorRate
+		}
+
+		health.Services = append(health.Services, service)
 	}
 
 	health.Alerts = alerts

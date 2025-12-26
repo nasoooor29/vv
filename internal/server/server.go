@@ -30,6 +30,7 @@ type Server struct {
 	storageService *services.StorageService
 	logsService    *services.LogsService
 	metricsService *services.MetricsService
+	dockerService  *services.DockerService
 }
 
 func NewServer() *http.Server {
@@ -53,6 +54,9 @@ func NewServer() *http.Server {
 	storageService := services.NewStorageService(serverDispatcher, logger)
 	logsService := services.NewLogsService(db, serverDispatcher, logger)
 	metricsService := services.NewMetricsService(db, serverDispatcher, logger)
+	dockerService := services.NewDockerService(serverDispatcher, logger)
+
+	// Initialize Docker clients from environment variables
 
 	NewServer := &Server{
 		port:           port,
@@ -65,6 +69,7 @@ func NewServer() *http.Server {
 		storageService: storageService,
 		logsService:    logsService,
 		metricsService: metricsService,
+		dockerService:  dockerService,
 	}
 
 	// Declare Server config
