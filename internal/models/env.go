@@ -26,8 +26,8 @@ type EnvVars struct {
 
 var ENV_VARS EnvVars
 
-// LoadEnvProduction loads environment variables strictly for production
-func LoadEnvProduction() EnvVars {
+// LoadEnv loads environment variables strictly for production
+func LoadEnv() EnvVars {
 	// Load environment variables from .env file
 	err := godotenv.Load()
 	if err != nil {
@@ -48,4 +48,8 @@ func LoadEnvProduction() EnvVars {
 
 func IsCiEnvironment() bool {
 	return os.Getenv("CI") != "" || os.Getenv("GITHUB_ACTIONS") != ""
+}
+
+func init() {
+	LoadEnv()
 }
