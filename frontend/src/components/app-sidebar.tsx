@@ -17,7 +17,6 @@ import {
   Activity,
   Network,
   Database,
-  Shield,
   Users,
   Settings,
   FileText,

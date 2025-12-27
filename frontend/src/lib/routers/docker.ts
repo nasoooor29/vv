@@ -165,7 +165,7 @@ export const dockerRouter = {
           Image: z.string(),
           Cmd: z.array(z.string()).optional(),
           Env: z.array(z.string()).optional(),
-          ExposedPorts: z.record(z.any()).optional(),
+          ExposedPorts: z.record(z.string(), z.any()).optional(),
         },
       }),
     )

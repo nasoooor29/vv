@@ -96,22 +96,6 @@ function DockerContainerCard({
     stopMutation.isPending ||
     deleteMutation.isPending;
 
-  const handleDelete = async () => {
-    const confirmed = await confirm({
-      title: "Delete Container",
-      description: `Are you sure you want to delete container "${container.Names[0]?.slice(1)}"? This action cannot be undone.`,
-      confirmText: "Delete",
-      cancelText: "Cancel",
-      variant: "destructive",
-    });
-
-    if (confirmed) {
-      deleteMutation.mutate({
-        params: { clientId, id: container.Id },
-      });
-    }
-  };
-
   return (
     <>
       <ConfirmationDialog />
@@ -193,7 +177,20 @@ function DockerContainerCard({
                     size="sm"
                     variant="outline"
                     className="text-destructive hover:text-destructive"
-                    onClick={handleDelete}
+                    onClick={() =>
+                      confirm({
+                        title: "Delete Container",
+                        description: `Are you sure you want to delete container "${container.Names[0]?.slice(1)}"? This action cannot be undone.`,
+                        confirmText: "Delete",
+                        cancelText: "Cancel",
+                        isDestructive: true,
+                        onConfirm() {
+                          deleteMutation.mutate({
+                            params: { clientId, id: container.Id },
+                          });
+                        },
+                      })
+                    }
                     disabled={isLoading}
                   >
                     <Trash2 className="h-4 w-4" />

@@ -13,10 +13,6 @@ import { logsRouter } from "./routers/logs";
 import { metricsRouter } from "./routers/metrics";
 import { dockerRouter } from "./routers/docker";
 import { Z } from "@/types";
-import {
-  RequestValidationPlugin,
-  ResponseValidationPlugin,
-} from "@orpc/contract/plugins";
 
 export const queryClient = new QueryClient({
   mutationCache: new MutationCache({

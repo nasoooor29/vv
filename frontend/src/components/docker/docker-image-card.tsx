@@ -24,7 +24,7 @@ function DockerImageCard({ image }: DockerImageCardProps) {
       <div className="flex items-center gap-3">
         <Container className="h-5 w-5 text-muted-foreground" />
         <div>
-          <div className="text-left font-medium">{imageTitle}</div>
+          <div className="text-left font-medium">{String(imageTitle)}</div>
           <div className="text-left text-sm text-muted-foreground">
             {formatBytes(image.Size)} - Created{" "}
             {formatTimeDifference(new Date(image.Created * 1000))}
