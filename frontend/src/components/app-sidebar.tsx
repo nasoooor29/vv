@@ -39,6 +39,7 @@ import {
 } from "@/types/types.gen";
 
 import { formatTimeDifference } from "@/lib/utils";
+import { CONSTANTS } from "@/lib";
 
 // Component for reactive time display
 function RelativeTimeDisplay({
@@ -59,7 +60,7 @@ function RelativeTimeDisplay({
     // Update every second for more responsive display
     const interval = setInterval(() => {
       setDisplayTime(formatTimeDifference(timestamp));
-    }, 1000);
+    }, CONSTANTS.POLLING_INTERVAL_MS);
 
     return () => clearInterval(interval);
   }, [timestamp]);
@@ -87,7 +88,7 @@ export function AppSidebar() {
   );
   const health = useQuery(
     orpc.health.check.queryOptions({
-      staleTime: 1 * 1000,
+      staleTime: CONSTANTS.POLLING_INTERVAL_MS,
     }),
   );
 

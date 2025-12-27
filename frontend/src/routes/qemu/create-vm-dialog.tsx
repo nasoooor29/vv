@@ -1,12 +1,4 @@
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,17 +6,15 @@ import { client } from "@/lib/orpc";
 import type { CreateVMRequest } from "@/types/types.gen";
 import { toast } from "sonner";
 
-interface CreateVMDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+interface CreateVMDialogContentProps {
   onSuccess?: () => void;
+  onClose: () => void;
 }
 
-export function CreateVMDialog({
-  open,
-  onOpenChange,
+export function CreateVMDialogContent({
   onSuccess,
-}: CreateVMDialogProps) {
+  onClose,
+}: CreateVMDialogContentProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<CreateVMRequest>({
     name: "",
@@ -98,7 +88,7 @@ export function CreateVMDialog({
         autostart: false,
       });
 
-      onOpenChange(false);
+      onClose();
       onSuccess?.();
     } catch (error) {
       toast.error(
@@ -110,123 +100,113 @@ export function CreateVMDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create Virtual Machine</DialogTitle>
-          <DialogDescription>
-            Create a new QEMU virtual machine with custom configuration
-          </DialogDescription>
-        </DialogHeader>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="name">VM Name *</Label>
+        <Input
+          id="name"
+          name="name"
+          placeholder="my-vm"
+          value={formData.name}
+          onChange={handleInputChange}
+          required
+          disabled={loading}
+        />
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">VM Name *</Label>
-            <Input
-              id="name"
-              name="name"
-              placeholder="my-vm"
-              value={formData.name}
-              onChange={handleInputChange}
-              required
-              disabled={loading}
-            />
-          </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="memory">Memory (MB) *</Label>
+          <Input
+            id="memory"
+            name="memory"
+            type="number"
+            min="256"
+            max="262144"
+            step="256"
+            value={formData.memory}
+            onChange={handleInputChange}
+            required
+            disabled={loading}
+          />
+        </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="memory">Memory (MB) *</Label>
-              <Input
-                id="memory"
-                name="memory"
-                type="number"
-                min="256"
-                max="262144"
-                step="256"
-                value={formData.memory}
-                onChange={handleInputChange}
-                required
-                disabled={loading}
-              />
-            </div>
+        <div className="space-y-2">
+          <Label htmlFor="vcpus">vCPUs *</Label>
+          <Input
+            id="vcpus"
+            name="vcpus"
+            type="number"
+            min="1"
+            max="256"
+            value={formData.vcpus}
+            onChange={handleInputChange}
+            required
+            disabled={loading}
+          />
+        </div>
+      </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="vcpus">vCPUs *</Label>
-              <Input
-                id="vcpus"
-                name="vcpus"
-                type="number"
-                min="1"
-                max="256"
-                value={formData.vcpus}
-                onChange={handleInputChange}
-                required
-                disabled={loading}
-              />
-            </div>
-          </div>
+      <div className="space-y-2">
+        <Label htmlFor="disk_size">Disk Size (GB) *</Label>
+        <Input
+          id="disk_size"
+          name="disk_size"
+          type="number"
+          min="1"
+          max="10000"
+          step="10"
+          value={formData.disk_size}
+          onChange={handleInputChange}
+          required
+          disabled={loading}
+        />
+      </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="disk_size">Disk Size (GB) *</Label>
-            <Input
-              id="disk_size"
-              name="disk_size"
-              type="number"
-              min="1"
-              max="10000"
-              step="10"
-              value={formData.disk_size}
-              onChange={handleInputChange}
-              required
-              disabled={loading}
-            />
-          </div>
+      <div className="space-y-2">
+        <Label htmlFor="os_image">OS Image</Label>
+        <Input
+          id="os_image"
+          name="os_image"
+          placeholder="ubuntu-22.04 (optional)"
+          value={formData.os_image}
+          onChange={handleInputChange}
+          disabled={loading}
+        />
+        <p className="text-xs text-muted-foreground">
+          Leave empty to use default image
+        </p>
+      </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="os_image">OS Image</Label>
-            <Input
-              id="os_image"
-              name="os_image"
-              placeholder="ubuntu-22.04 (optional)"
-              value={formData.os_image}
-              onChange={handleInputChange}
-              disabled={loading}
-            />
-            <p className="text-xs text-muted-foreground">
-              Leave empty to use default image
-            </p>
-          </div>
+      <div className="flex items-center space-x-2">
+        <input
+          id="autostart"
+          name="autostart"
+          type="checkbox"
+          checked={formData.autostart}
+          onChange={handleInputChange}
+          disabled={loading}
+          className="h-4 w-4 rounded border border-input"
+        />
+        <Label htmlFor="autostart" className="text-sm font-normal">
+          Autostart VM on system boot
+        </Label>
+      </div>
 
-          <div className="flex items-center space-x-2">
-            <input
-              id="autostart"
-              name="autostart"
-              type="checkbox"
-              checked={formData.autostart}
-              onChange={handleInputChange}
-              disabled={loading}
-              className="h-4 w-4 rounded border border-input"
-            />
-            <Label htmlFor="autostart" className="text-sm font-normal">
-              Autostart VM on system boot
-            </Label>
-          </div>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Creating..." : "Create VM"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+      <div className="flex gap-2 justify-end w-full">
+        <Button
+          className="flex-1"
+          type="button"
+          variant="outline"
+          onClick={onClose}
+          disabled={loading}
+        >
+          Cancel
+        </Button>
+        <Button type="submit" disabled={loading} className="flex-1">
+          {loading ? "Creating..." : "Create VM"}
+        </Button>
+      </div>
+    </form>
   );
 }

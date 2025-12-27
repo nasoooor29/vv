@@ -5,11 +5,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, Disc3 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatBytes } from "@/lib/utils";
+import { CONSTANTS } from "@/lib";
 
 export default function StorageDevicesPage() {
   const devicesQuery = useQuery(
     orpc.storage.devices.queryOptions({
-      staleTime: 5 * 1000,
+      staleTime: CONSTANTS.POLLING_INTERVAL_MS,
     }),
   );
 
