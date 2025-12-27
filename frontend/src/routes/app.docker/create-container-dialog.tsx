@@ -124,6 +124,7 @@ export function CreateContainerContent({
 
     createContainerMutation.mutate({
       params: { clientId },
+      query: { name: containerName.trim() || undefined },
       body: {
         Image: image,
         Cmd: cmdArray,
