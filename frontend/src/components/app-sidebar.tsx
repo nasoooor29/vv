@@ -20,6 +20,7 @@ import {
   Users,
   Settings,
   FileText,
+  Disc3,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Link, useNavigate } from "react-router";
@@ -104,6 +105,12 @@ export function AppSidebar() {
       id: "vms",
       label: "Virtual Machines",
       icon: Server,
+      requiredPermission: RBAC_QEMU_READ,
+    },
+    {
+      id: "iso",
+      label: "ISO Templates",
+      icon: Disc3,
       requiredPermission: RBAC_QEMU_READ,
     },
     {

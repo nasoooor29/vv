@@ -88,6 +88,14 @@ func (s *Server) RegisterRoutes() http.Handler {
 	qemuGroup.POST("/virtual-machines/:uuid/reboot", s.qemuService.RebootVirtualMachine, Roles(models.RBAC_QEMU_UPDATE))
 	qemuGroup.POST("/virtual-machines/:uuid/shutdown", s.qemuService.ShutdownVirtualMachine, Roles(models.RBAC_QEMU_UPDATE))
 
+	// ISO routes
+	isoGroup := api.Group("/iso", s.authService.AuthMiddleware, RequestLogger(s.isoService.Logger, s.isoService.Dispatcher))
+	isoGroup.GET("", s.isoService.ListISOs, Roles(models.RBAC_QEMU_READ))
+	isoGroup.GET("/:filename", s.isoService.GetISOInfo, Roles(models.RBAC_QEMU_READ))
+	isoGroup.POST("", s.isoService.UploadISO, Roles(models.RBAC_QEMU_WRITE))
+	isoGroup.DELETE("/:filename", s.isoService.DeleteISO, Roles(models.RBAC_QEMU_DELETE))
+	isoGroup.GET("/:filename/download", s.isoService.DownloadISO, Roles(models.RBAC_QEMU_READ))
+
 	// Docker routes
 	dockerLogger := RequestLogger(s.dockerService.Logger, s.dockerService.Dispatcher)
 	dockerGroup := api.Group("/docker", dockerLogger)

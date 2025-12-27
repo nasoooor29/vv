@@ -32,6 +32,7 @@ type Server struct {
 	docsService    *services.DocsService
 	metricsService *services.MetricsService
 	qemuService    *services.QemuService
+	isoService     *services.ISOService
 	dockerService  *services.DockerService
 }
 
@@ -62,6 +63,7 @@ func NewServer() *http.Server {
 	// Initialize Docker clients from environment variables
 	docsService := services.NewDocsService(db, serverDispatcher, logger)
 	qemuService := services.NewQemuService(serverDispatcher, fs, logger)
+	isoService := services.NewISOService(serverDispatcher, fs, logger)
 
 	NewServer := &Server{
 		port:           port,
@@ -78,6 +80,7 @@ func NewServer() *http.Server {
 		dockerService:  dockerService,
 		docsService:    docsService,
 		qemuService:    qemuService,
+		isoService:     isoService,
 	}
 
 	// Declare Server config

@@ -53,7 +53,7 @@ export const qemuRouter = {
       method: "POST",
       path: "/qemu/virtual-machines",
     })
-    .input(Z.createVMRequestSchema)
+    .input(Z.createVmRequestSchema)
     .output(Z.virtualMachineSchema),
 
   // Start virtual machine

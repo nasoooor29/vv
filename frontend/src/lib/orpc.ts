@@ -12,6 +12,7 @@ import { usersRouter } from "./routers/users";
 import { logsRouter } from "./routers/logs";
 import { metricsRouter } from "./routers/metrics";
 import { qemuRouter } from "./routers/qemu";
+import { isoRouter } from "./routers/iso";
 import { dockerRouter } from "./routers/docker";
 import { Z } from "@/types";
 
@@ -63,6 +64,7 @@ export const contract = {
   logs: logsRouter,
   metrics: metricsRouter,
   qemu: qemuRouter,
+  iso: isoRouter,
   docker: dockerRouter,
 };
 
