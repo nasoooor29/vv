@@ -67,8 +67,6 @@ func NewServer() *http.Server {
 	}
 
 	dispatcher := utils.NewDispatcher(db, notifier)
-	dispatcher := utils.NewDispatcher(db)
-	dispatcher := utils.NewDispatcher(db)
 	fs := utils.NewFS(models.ENV_VARS.Directory)
 
 	// Add server group to logger
@@ -86,12 +84,10 @@ func NewServer() *http.Server {
 
 	// Initialize Docker clients from environment variables
 	docsService := services.NewDocsService(db, serverDispatcher, logger)
-	qemuService := services.NewQemuService(serverDispatcher, logger)
 	settingsService := services.NewSettingsService(db, serverDispatcher, logger, notifier)
 
 	// Load notification settings from database
 	loadNotificationSettingsFromDB(db, notifier)
-	qemuService := services.NewQemuService(serverDispatcher, logger)
 	qemuService := services.NewQemuService(serverDispatcher, fs, logger)
 
 	NewServer := &Server{
@@ -110,11 +106,7 @@ func NewServer() *http.Server {
 		dockerService:    dockerService,
 		docsService:      docsService,
 		qemuService:      qemuService,
-		firewallService:  firewallService,
-		templatesService: templatesService,
 		settingsService:  settingsService,
-		firewallService:  firewallService,
-		templatesService: templatesService,
 	}
 
 	// Declare Server config
