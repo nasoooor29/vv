@@ -1,0 +1,21 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "index",
+    "getting-started",
+    "---Authentication---",
+    "authentication",
+    "oauth-setup",
+    "rbac",
+    "---Features---",
+    "docker",
+    "virtual-machines",
+    "storage",
+    "users",
+    "---Administration---",
+    "logs",
+    "monitoring",
+    "---Advanced---",
+    "polling"
+  ]
+}

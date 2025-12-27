@@ -21,10 +21,27 @@ import {
   type RBACPolicy,
 } from "@/types/types.gen";
 
+export const allPolicies = [
+  RBAC_DOCKER_READ,
+  RBAC_DOCKER_WRITE,
+  RBAC_DOCKER_UPDATE,
+  RBAC_DOCKER_DELETE,
+  RBAC_QEMU_READ,
+  RBAC_QEMU_WRITE,
+  RBAC_QEMU_UPDATE,
+  RBAC_QEMU_DELETE,
+  RBAC_EVENT_VIEWER,
+  RBAC_EVENT_MANAGER,
+  RBAC_USER_ADMIN,
+  RBAC_SETTINGS_MANAGER,
+  RBAC_AUDIT_LOG_VIEWER,
+  RBAC_HEALTH_CHECKER,
+];
+
 /**
  * Convert role string (comma-separated) to RBAC policies
  * Matches backend logic from models.go: RoleToRBACPolicies
- * 
+ *
  * Splits the role string by comma and compares each role against all available RBAC policies
  */
 export function roleToRBACPolicies(roleString: string): Set<RBACPolicy> {
@@ -56,6 +73,22 @@ export function roleToRBACPolicies(roleString: string): Set<RBACPolicy> {
     RBAC_FIREWALL_UPDATE,
     RBAC_FIREWALL_DELETE,
   ];
+  const allPolicies = [
+    RBAC_DOCKER_READ,
+    RBAC_DOCKER_WRITE,
+    RBAC_DOCKER_UPDATE,
+    RBAC_DOCKER_DELETE,
+    RBAC_QEMU_READ,
+    RBAC_QEMU_WRITE,
+    RBAC_QEMU_UPDATE,
+    RBAC_QEMU_DELETE,
+    RBAC_EVENT_VIEWER,
+    RBAC_EVENT_MANAGER,
+    RBAC_USER_ADMIN,
+    RBAC_SETTINGS_MANAGER,
+    RBAC_AUDIT_LOG_VIEWER,
+    RBAC_HEALTH_CHECKER,
+  ];
 
   // For each role, check if it matches any of the available policies
   for (const role of roles) {
@@ -79,7 +112,7 @@ export function roleToRBACPolicies(roleString: string): Set<RBACPolicy> {
  */
 export function hasPermission(
   userRoles: Set<RBACPolicy>,
-  requiredPolicy: RBACPolicy | RBACPolicy[]
+  requiredPolicy: RBACPolicy | RBACPolicy[],
 ): boolean {
   // Check if user is admin - admins have all permissions
   if (userRoles.has(RBAC_USER_ADMIN)) return true;
@@ -98,7 +131,7 @@ export function hasPermission(
  */
 export function hasAnyPermission(
   userRoles: Set<RBACPolicy>,
-  requiredPolicies: RBACPolicy[]
+  requiredPolicies: RBACPolicy[],
 ): boolean {
   // Check if user is admin
   if (userRoles.has(RBAC_USER_ADMIN)) return true;
