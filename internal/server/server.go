@@ -7,7 +7,6 @@ import (
 	"os"
 	"strconv"
 	"time"
-
 	"visory/internal/database"
 	"visory/internal/models"
 	"visory/internal/services"
@@ -19,6 +18,7 @@ import (
 type Server struct {
 	port int
 
+	fs             *utils.FS
 	db             *database.Service
 	dispatcher     *utils.Dispatcher
 	logger         *slog.Logger
@@ -46,6 +46,7 @@ func NewServer() *http.Server {
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 	db := database.New()
 	dispatcher := utils.NewDispatcher(db)
+	fs := utils.NewFS(models.ENV_VARS.Directory)
 
 	// Add server group to logger
 	serverDispatcher := dispatcher.WithGroup("server")
@@ -60,12 +61,13 @@ func NewServer() *http.Server {
 
 	// Initialize Docker clients from environment variables
 	docsService := services.NewDocsService(db, serverDispatcher, logger)
-	qemuService := services.NewQemuService(serverDispatcher, logger)
+	qemuService := services.NewQemuService(serverDispatcher, fs, logger)
 
 	NewServer := &Server{
 		port:           port,
 		db:             db,
 		logger:         logger,
+		fs:             fs,
 		dispatcher:     serverDispatcher,
 		OAuthProviders: authService.OAuthProviders,
 		authService:    authService,

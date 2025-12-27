@@ -17,6 +17,7 @@ type EnvVars struct {
 	GoogleOAuthSecret string `envconfig:"GOOGLE_OAUTH_SECRET" required:"true"`
 	GithubOAuthKey    string `envconfig:"GITHUB_OAUTH_KEY" required:"true"`
 	GithubOAuthSecret string `envconfig:"GITHUB_OAUTH_SECRET" required:"true"`
+	Directory         string `envconfig:"DIRECTORY" required:"true" default:"tmp/"`
 	// OAuthCallbackURL  string `envconfig:"OAUTH_CALLBACK_URL" default:"http://localhost:9999/api/auth/oauth/callback" required:"true"`
 	BaseUrl         string `envconfig:"BASE_URL" default:"http://localhost"`
 	SessionSecret   string `envconfig:"SESSION_SECRET" required:"true"`

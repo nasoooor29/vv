@@ -9,12 +9,12 @@ import (
 	"slices"
 	"strings"
 	"time"
-
 	"visory/internal/database"
-	dbsessions "visory/internal/database/sessions"
 	"visory/internal/database/user"
 	"visory/internal/models"
 	"visory/internal/utils"
+
+	dbsessions "visory/internal/database/sessions"
 
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/sessions"
