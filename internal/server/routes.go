@@ -107,6 +107,17 @@ func (s *Server) RegisterRoutes() http.Handler {
 	dockerClientGroup.POST("/containers/:id/restart", s.dockerService.RestartContainer, Roles(models.RBAC_DOCKER_UPDATE))
 	dockerClientGroup.DELETE("/containers/:id", s.dockerService.DeleteContainer, Roles(models.RBAC_DOCKER_DELETE))
 
+	// Docker Templates routes
+	templatesLogger := RequestLogger(s.templatesService.Logger, s.templatesService.Dispatcher)
+	templatesGroup := api.Group("/templates", s.authService.AuthMiddleware, templatesLogger)
+	templatesGroup.GET("", s.templatesService.ListTemplates, Roles(models.RBAC_DOCKER_READ))
+	templatesGroup.GET("/categories", s.templatesService.GetCategories, Roles(models.RBAC_DOCKER_READ))
+	templatesGroup.POST("/refresh", s.templatesService.RefreshCache, Roles(models.RBAC_DOCKER_WRITE))
+	templatesGroup.GET("/:id", s.templatesService.GetTemplate, Roles(models.RBAC_DOCKER_READ))
+
+	// Template deploy routes (under docker client context)
+	dockerClientGroup.POST("/templates/:id/deploy", s.templatesService.DeployTemplate, Roles(models.RBAC_DOCKER_WRITE))
+
 	// Firewall routes
 	firewallGroup := api.Group("/firewall", s.authService.AuthMiddleware, RequestLogger(s.firewallService.Logger, s.firewallService.Dispatcher))
 	firewallGroup.GET("/status", s.firewallService.GetStatus, Roles(models.RBAC_FIREWALL_READ))

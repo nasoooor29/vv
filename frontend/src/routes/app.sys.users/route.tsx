@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useConfirmation, useDialog } from "@/hooks";
-import { T } from "@/types";
+import type { T } from "@/types";
 import { UsersTable } from "./table";
 import { CreateUserDialogContent } from "./create-dialog";
 import { EditUserDialogContent } from "./edit-dialog";

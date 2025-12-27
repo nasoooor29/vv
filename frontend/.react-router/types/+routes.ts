@@ -49,6 +49,9 @@ type Pages = {
   "/app/sys/users": {
     params: {};
   };
+  "/app/templates": {
+    params: {};
+  };
   "/app/sys/logs": {
     params: {};
   };
@@ -66,7 +69,7 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/auth" | "/auth/register" | "/auth/login" | "/docs" | "/docs/*" | "/app" | "/app/sys/networking" | "/app/sys/settings" | "/app/sys/storage" | "/app/dashboard" | "/app/sys/users" | "/app/sys/logs" | "/app/monitor" | "/app/docker" | "/app/vms";
+    page: "/" | "/auth" | "/auth/register" | "/auth/login" | "/docs" | "/docs/*" | "/app" | "/app/sys/networking" | "/app/sys/settings" | "/app/sys/storage" | "/app/dashboard" | "/app/sys/users" | "/app/templates" | "/app/sys/logs" | "/app/monitor" | "/app/docker" | "/app/vms";
   };
   "routes/_landing.tsx": {
     id: "routes/_landing";
@@ -102,7 +105,7 @@ type RouteFiles = {
   };
   "routes/app.tsx": {
     id: "routes/app";
-    page: "/app" | "/app/sys/networking" | "/app/sys/settings" | "/app/sys/storage" | "/app/dashboard" | "/app/sys/users" | "/app/sys/logs" | "/app/monitor" | "/app/docker" | "/app/vms";
+    page: "/app" | "/app/sys/networking" | "/app/sys/settings" | "/app/sys/storage" | "/app/dashboard" | "/app/sys/users" | "/app/templates" | "/app/sys/logs" | "/app/monitor" | "/app/docker" | "/app/vms";
   };
   "routes/app.sys.networking.tsx": {
     id: "routes/app.sys.networking";
@@ -123,6 +126,10 @@ type RouteFiles = {
   "routes/app.sys.users/route.tsx": {
     id: "routes/app.sys.users";
     page: "/app/sys/users";
+  };
+  "routes/app.templates/route.tsx": {
+    id: "routes/app.templates";
+    page: "/app/templates";
   };
   "routes/app.sys.logs/route.tsx": {
     id: "routes/app.sys.logs";
@@ -162,6 +169,7 @@ type RouteModules = {
   "routes/app.sys.storage": typeof import("./src/routes/app.sys.storage/route.tsx");
   "routes/app.dashboard": typeof import("./src/routes/app.dashboard.tsx");
   "routes/app.sys.users": typeof import("./src/routes/app.sys.users/route.tsx");
+  "routes/app.templates": typeof import("./src/routes/app.templates/route.tsx");
   "routes/app.sys.logs": typeof import("./src/routes/app.sys.logs/route.tsx");
   "routes/app.monitor": typeof import("./src/routes/app.monitor.tsx");
   "routes/app._index": typeof import("./src/routes/app._index.tsx");

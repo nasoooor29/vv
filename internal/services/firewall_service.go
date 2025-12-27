@@ -733,7 +733,7 @@ func (s *FirewallService) persistRules() error {
 	}
 
 	// Ensure directory exists
-	if err := os.MkdirAll(s.dataDir, 0755); err != nil {
+	if err := os.MkdirAll(s.dataDir, 0o755); err != nil {
 		return fmt.Errorf("failed to create data directory: %w", err)
 	}
 
@@ -743,7 +743,7 @@ func (s *FirewallService) persistRules() error {
 		return fmt.Errorf("failed to marshal rules: %w", err)
 	}
 
-	if err := os.WriteFile(filePath, data, 0644); err != nil {
+	if err := os.WriteFile(filePath, data, 0o644); err != nil {
 		return fmt.Errorf("failed to write rules file: %w", err)
 	}
 

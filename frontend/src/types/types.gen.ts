@@ -1,3 +1,80 @@
+/**
+ * VirtualMachine represents a QEMU virtual machine
+ */
+export interface VirtualMachine {
+  id: number /* int32 */;
+  name: string;
+  uuid: string;
+}
+/**
+ * VirtualMachineInfo contains detailed information about a virtual machine
+ */
+export interface VirtualMachineInfo {
+  state: number /* uint8 */;
+  max_mem_kb: number /* uint64 */;
+  memory_kb: number /* uint64 */;
+  vcpus: number /* uint16 */;
+  cpu_time_ns: number /* uint64 */;
+}
+/**
+ * VirtualMachineWithInfo combines VM details with runtime information
+ */
+export interface VirtualMachineWithInfo {
+  id: number /* int32 */;
+  name: string;
+  uuid: string;
+  VirtualMachineInfo: VirtualMachineInfo;
+}
+/**
+ * CreateVMRequest represents a request to create a new virtual machine
+ */
+export interface CreateVMRequest {
+  name: string;
+  memory: number /* int64 */;
+  vcpus: number /* int32 */;
+  disk_size: number /* int64 */;
+  os_image: string;
+  autostart: boolean;
+}
+/**
+ * VMActionResponse represents the response from VM control operations
+ */
+export interface VMActionResponse {
+  success: boolean;
+  message: string;
+}
+/**
+ * QEMU VM States (libvirt domain states)
+ */
+export const VIR_DOMAIN_NOSTATE = 0; // No state
+/**
+ * QEMU VM States (libvirt domain states)
+ */
+export const VIR_DOMAIN_RUNNING = 1; // The domain is running
+/**
+ * QEMU VM States (libvirt domain states)
+ */
+export const VIR_DOMAIN_BLOCKED = 2; // The domain is blocked on resource
+/**
+ * QEMU VM States (libvirt domain states)
+ */
+export const VIR_DOMAIN_PAUSED = 3; // The domain is paused by user
+/**
+ * QEMU VM States (libvirt domain states)
+ */
+export const VIR_DOMAIN_SHUTDOWN = 4; // The domain is being shut down
+/**
+ * QEMU VM States (libvirt domain states)
+ */
+export const VIR_DOMAIN_SHUTOFF = 5; // The domain is shut off
+/**
+ * QEMU VM States (libvirt domain states)
+ */
+export const VIR_DOMAIN_CRASHED = 6; // The domain is crashed
+/**
+ * QEMU VM States (libvirt domain states)
+ */
+export const VIR_DOMAIN_PMSUSPENDED = 7; // The domain is suspended by guest power management
 export interface Login {
   username: string;
   password: string;
@@ -156,19 +233,178 @@ export interface EnvVars {
    * OAuthCallbackURL  string `envconfig:"OAUTH_CALLBACK_URL" default:"http://localhost:9999/api/auth/oauth/callback" required:"true"`
    */
   BaseUrl: string;
+  Directory: string;
   SessionSecret: string;
   FRONTEND_DASH: string;
   BaseUrlWithPort: string;
 }
+/**
+ * PortainerTemplate represents a single template from the Portainer templates JSON
+ */
+export interface PortainerTemplate {
+  type: number /* int */;
+  title: string;
+  description: string;
+  categories: string[];
+  platform: string;
+  logo: string;
+  image: string;
+  name: string;
+  registry: string;
+  command: string;
+  network: string;
+  privileged: boolean;
+  interactive: boolean;
+  hostname: string;
+  note: string;
+  ports: string[];
+  volumes: TemplateVolume[];
+  env: TemplateEnv[];
+  labels: TemplateLabel[];
+  restart_policy: string;
+}
+/**
+ * TemplateVolume represents a volume mapping in a template
+ */
+export interface TemplateVolume {
+  container: string;
+  bind: string;
+  readonly: boolean;
+}
+/**
+ * TemplateEnv represents an environment variable in a template
+ */
+export interface TemplateEnv {
+  name: string;
+  label: string;
+  description: string;
+  default: string;
+  preset: boolean;
+  select: EnvSelect[];
+}
+/**
+ * EnvSelect represents a select option for environment variables
+ */
+export interface EnvSelect {
+  text: string;
+  value: string;
+  default: boolean;
+}
+/**
+ * TemplateLabel represents a label in a template
+ */
+export interface TemplateLabel {
+  name: string;
+  value: string;
+}
+/**
+ * TemplatesResponse represents the response from the Portainer templates API
+ */
+export interface TemplatesResponse {
+  version: string;
+  templates: PortainerTemplate[];
+}
+/**
+ * DeployTemplateRequest represents a request to deploy a template
+ */
+export interface DeployTemplateRequest {
+  name: string; // Container name (optional, uses template name if empty)
+  env: { [key: string]: string }; // Environment variable overrides
+  ports: string[]; // Port mapping overrides
+  volumes: TemplateVolume[]; // Volume mapping overrides
+  network: string; // Network to attach to
+  restart_policy: string; // Restart policy override
+}
+/**
+ * TemplateListItem represents a simplified template for listing
+ */
+export interface TemplateListItem {
+  id: number /* int */;
+  title: string;
+  description: string;
+  categories: string[];
+  platform: string;
+  logo: string;
+  image: string;
+}
+/**
+ * DeployResponse represents the response after deploying a template
+ */
+export interface DeployResponse {
+  container_id: string;
+  name: string;
+  message: string;
+}
 export const COOKIE_NAME = "token";
 export const BYPASS_RBAC_HEADER = "X-Bypass-RBAC";
+/**
+ * FirewallRule represents a single nftables rule
+ */
+export interface FirewallRule {
+  handle: number /* uint64 */; // nftables rule handle (unique ID)
+  chain: string; // "input", "forward", or "output"
+  protocol: string; // "tcp", "udp", or "" for any
+  port: number /* uint16 */; // destination port (0 = any)
+  source_ip: string; // source IP/CIDR or "" for any
+  action: string; // "accept" or "drop"
+  comment: string; // optional user comment
+}
+/**
+ * FirewallStatus represents the current firewall state
+ */
+export interface FirewallStatus {
+  enabled: boolean;
+  rule_count: number /* int */;
+  table_name: string;
+}
+/**
+ * CreateRuleRequest is the request body for creating a new firewall rule
+ */
+export interface CreateRuleRequest {
+  chain: string;
+  protocol: string;
+  port: number /* uint16 */;
+  source_ip: string;
+  action: string;
+  comment: string;
+}
+/**
+ * ReorderRulesRequest is the request body for reordering firewall rules
+ */
+export interface ReorderRulesRequest {
+  chain: string;
+  handles: number /* uint64 */[]; // Rule handles in desired order
+}
+export interface FirewallService {
+  Dispatcher?: any /* utils.Dispatcher */;
+  Logger?: any /* slog.Logger */;
+}
+export interface QemuService {
+  Dispatcher?: any /* utils.Dispatcher */;
+  Logger?: any /* slog.Logger */;
+  LibVirt?: any /* libvirt.Libvirt */;
+}
 export interface StorageService {
   Dispatcher?: any /* utils.Dispatcher */;
   Logger?: any /* slog.Logger */;
 }
+export interface DocsService {
+  Dispatcher?: any /* utils.Dispatcher */;
+  Logger?: any /* slog.Logger */;
+  Spec: string;
+}
 export interface UsersService {
   Dispatcher?: any /* utils.Dispatcher */;
   Logger?: any /* slog.Logger */;
+}
+export interface ClientInfo {
+  id: number /* int */;
+  status: string;
+}
+export interface DockerService {
+  Dispatcher?: any /* utils.Dispatcher */;
+  Logger?: any /* slog.Logger */;
+  ClientManager?: any /* clientmanager.Docker */;
 }
 export interface AuthService {
   Dispatcher?: any /* utils.Dispatcher */;
@@ -184,6 +420,10 @@ export interface MetricsService {
  */
 export interface GetMetricsRequest {
   Days: number /* int */;
+}
+export interface TemplatesService {
+  Dispatcher?: any /* utils.Dispatcher */;
+  Logger?: any /* slog.Logger */;
 }
 export interface LogsService {
   Dispatcher?: any /* utils.Dispatcher */;
@@ -364,38 +604,4 @@ export interface UserSession {
   session_token: string;
   created_at: string;
   updated_at: string;
-}
-export interface VirtualMachine {
-  id: number /* int32 */;
-  name: string;
-  uuid: string;
-}
-export interface VirtualMachineInfo {
-  state: number /* uint8 */;
-  max_mem_kb: number /* uint64 */;
-  memory_kb: number /* uint64 */;
-  vcpus: number /* uint16 */;
-  cpu_time_ns: number /* uint64 */;
-}
-export interface VirtualMachineWithInfo {
-  id: number /* int32 */;
-  name: string;
-  uuid: string;
-  state: number /* uint8 */;
-  max_mem_kb: number /* uint64 */;
-  memory_kb: number /* uint64 */;
-  vcpus: number /* uint16 */;
-  cpu_time_ns: number /* uint64 */;
-}
-export interface CreateVMRequest {
-  name: string;
-  memory: number /* int64 */;
-  vcpus: number /* int32 */;
-  disk_size: number /* int64 */;
-  os_image?: string;
-  autostart?: boolean;
-}
-export interface VMActionResponse {
-  success: boolean;
-  message: string;
 }

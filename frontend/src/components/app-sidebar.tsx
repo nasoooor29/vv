@@ -20,6 +20,7 @@ import {
   Users,
   Settings,
   FileText,
+  Package,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Link, useNavigate } from "react-router";
@@ -117,6 +118,12 @@ export function AppSidebar() {
       id: "docker",
       label: "Containers",
       icon: Container,
+      requiredPermission: RBAC_DOCKER_READ,
+    },
+    {
+      id: "templates",
+      label: "Templates",
+      icon: Package,
       requiredPermission: RBAC_DOCKER_READ,
     },
     {
