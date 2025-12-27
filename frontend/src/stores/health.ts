@@ -1,3 +1,4 @@
+import { CONSTANTS } from "@/lib";
 import { client } from "@/lib/orpc";
 import type { Z } from "@/types";
 import type z from "zod";
@@ -23,4 +24,4 @@ setInterval(async () => {
   } catch (error) {
     useHealth.getState().setHealth(null);
   }
-}, 1000);
+}, CONSTANTS.POLLING_INTERVAL_MS);

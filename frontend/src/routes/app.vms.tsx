@@ -1,12 +1,19 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
 import { orpc, queryClient } from "@/lib/orpc";
-import { usePollingVMs } from "@/hooks";
+import { useDialog } from "@/hooks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Server, Play, RotateCw, Power, Info, Plus } from "lucide-react";
+import {
+  AlertCircle,
+  Server,
+  Play,
+  RotateCw,
+  Power,
+  Info,
+  Plus,
+} from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { usePermission } from "@/components/protected-content";
 import {
@@ -14,98 +21,61 @@ import {
   RBAC_QEMU_WRITE,
   RBAC_QEMU_UPDATE,
 } from "@/types/types.gen";
-import { toast } from "sonner";
-import VMDetailDialog from "./qemu/vm-detail-dialog";
-import VMActionsDialog from "./qemu/vm-actions-dialog";
-import { CreateVMDialog } from "./qemu/create-vm-dialog";
+import { VMDetailDialogContent } from "./qemu/vm-detail-dialog";
+import {
+  VMActionsDialogContent,
+  getActionInfo,
+} from "./qemu/vm-actions-dialog";
+import { CreateVMDialogContent } from "./qemu/create-vm-dialog";
 import type { T } from "@/types";
+import { formatBytes } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { CONSTANTS } from "@/lib";
 
 export default function QemuPage() {
   const { hasPermission } = usePermission();
   const [selectedVM, setSelectedVM] = useState<T.VirtualMachineWithInfo | null>(
     null,
   );
-  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [actionDialogOpen, setActionDialogOpen] = useState(false);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [selectedAction, setSelectedAction] = useState<
     "start" | "reboot" | "shutdown" | null
   >(null);
 
-  const vmsQuery = usePollingVMs({ enabled: true, interval: 5000 });
-
-  const startVMMutation = useMutation(
-    orpc.qemu.startVirtualMachine.mutationOptions({
-      onSuccess: () => {
-        toast.success("Virtual machine started successfully");
-        queryClient.invalidateQueries();
-        setActionDialogOpen(false);
-      },
-      onError: () => {
-        toast.error("Failed to start virtual machine");
-      },
+  const vmsQuery = useQuery(
+    orpc.qemu.getVirtualMachinesInfo.queryOptions({
+      staleTime: CONSTANTS.POLLING_INTERVAL_MS, // Data is stale after half the polling interval
     }),
   );
 
-  const rebootVMMutation = useMutation(
-    orpc.qemu.rebootVirtualMachine.mutationOptions({
-      onSuccess: () => {
-        toast.success("Virtual machine rebooted successfully");
-        queryClient.invalidateQueries();
-        setActionDialogOpen(false);
-      },
-      onError: () => {
-        toast.error("Failed to reboot virtual machine");
-      },
-    }),
-  );
-
-  const shutdownVMMutation = useMutation(
-    orpc.qemu.shutdownVirtualMachine.mutationOptions({
-      onSuccess: () => {
-        toast.success("Virtual machine shutdown initiated");
-        queryClient.invalidateQueries();
-        setActionDialogOpen(false);
-      },
-      onError: () => {
-        toast.error("Failed to shutdown virtual machine");
-      },
-    }),
-  );
+  const detailDialog = useDialog();
+  const actionInfo = getActionInfo(selectedAction || "");
+  const actionDialog = useDialog();
+  const createDialog = useDialog({
+    title: "Create Virtual Machine",
+    description: "Create a new QEMU virtual machine with custom configuration",
+  });
 
   const handleStartVM = (vm: T.VirtualMachineWithInfo) => {
     setSelectedVM(vm);
     setSelectedAction("start");
-    setActionDialogOpen(true);
+    actionDialog.open();
   };
 
   const handleRebootVM = (vm: T.VirtualMachineWithInfo) => {
     setSelectedVM(vm);
     setSelectedAction("reboot");
-    setActionDialogOpen(true);
+    actionDialog.open();
   };
 
   const handleShutdownVM = (vm: T.VirtualMachineWithInfo) => {
     setSelectedVM(vm);
     setSelectedAction("shutdown");
-    setActionDialogOpen(true);
+    actionDialog.open();
   };
 
   const handleViewDetails = (vm: T.VirtualMachineWithInfo) => {
     setSelectedVM(vm);
-    setDetailDialogOpen(true);
-  };
-
-  const handleConfirmAction = () => {
-    if (!selectedVM || !selectedAction) return;
-
-    if (selectedAction === "start") {
-      startVMMutation.mutate({ params: { uuid: selectedVM.uuid } });
-    } else if (selectedAction === "reboot") {
-      rebootVMMutation.mutate({ params: { uuid: selectedVM.uuid } });
-    } else if (selectedAction === "shutdown") {
-      shutdownVMMutation.mutate({ params: { uuid: selectedVM.uuid } });
-    }
+    detailDialog.open();
   };
 
   const getVMStatus = (state: number) => {
@@ -120,14 +90,6 @@ export default function QemuPage() {
       7: { label: "Suspended", variant: "secondary" },
     };
     return states[state] || { label: "Unknown", variant: "secondary" };
-  };
-
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return "0 B";
-    const k = 1024;
-    const sizes = ["B", "KB", "MB", "GB", "TB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
 
   if (!hasPermission(RBAC_QEMU_READ)) {
@@ -149,7 +111,7 @@ export default function QemuPage() {
           <h1 className="text-3xl font-bold">Virtual Machines</h1>
         </div>
         {hasPermission(RBAC_QEMU_WRITE) && (
-          <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
+          <Button onClick={createDialog.open} className="gap-2">
             <Plus className="h-4 w-4" />
             Create VM
           </Button>
@@ -216,7 +178,9 @@ export default function QemuPage() {
                         </p>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">Max Memory</p>
+                        <p className="text-xs text-muted-foreground">
+                          Max Memory
+                        </p>
                         <p className="font-semibold">
                           {formatBytes(vm.max_mem_kb * 1024)}
                         </p>
@@ -287,32 +251,32 @@ export default function QemuPage() {
         </CardContent>
       </Card>
 
-      <VMDetailDialog
-        vm={selectedVM}
-        open={detailDialogOpen}
-        onOpenChange={setDetailDialogOpen}
-      />
+      <detailDialog.Component
+        title={selectedVM?.name ?? "VM Details"}
+        description={selectedVM?.uuid}
+      >
+        <VMDetailDialogContent vm={selectedVM} />
+      </detailDialog.Component>
 
-       <VMActionsDialog
-        vm={selectedVM}
-        action={selectedAction}
-        open={actionDialogOpen}
-        onOpenChange={setActionDialogOpen}
-        onConfirm={handleConfirmAction}
-        isLoading={
-          startVMMutation.isPending ||
-          rebootVMMutation.isPending ||
-          shutdownVMMutation.isPending
-        }
-      />
+      <actionDialog.Component
+        title={actionInfo.title}
+        description={actionInfo.description}
+      >
+        <VMActionsDialogContent
+          vm={selectedVM}
+          action={selectedAction}
+          onClose={actionDialog.close}
+        />
+      </actionDialog.Component>
 
-      <CreateVMDialog
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-        onSuccess={() => {
-          queryClient.invalidateQueries();
-        }}
-      />
+      <createDialog.Component>
+        {(close) => (
+          <CreateVMDialogContent
+            onSuccess={() => queryClient.invalidateQueries()}
+            onClose={close}
+          />
+        )}
+      </createDialog.Component>
     </div>
   );
 }

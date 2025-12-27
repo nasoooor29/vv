@@ -39,3 +39,5 @@ visory.db*
 api
 
 legacy-visory
+*.db-shm
+*.db-wal

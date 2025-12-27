@@ -6,11 +6,12 @@ import { AlertCircle, Disc3 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { formatBytes } from "@/lib/utils";
+import { CONSTANTS } from "@/lib";
 
 export default function MountPointsPage() {
   const mountPointsQuery = useQuery(
     orpc.storage.mountPoints.queryOptions({
-      staleTime: 5 * 1000,
+      staleTime: CONSTANTS.POLLING_INTERVAL_MS,
     }),
   );
 

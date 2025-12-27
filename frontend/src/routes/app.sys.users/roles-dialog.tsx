@@ -1,12 +1,11 @@
 import { useMutation } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
 import { toast } from "sonner";
-import { useDialog } from "@/hooks";
 import { T } from "@/types";
 import { Button } from "@/components/ui/button";
 import MultipleSelector from "@/components/ui/multi-select";
 import { roleStringToArray, roleArrayToString } from "@/lib/rbac";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const AVAILABLE_ROLES = [
   { value: "user", label: "User" },
@@ -26,15 +25,26 @@ const AVAILABLE_ROLES = [
   { value: "health_checker", label: "Health Checker" },
 ];
 
-export function ManageRolesDialog(user: T.User | null) {
-  const initialRoles = user ? roleStringToArray(user.role) : [];
-  const [selectedRoles, setSelectedRoles] = useState<string[]>(initialRoles);
+interface ManageRolesDialogContentProps {
+  user: T.User | null;
+  onClose: () => void;
+}
+
+export function ManageRolesDialogContent({ user, onClose }: ManageRolesDialogContentProps) {
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+
+  // Update selected roles when user changes
+  useEffect(() => {
+    if (user) {
+      setSelectedRoles(roleStringToArray(user.role));
+    }
+  }, [user]);
 
   const updateRoleMutation = useMutation(
     orpc.users.updateUserRole.mutationOptions({
       onSuccess() {
         toast.success("User role updated successfully");
-        dialog.close();
+        onClose();
       },
       onError() {
         toast.error("Failed to update user role");
@@ -42,56 +52,46 @@ export function ManageRolesDialog(user: T.User | null) {
     }),
   );
 
-  const dialog = useDialog({
-    title: "Update User Roles",
-    description: `Select roles for ${user?.username || ""}`,
-    children: (
-      <div className="space-y-4">
-        <MultipleSelector
-          value={selectedRoles.map((role) => ({
-            value: role,
-            label: AVAILABLE_ROLES.find((r) => r.value === role)?.label || role,
-          }))}
-          onChange={(selected) => {
-            setSelectedRoles(selected.map((s) => s.value));
-          }}
-          defaultOptions={AVAILABLE_ROLES}
-          placeholder="Select roles..."
-          emptyIndicator={<p className="text-center text-sm">No roles found</p>}
-        />
-        <p className="text-xs text-muted-foreground">
-          Select at least one role. If no role is selected, the user will be
-          assigned the 'User' role.
-        </p>
-        <div className="flex gap-2 pt-4">
-          <Button variant="secondary" onClick={() => dialog.close()}>
-            Cancel
-          </Button>
-          <Button
-            onClick={() => {
-              if (user) {
-                const rolesString =
-                  selectedRoles.length > 0
-                    ? roleArrayToString(selectedRoles)
-                    : "user";
-                updateRoleMutation.mutate({
-                  params: { id: String(user.id) },
-                  body: { role: rolesString },
-                });
-              }
-            }}
-            disabled={updateRoleMutation.isPending}
-          >
-            {updateRoleMutation.isPending ? "Updating..." : "Update"}
-          </Button>
-        </div>
-      </div>
-    ),
-  });
+  if (!user) return null;
 
-  return {
-    dialog: dialog,
-    setRoles: (roles: string) => setSelectedRoles(roleStringToArray(roles)),
-    mutation: updateRoleMutation,
-  };
+  return (
+    <div className="space-y-4">
+      <MultipleSelector
+        value={selectedRoles.map((role) => ({
+          value: role,
+          label: AVAILABLE_ROLES.find((r) => r.value === role)?.label || role,
+        }))}
+        onChange={(selected) => {
+          setSelectedRoles(selected.map((s) => s.value));
+        }}
+        defaultOptions={AVAILABLE_ROLES}
+        placeholder="Select roles..."
+        emptyIndicator={<p className="text-center text-sm">No roles found</p>}
+      />
+      <p className="text-xs text-muted-foreground">
+        Select at least one role. If no role is selected, the user will be
+        assigned the 'User' role.
+      </p>
+      <div className="flex gap-2 pt-4">
+        <Button variant="secondary" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button
+          onClick={() => {
+            const rolesString =
+              selectedRoles.length > 0
+                ? roleArrayToString(selectedRoles)
+                : "user";
+            updateRoleMutation.mutate({
+              params: { id: String(user.id) },
+              body: { role: rolesString },
+            });
+          }}
+          disabled={updateRoleMutation.isPending}
+        >
+          {updateRoleMutation.isPending ? "Updating..." : "Update"}
+        </Button>
+      </div>
+    </div>
+  );
 }
