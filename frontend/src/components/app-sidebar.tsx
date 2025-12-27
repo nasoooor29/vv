@@ -24,7 +24,7 @@ import {
 import { Button } from "./ui/button";
 import { Link, useNavigate } from "react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { orpc } from "@/lib/orpc";
+import { orpc, queryClient } from "@/lib/orpc";
 import { toast } from "sonner";
 import { useSession } from "@/stores/user";
 import { useEffect, useState } from "react";
@@ -82,6 +82,13 @@ export function AppSidebar() {
       onSuccess() {
         toast.success("Logged out successfully");
         clearSession();
+        queryClient.clear(); // Clear all query cache
+        nav("/auth/login");
+      },
+      onError() {
+        // Even if logout fails on backend, clear local session
+        clearSession();
+        queryClient.clear();
         nav("/auth/login");
       },
     }),

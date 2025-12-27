@@ -49,15 +49,13 @@ func (s *Server) RegisterRoutes() http.Handler {
 	authGroup.POST("/logout", s.authService.Logout)
 
 	// Storage routes
-	storageGroup := api.Group("/storage", RequestLogger(s.storageService.Logger, s.storageService.Dispatcher))
-	storageGroup.Use(s.authService.AuthMiddleware)
+	storageGroup := api.Group("/storage", s.authService.AuthMiddleware, RequestLogger(s.storageService.Logger, s.storageService.Dispatcher))
 	storageGroup.Use(Roles(models.RBAC_SETTINGS_MANAGER))
 	storageGroup.GET("/devices", s.storageService.GetStorageDevices)
 	storageGroup.GET("/mount-points", s.storageService.GetMountPoints)
 
 	// Users routes
-	usersGroup := api.Group("/users", RequestLogger(s.usersService.Logger, s.usersService.Dispatcher))
-	usersGroup.Use(s.authService.AuthMiddleware)
+	usersGroup := api.Group("/users", s.authService.AuthMiddleware, RequestLogger(s.usersService.Logger, s.usersService.Dispatcher))
 	usersGroup.GET("", s.usersService.GetAllUsers, Roles(models.RBAC_USER_ADMIN))
 	usersGroup.GET("/", s.usersService.GetAllUsers, Roles(models.RBAC_USER_ADMIN))
 	usersGroup.GET("/:id", s.usersService.GetUserById, Roles(models.RBAC_USER_ADMIN))
@@ -91,11 +89,11 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	// Docker routes
 	dockerLogger := RequestLogger(s.dockerService.Logger, s.dockerService.Dispatcher)
-	dockerGroup := api.Group("/docker", dockerLogger)
-	dockerGroup.GET("", s.dockerService.GetAvailableClients, s.authService.AuthMiddleware, Roles(models.RBAC_DOCKER_READ))
+	dockerGroup := api.Group("/docker", s.authService.AuthMiddleware, dockerLogger)
+	dockerGroup.GET("", s.dockerService.GetAvailableClients, Roles(models.RBAC_DOCKER_READ))
 
 	// Docker client routes with validation middleware
-	dockerClientGroup := dockerGroup.Group("/:clientid", s.authService.AuthMiddleware, s.dockerService.ValidateDockerClientMiddleware)
+	dockerClientGroup := dockerGroup.Group("/:clientid", s.dockerService.ValidateDockerClientMiddleware)
 	dockerClientGroup.GET("/containers", s.dockerService.ListContainers, Roles(models.RBAC_DOCKER_READ))
 	dockerClientGroup.GET("/images", s.dockerService.ListImages, Roles(models.RBAC_DOCKER_READ))
 	dockerClientGroup.DELETE("/images/:id", s.dockerService.DeleteImage, Roles(models.RBAC_DOCKER_DELETE))

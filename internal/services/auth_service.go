@@ -173,7 +173,7 @@ func (s *AuthService) Logout(c echo.Context) error {
 // @Accept       json
 // @Produce      json
 // @Param        user  body      user.UpsertUserParams  true  "User registration info"
-// @Success      200   {object}  user.User
+// @Success      200   {object}  user.GetUserAndSessionByTokenRow
 // @Failure      400   {object}  models.HTTPError
 // @Failure      409   {object}  models.HTTPError
 // @Failure      500   {object}  models.HTTPError
@@ -200,11 +200,18 @@ func (s *AuthService) Register(c echo.Context) error {
 	if err != nil {
 		return s.Dispatcher.NewInternalServerError("Failed to register user", err)
 	}
-	if err := s.generateCookie(c, val.ID); err != nil {
+	sessionToken, err := s.generateCookie(c, val.ID)
+	if err != nil {
 		return s.Dispatcher.NewInternalServerError("Failed to generate cookie", err)
 	}
 
-	return c.JSON(http.StatusOK, val)
+	// Fetch the full user with session to return consistent response
+	userWithSession, err := s.db.User.GetUserAndSessionByToken(c.Request().Context(), sessionToken)
+	if err != nil {
+		return s.Dispatcher.NewInternalServerError("Failed to get user session", err)
+	}
+
+	return c.JSON(http.StatusOK, userWithSession)
 }
 
 // @Summary      login
@@ -213,7 +220,7 @@ func (s *AuthService) Register(c echo.Context) error {
 // @Accept       json
 // @Produce      json
 // @Param        credentials  body      models.Login  true  "User login credentials"
-// @Success      200   {object}  user.User
+// @Success      200   {object}  user.GetUserAndSessionByTokenRow
 // @Failure      400   {object}  models.HTTPError
 // @Failure      401   {object}  models.HTTPError
 // @Failure      404   {object}  models.HTTPError
@@ -241,11 +248,18 @@ func (s *AuthService) Login(c echo.Context) error {
 		return s.Dispatcher.NewUnauthorized("your username or password is wrong", err)
 	}
 
-	if err := s.generateCookie(c, val.ID); err != nil {
+	sessionToken, err := s.generateCookie(c, val.ID)
+	if err != nil {
 		return s.Dispatcher.NewInternalServerError("Failed to generate cookie", err)
 	}
 
-	return c.JSON(http.StatusOK, val)
+	// Fetch the full user with session to return consistent response
+	userWithSession, err := s.db.User.GetUserAndSessionByToken(c.Request().Context(), sessionToken)
+	if err != nil {
+		return s.Dispatcher.NewInternalServerError("Failed to get user session", err)
+	}
+
+	return c.JSON(http.StatusOK, userWithSession)
 }
 
 // @Summary      OAuth login
@@ -333,7 +347,7 @@ func (s *AuthService) OAuthCallback(c echo.Context) error {
 	}
 
 	// Generate session cookie
-	if err := s.generateCookie(c, userId); err != nil {
+	if _, err := s.generateCookie(c, userId); err != nil {
 		return s.Dispatcher.NewInternalServerError("Failed to generate session", err)
 	}
 
@@ -341,11 +355,11 @@ func (s *AuthService) OAuthCallback(c echo.Context) error {
 	return c.Redirect(http.StatusFound, models.ENV_VARS.FRONTEND_DASH)
 }
 
-// generateCookie generates a session cookie for the user
-func (s *AuthService) generateCookie(c echo.Context, userId int64) error {
+// generateCookie generates a session cookie for the user and returns the session token
+func (s *AuthService) generateCookie(c echo.Context, userId int64) (string, error) {
 	uid, err := uuid.NewV4()
 	if err != nil {
-		return s.Dispatcher.NewInternalServerError("Failed to generate session token", err)
+		return "", s.Dispatcher.NewInternalServerError("Failed to generate session token", err)
 	}
 
 	_, err = s.db.Session.UpsertSession(c.Request().Context(), dbsessions.UpsertSessionParams{
@@ -353,7 +367,7 @@ func (s *AuthService) generateCookie(c echo.Context, userId int64) error {
 		SessionToken: uid.String(),
 	})
 	if err != nil {
-		return s.Dispatcher.NewInternalServerError("Failed to create session", err)
+		return "", s.Dispatcher.NewInternalServerError("Failed to create session", err)
 	}
 
 	cookie := http.Cookie{
@@ -366,7 +380,7 @@ func (s *AuthService) generateCookie(c echo.Context, userId int64) error {
 	}
 	c.SetCookie(&cookie)
 
-	return nil
+	return uid.String(), nil
 }
 
 // generateUsernameFromEmail generates a username from an email address

@@ -54,7 +54,7 @@ func RequestLogger(logger *slog.Logger, dispatcher *utils.Dispatcher) echo.Middl
 			}
 
 			var userID int64 = -1
-			if u, ok := c.Get("userWithSession").(*user.GetUserAndSessionByTokenRow); ok && u != nil {
+			if u, ok := c.Get("userWithSession").(user.GetUserAndSessionByTokenRow); ok {
 				userID = u.User.ID
 			}
 			data := models.LogRequestData{
