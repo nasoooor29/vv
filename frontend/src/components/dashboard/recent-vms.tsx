@@ -13,31 +13,34 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Server, Play, Power, RotateCcw } from "lucide-react";
 import { formatBytes } from "@/lib/utils";
 import { toast } from "sonner";
+import { CONSTANTS } from "@/lib";
 
 // VM States from libvirt
 const VM_STATE_RUNNING = 1;
 
 function RecentVMs() {
   const { data: vms, isLoading } = useQuery(
-    orpc.qemu.getVirtualMachinesInfo.queryOptions({})
+    orpc.qemu.getVirtualMachinesInfo.queryOptions({
+      staleTime: CONSTANTS.POLLING_INTERVAL_MS,
+    }),
   );
 
   const startMutation = useMutation(
     orpc.qemu.startVirtualMachine.mutationOptions({
       onSuccess: () => toast.success("VM started"),
-    })
+    }),
   );
 
   const shutdownMutation = useMutation(
     orpc.qemu.shutdownVirtualMachine.mutationOptions({
       onSuccess: () => toast.success("VM shutdown initiated"),
-    })
+    }),
   );
 
   const rebootMutation = useMutation(
     orpc.qemu.rebootVirtualMachine.mutationOptions({
       onSuccess: () => toast.success("VM reboot initiated"),
-    })
+    }),
   );
 
   if (isLoading) {
@@ -127,7 +130,10 @@ function RecentVMs() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <Badge variant="outline" className="text-xs hidden sm:inline-flex">
+                  <Badge
+                    variant="outline"
+                    className="text-xs hidden sm:inline-flex"
+                  >
                     {getStateLabel(vm.state)}
                   </Badge>
                   <div className="flex gap-1">
