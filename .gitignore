@@ -38,3 +38,4 @@ visory
 visory.db*
 api
 
+cmd/depscan/depscan
