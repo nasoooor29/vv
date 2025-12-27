@@ -8,7 +8,15 @@ export const logsRouter = {
       method: "GET",
       path: "/logs",
     })
-    .input(Z.getLogsRequestSchema)
+    .input(
+      z.object({
+        service_group: z.string().optional(),
+        level: z.string().optional(),
+        page: z.number().optional().default(1),
+        page_size: z.number().optional().default(20),
+        days: z.number().optional().default(7),
+      })
+    )
     .output(Z.getLogsResponseSchema),
 
   getLogStats: base

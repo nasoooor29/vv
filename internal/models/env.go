@@ -3,6 +3,7 @@ package models
 import (
 	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
@@ -37,7 +38,7 @@ func LoadEnv() EnvVars {
 
 	var cfg EnvVars
 	err = envconfig.Process("", &cfg)
-	if err != nil && !IsCiEnvironment() {
+	if err != nil && !IsCiEnvironment() && !IsTestEnvironment() {
 		slog.Error("error processing environment variables", "err", err)
 		panic(err)
 	}
@@ -48,7 +49,12 @@ func LoadEnv() EnvVars {
 }
 
 func IsCiEnvironment() bool {
-	return os.Getenv("CI") != "" || os.Getenv("GITHUB_ACTIONS") != ""
+	return os.Getenv("CI") != "" || os.Getenv("GITHUB_ACTIONS") != "" || os.Getenv("GO_TEST") != ""
+}
+
+func IsTestEnvironment() bool {
+	// Check if running under go test
+	return len(os.Args) > 0 && (strings.Contains(os.Args[0], "test") || strings.Contains(os.Args[0], ".test"))
 }
 
 func init() {

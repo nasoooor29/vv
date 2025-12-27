@@ -21,6 +21,7 @@ import {
   Settings,
   FileText,
   Package,
+  Cloud,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Link, useNavigate } from "react-router";
@@ -33,7 +34,6 @@ import { usePermission } from "./protected-content";
 import {
   RBAC_QEMU_READ,
   RBAC_DOCKER_READ,
-  RBAC_EVENT_VIEWER,
   RBAC_SETTINGS_MANAGER,
   RBAC_USER_ADMIN,
   RBAC_AUDIT_LOG_VIEWER,
@@ -46,7 +46,7 @@ import { CONSTANTS } from "@/lib";
 function RelativeTimeDisplay({
   timestamp,
 }: {
-  timestamp: number | Date | null;
+  timestamp: number | Date | string | null;
 }) {
   const [displayTime, setDisplayTime] = useState(() =>
     timestamp ? formatTimeDifference(timestamp) : "",
@@ -130,7 +130,7 @@ export function AppSidebar() {
       id: "monitor",
       label: "Monitoring",
       icon: Activity,
-      requiredPermission: RBAC_EVENT_VIEWER,
+      requiredPermission: RBAC_AUDIT_LOG_VIEWER,
     },
   ];
 
@@ -180,9 +180,12 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className="px-2 py-2">
-          <h2 className="text-lg font-semibold">Visory</h2>
-          <p className="text-sm text-muted-foreground">
+        <div className="px-2 py-2 flex flex-col items-start gap-1 text-lg">
+          <div className="flex items-center gap-2">
+            <Cloud className="w-5 h-5 text-primary" />
+            Visory
+          </div>
+          <p className="text-xs text-muted-foreground">
             v{health.data?.app_version}
           </p>
         </div>

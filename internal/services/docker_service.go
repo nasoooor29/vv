@@ -204,7 +204,9 @@ func (s *DockerService) CreateContainer(c echo.Context) error {
 		return s.Dispatcher.NewInternalServerError("Failed to bind request", err)
 	}
 
-	resp, err := cli.ContainerCreate(ctx, &config, nil, nil, nil, "")
+	containerName := c.QueryParam("name")
+
+	resp, err := cli.ContainerCreate(ctx, &config, nil, nil, nil, containerName)
 	if err != nil {
 		return s.Dispatcher.NewInternalServerError("Failed to create container", err)
 	}
