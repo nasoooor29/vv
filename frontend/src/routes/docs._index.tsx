@@ -21,7 +21,6 @@ const clientLoader = createClientLoader(browserCollections.docs.raw, {
 });
 
 export default function DocsIndexPage() {
-  // Get the index page (empty slugs array means root)
   const page = source.getPage([]);
 
   if (!page) {
@@ -35,7 +34,7 @@ export default function DocsIndexPage() {
     );
   }
 
-  // The path for clientLoader - without ./ prefix as it's stripped by the loader
+  // Path without ./ prefix as it's stripped by the loader
   const mdxPath = `index.mdx`;
   const Content = useMemo(() => clientLoader.getComponent(mdxPath), [mdxPath]);
 

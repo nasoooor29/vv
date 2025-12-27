@@ -37,7 +37,7 @@ export default function DocsPage() {
     );
   }
 
-  // The path for clientLoader - without ./ prefix as it's stripped by the loader
+  // Path without ./ prefix as it's stripped by the loader
   const mdxPath = `${page.slug}.mdx`;
   const Content = useMemo(() => clientLoader.getComponent(mdxPath), [mdxPath]);
 

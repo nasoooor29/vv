@@ -9,7 +9,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { Cloud, Menu } from "lucide-react";
+import { Cloud, Menu, Home, LayoutDashboard } from "lucide-react";
 import { Link, Outlet, useLocation } from "react-router";
 import { useState } from "react";
 
@@ -31,28 +31,42 @@ export default function DocsLayout() {
   return (
     <div className="flex min-h-screen bg-background text-foreground">
       {/* Mobile Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center gap-2 p-4 border-b border-border bg-background">
-        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="shrink-0">
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle menu</span>
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between p-4 border-b border-border bg-background">
+        <div className="flex items-center gap-2">
+          <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="shrink-0">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-72 p-0">
+              <SheetHeader className="border-b border-border">
+                <SheetTitle className="flex items-center gap-2">
+                  <Cloud className="w-5 h-5 text-primary" />
+                  Visory Docs
+                </SheetTitle>
+              </SheetHeader>
+              <ScrollArea className="flex-1 p-4">{sidebarContent}</ScrollArea>
+            </SheetContent>
+          </Sheet>
+          <Link to="/" className="flex items-center gap-2">
+            <Cloud className="w-5 h-5 text-primary" />
+            <span className="font-bold">Visory Docs</span>
+          </Link>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link to="/">
+            <Button variant="ghost" size="icon">
+              <Home className="h-4 w-4" />
             </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-72 p-0">
-            <SheetHeader className="border-b border-border">
-              <SheetTitle className="flex items-center gap-2">
-                <Cloud className="w-5 h-5 text-primary" />
-                Visory Docs
-              </SheetTitle>
-            </SheetHeader>
-            <ScrollArea className="flex-1 p-4">{sidebarContent}</ScrollArea>
-          </SheetContent>
-        </Sheet>
-        <Link to="/" className="flex items-center gap-2">
-          <Cloud className="w-5 h-5 text-primary" />
-          <span className="font-bold">Visory Docs</span>
-        </Link>
+          </Link>
+          <Link to="/app/dashboard">
+            <Button variant="ghost" size="icon">
+              <LayoutDashboard className="h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Desktop Sidebar */}
@@ -64,6 +78,20 @@ export default function DocsLayout() {
           </Link>
         </div>
         <ScrollArea className="flex-1 p-4">{sidebarContent}</ScrollArea>
+        <div className="p-4 border-t border-border space-y-2">
+          <Link to="/" className="block">
+            <Button variant="outline" className="w-full justify-start gap-2">
+              <Home className="h-4 w-4" />
+              Back to Home
+            </Button>
+          </Link>
+          <Link to="/app/dashboard" className="block">
+            <Button variant="default" className="w-full justify-start gap-2">
+              <LayoutDashboard className="h-4 w-4" />
+              Dashboard
+            </Button>
+          </Link>
+        </div>
       </aside>
 
       {/* Main Content */}
