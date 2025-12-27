@@ -1,0 +1,153 @@
+# Docker Container Management
+
+Visory provides a comprehensive interface for managing Docker containers and images across multiple Docker daemon connections.
+
+## Overview
+
+The Docker management feature allows you to:
+- Connect to multiple Docker daemons
+- View, create, and manage containers
+- Monitor container statistics in real-time
+- Manage Docker images
+
+## Required Permissions
+
+| Action | Permission |
+|--------|------------|
+| View containers/images | `docker_read` |
+| Create containers | `docker_write` |
+| Start/Stop/Restart | `docker_update` |
+| Delete containers/images | `docker_delete` |
+
+## Accessing Docker Management
+
+Navigate to **Docker** in the sidebar (requires `docker_read` permission).
+
+## Docker Clients
+
+Visory supports multiple Docker daemon connections. Each client represents a connection to a Docker daemon (local or remote).
+
+### Listing Clients
+
+The Docker page displays all available Docker clients with their connection status.
+
+## Container Operations
+
+### Viewing Containers
+
+The container grid displays all containers with:
+- Container name
+- Image
+- Status (running, stopped, etc.)
+- Created date
+- Port mappings
+
+### Container Details
+
+Click on a container to view detailed information:
+- Full container ID
+- Image and command
+- Environment variables
+- Network settings
+- Mount points
+- Resource limits
+
+### Creating a Container
+
+1. Click **Create Container**
+2. Select the Docker client
+3. Choose an image from available images
+4. Configure container settings:
+   - Name
+   - Port mappings
+   - Environment variables
+   - Volume mounts
+5. Click **Create**
+
+### Container Actions
+
+| Action | Description | Permission |
+|--------|-------------|------------|
+| Start | Start a stopped container | `docker_update` |
+| Stop | Stop a running container | `docker_update` |
+| Restart | Restart a container | `docker_update` |
+| Delete | Remove a container | `docker_delete` |
+
+### Viewing Logs
+
+Click the logs icon to view container output. Logs can be:
+- Streamed in real-time
+- Downloaded as a file
+
+### Container Statistics
+
+Real-time statistics are available for running containers:
+- CPU usage
+- Memory usage
+- Network I/O
+- Block I/O
+
+## Image Management
+
+### Viewing Images
+
+The images section displays all available Docker images with:
+- Repository and tag
+- Image ID
+- Size
+- Created date
+
+### Deleting Images
+
+Select an image and click **Delete** to remove it. Note that images in use by containers cannot be deleted.
+
+## API Reference
+
+### Docker Clients
+
+```
+GET /api/docker
+```
+Returns list of available Docker clients.
+
+### Container Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/docker/:clientId/containers` | GET | List containers |
+| `/api/docker/:clientId/containers/:id` | GET | Inspect container |
+| `/api/docker/:clientId/containers/:id/stats` | GET | Get container stats |
+| `/api/docker/:clientId/containers/:id/stats/stream` | GET | Stream stats (SSE) |
+| `/api/docker/:clientId/containers/:id/logs` | GET | Get container logs |
+| `/api/docker/:clientId/containers` | POST | Create container |
+| `/api/docker/:clientId/containers/:id/start` | POST | Start container |
+| `/api/docker/:clientId/containers/:id/stop` | POST | Stop container |
+| `/api/docker/:clientId/containers/:id/restart` | POST | Restart container |
+| `/api/docker/:clientId/containers/:id` | DELETE | Delete container |
+
+### Image Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/docker/:clientId/images` | GET | List images |
+| `/api/docker/:clientId/images/:id` | DELETE | Delete image |
+
+## Container States
+
+| State | Description |
+|-------|-------------|
+| `created` | Container created but not started |
+| `running` | Container is running |
+| `paused` | Container is paused |
+| `restarting` | Container is restarting |
+| `removing` | Container is being removed |
+| `exited` | Container has stopped |
+| `dead` | Container is dead |
+
+## Best Practices
+
+1. **Use meaningful names**: Give containers descriptive names for easy identification
+2. **Set resource limits**: Configure memory and CPU limits to prevent resource exhaustion
+3. **Clean up unused images**: Regularly remove unused images to save disk space
+4. **Monitor statistics**: Keep an eye on resource usage for running containers
+5. **Use health checks**: Configure container health checks for reliability

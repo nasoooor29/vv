@@ -1,0 +1,74 @@
+# Visory Documentation
+
+Visory is a server management and virtualization platform that provides a unified web interface for managing virtual machines (QEMU/KVM), Docker containers, system storage, user accounts, and audit logging.
+
+## Features
+
+- **Virtual Machine Management** - Create and manage QEMU/KVM virtual machines
+- **Docker Integration** - Manage containers and images across multiple Docker daemons
+- **Storage Monitoring** - View storage devices and mount points
+- **User Management** - Full user lifecycle with role-based access control
+- **Audit Logging** - Comprehensive logging for security and compliance
+- **Real-time Monitoring** - Health checks and metrics dashboard
+
+## Technology Stack
+
+**Backend**
+- Go with Echo framework
+- SQLite database with sqlc
+- libvirt for VM management
+- Docker SDK for container management
+
+**Frontend**
+- React with React Router v7
+- Tailwind CSS with Shadcn UI
+- TanStack Query for data fetching
+- Zustand for state management
+
+## Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/your-org/visory.git
+cd visory
+
+# Set up environment
+cp .env.example .env
+
+# Install dependencies
+go mod download
+cd frontend && bun install && cd ..
+
+# Run the application
+make tmux
+```
+
+Access the application:
+- **Frontend**: http://localhost:5173
+- **API**: http://localhost:9999/api
+- **API Docs**: http://localhost:9999/api/docs/swagger
+
+## Documentation
+
+### Getting Started
+- [Installation & Setup](./getting-started.md)
+- [Authentication](./authentication.md)
+- [OAuth Setup](./oauth-setup.md)
+
+### Core Features
+- [Docker Management](./docker.md)
+- [Virtual Machines](./virtual-machines.md)
+- [Storage](./storage.md)
+- [User Management](./users.md)
+
+### Administration
+- [Role-Based Access Control](./rbac.md)
+- [Audit Logs](./logs.md)
+- [Monitoring & Health](./monitoring.md)
+
+### Advanced
+- [Real-time Polling](./polling.md)
+
+## Support
+
+For issues and feature requests, please use the GitHub issue tracker.

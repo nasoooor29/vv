@@ -1,0 +1,138 @@
+# Getting Started
+
+This guide will help you get Visory up and running on your local machine for development and testing.
+
+## Prerequisites
+
+- **Go** 1.24 or higher
+- **Bun** (JavaScript runtime)
+- **libvirt** (for QEMU/KVM support)
+- **Docker** (optional, for container management)
+
+## Quick Start
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/your-org/visory.git
+cd visory
+```
+
+### 2. Set Up Environment Variables
+
+Copy the example environment file and configure it:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your settings:
+
+```bash
+# Server Configuration
+PORT=9999
+APP_ENV=development
+
+# Database
+BLUEPRINT_DB_DATABASE=visory.db
+
+# Session Secret (required)
+SESSION_SECRET="your-random-secret-key"
+
+# OAuth (optional, see Authentication docs)
+GOOGLE_OAUTH_KEY="your-google-client-id"
+GOOGLE_OAUTH_SECRET="your-google-client-secret"
+```
+
+Generate a secure session secret:
+
+```bash
+openssl rand -base64 32
+```
+
+### 3. Install Dependencies
+
+```bash
+# Install Go dependencies
+go mod download
+
+# Install frontend dependencies
+cd frontend && bun install && cd ..
+```
+
+### 4. Run the Application
+
+#### Using Make (Recommended)
+
+Run both backend and frontend in tmux:
+
+```bash
+make tmux
+```
+
+Or run them separately:
+
+```bash
+# Terminal 1: Backend with hot reload
+make back
+
+# Terminal 2: Frontend dev server
+make front
+```
+
+#### Manual Start
+
+```bash
+# Backend
+go run ./cmd/api/main.go
+
+# Frontend (in another terminal)
+cd frontend && bun run dev
+```
+
+### 5. Access the Application
+
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:9999/api
+- **API Documentation**: http://localhost:9999/api/docs/swagger
+
+## Makefile Commands
+
+| Command | Description |
+|---------|-------------|
+| `make build` | Build the Go application |
+| `make test` | Run the test suite |
+| `make back` | Run backend with hot reload (air) |
+| `make front` | Run frontend dev server |
+| `make tmux` | Run both in tmux split |
+| `make clean` | Clean build artifacts |
+| `make gen-mig` | Generate database migration |
+
+## Project Structure
+
+```
+visory/
+├── cmd/api/           # Application entry point
+├── internal/
+│   ├── database/      # Database queries and migrations
+│   ├── models/        # Data models and types
+│   ├── server/        # HTTP server and routes
+│   ├── services/      # Business logic
+│   └── storage/       # Storage utilities
+├── frontend/
+│   ├── src/
+│   │   ├── components/  # UI components
+│   │   ├── routes/      # Page routes
+│   │   ├── stores/      # Zustand stores
+│   │   └── lib/         # Utilities and API clients
+│   └── public/
+├── docs/              # API documentation (Swagger)
+└── scripts/           # Utility scripts
+```
+
+## Next Steps
+
+- [Authentication](./authentication.md) - Set up OAuth and user authentication
+- [RBAC](./rbac.md) - Configure role-based access control
+- [Docker Management](./docker.md) - Manage Docker containers
+- [Virtual Machines](./virtual-machines.md) - Manage QEMU/KVM VMs

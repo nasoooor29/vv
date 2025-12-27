@@ -1,0 +1,133 @@
+# Storage Management
+
+Visory provides visibility into your system's storage devices and mount points.
+
+## Overview
+
+The storage management feature allows you to:
+- View all storage devices
+- Monitor disk usage
+- View mount points and filesystems
+
+## Required Permissions
+
+| Action | Permission |
+|--------|------------|
+| View storage | `settings_manager` |
+
+## Accessing Storage Management
+
+Navigate to **System** > **Storage** in the sidebar.
+
+## Storage Devices
+
+The devices view displays all block storage devices with:
+
+| Field | Description |
+|-------|-------------|
+| Name | Device name (e.g., sda, nvme0n1) |
+| Size | Human-readable size |
+| Type | Device type (disk, part, etc.) |
+| Mount Point | Where the device is mounted |
+| Usage | Usage percentage |
+
+### Device Types
+
+| Type | Description |
+|------|-------------|
+| `disk` | Physical disk |
+| `part` | Partition |
+| `lvm` | Logical volume |
+| `crypt` | Encrypted device |
+| `loop` | Loop device |
+
+## Mount Points
+
+The mount points view shows all mounted filesystems:
+
+| Field | Description |
+|-------|-------------|
+| Path | Mount path |
+| Device | Source device |
+| Filesystem | Filesystem type (ext4, xfs, etc.) |
+| Total | Total capacity |
+| Used | Used space |
+| Available | Free space |
+| Usage % | Visual usage indicator |
+
+## API Reference
+
+### Get Storage Devices
+
+```
+GET /api/storage/devices
+```
+
+Response:
+```json
+[
+  {
+    "name": "sda",
+    "size": "500GB",
+    "size_bytes": 500107862016,
+    "type": "disk",
+    "mount_point": "",
+    "usage_percent": 0
+  },
+  {
+    "name": "sda1",
+    "size": "500GB",
+    "size_bytes": 500106813440,
+    "type": "part",
+    "mount_point": "/",
+    "usage_percent": 45
+  }
+]
+```
+
+### Get Mount Points
+
+```
+GET /api/storage/mount-points
+```
+
+Response:
+```json
+[
+  {
+    "path": "/",
+    "device": "/dev/sda1",
+    "filesystem": "ext4",
+    "total": "500GB",
+    "used": "225GB",
+    "available": "275GB",
+    "usage_percent": 45
+  },
+  {
+    "path": "/home",
+    "device": "/dev/sdb1",
+    "filesystem": "ext4",
+    "total": "1TB",
+    "used": "400GB",
+    "available": "600GB",
+    "usage_percent": 40
+  }
+]
+```
+
+## Usage Indicators
+
+The UI displays usage with color-coded indicators:
+
+| Usage | Color | Status |
+|-------|-------|--------|
+| 0-70% | Green | Normal |
+| 70-85% | Yellow | Warning |
+| 85-100% | Red | Critical |
+
+## Best Practices
+
+1. **Monitor Regularly**: Check storage usage to prevent disk full scenarios
+2. **Plan Capacity**: Provision additional storage before hitting critical thresholds
+3. **Clean Up**: Remove unused files, logs, and temporary data
+4. **Backup Important Data**: Regularly backup data on critical mount points
