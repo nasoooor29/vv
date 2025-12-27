@@ -1,8 +1,11 @@
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Monitor } from "lucide-react";
 import type { T } from "@/types";
 
 interface VMDetailDialogProps {
   vm: T.VirtualMachineWithInfo | null;
+  onOpenConsole?: (uuid: string) => void;
 }
 
 const VM_STATES = {
@@ -24,13 +27,25 @@ function formatBytes(bytes: number) {
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
 }
 
-export function VMDetailDialogContent({ vm }: VMDetailDialogProps) {
+export function VMDetailDialogContent({ vm, onOpenConsole }: VMDetailDialogProps) {
   if (!vm) return null;
 
   const status = (VM_STATES[vm.state as keyof typeof VM_STATES] || { label: "Unknown", variant: "secondary" }) as any;
 
   return (
     <div className="space-y-6">
+      {/* Console Button */}
+      {vm.vnc_ip && vm.vnc_port && (
+        <Button
+          onClick={() => onOpenConsole?.(vm.uuid)}
+          className="w-full gap-2"
+          variant="default"
+        >
+          <Monitor className="h-4 w-4" />
+          Open Console
+        </Button>
+      )}
+
       {/* Status Section */}
       <div className="space-y-2">
         <h3 className="font-semibold text-sm text-muted-foreground">

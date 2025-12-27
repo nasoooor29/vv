@@ -389,6 +389,8 @@ export const virtualMachineInfoSchema = z.object({
   memory_kb: z.number(),
   vcpus: z.number(),
   cpu_time_ns: z.number(),
+  vnc_ip: z.string(),
+  vnc_port: z.number(),
 });
 
 export const virtualMachineWithInfoSchema = z.object({
@@ -400,6 +402,8 @@ export const virtualMachineWithInfoSchema = z.object({
   memory_kb: z.number(),
   vcpus: z.number(),
   cpu_time_ns: z.number(),
+  vnc_ip: z.string(),
+  vnc_port: z.number(),
 });
 
 export const createVmRequestSchema = z.object({

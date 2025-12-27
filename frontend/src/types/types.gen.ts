@@ -372,6 +372,8 @@ export interface VirtualMachineInfo {
   memory_kb: number /* uint64 */;
   vcpus: number /* uint16 */;
   cpu_time_ns: number /* uint64 */;
+  vnc_ip: string;
+  vnc_port: number;
 }
 export interface VirtualMachineWithInfo {
   id: number /* int32 */;
@@ -382,6 +384,8 @@ export interface VirtualMachineWithInfo {
   memory_kb: number /* uint64 */;
   vcpus: number /* uint16 */;
   cpu_time_ns: number /* uint64 */;
+  vnc_ip: string;
+  vnc_port: number;
 }
 export interface CreateVMRequest {
   name: string;
