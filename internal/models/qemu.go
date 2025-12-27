@@ -14,6 +14,8 @@ type VirtualMachineInfo struct {
 	MemoryKB  uint64 `json:"memory_kb"`
 	VCPUs     uint16 `json:"vcpus"`
 	CPUTimeNs uint64 `json:"cpu_time_ns"`
+	VNCIP     string `json:"vnc_ip"`
+	VNCPort   int    `json:"vnc_port"`
 }
 
 // VirtualMachineWithInfo combines VM details with runtime information
@@ -29,7 +31,7 @@ type CreateVMRequest struct {
 	Name      string `json:"name" validate:"required"`
 	Memory    int64  `json:"memory" validate:"required"`
 	VCPUs     int32  `json:"vcpus" validate:"required"`
-	DiskSize  int64  `json:"disk_size" validate:"required"`
+	DiskSize  int64  `json:"disk" validate:"required"`
 	OSImage   string `json:"os_image"`
 	Autostart bool   `json:"autostart"`
 }

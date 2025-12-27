@@ -75,6 +75,7 @@ require (
 	github.com/digitalocean/go-libvirt v0.0.0-20251202224409-8b0babaf9393
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/labstack/gommon v0.4.2 // indirect
+	github.com/libvirt/libvirt-go-xml v7.4.0+incompatible
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/pressly/goose/v3 v3.26.0
@@ -85,4 +86,5 @@ require (
 	golang.org/x/sys v0.39.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
+	gopkg.in/xmlpath.v2 v2.0.0-20150820204837-860cbeca3ebc
 )

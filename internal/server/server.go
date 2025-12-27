@@ -21,6 +21,7 @@ import (
 type Server struct {
 	port int
 
+	fs             *utils.FS
 	db             *database.Service
 	dispatcher     *utils.Dispatcher
 	logger         *slog.Logger
@@ -66,6 +67,9 @@ func NewServer() *http.Server {
 	}
 
 	dispatcher := utils.NewDispatcher(db, notifier)
+	dispatcher := utils.NewDispatcher(db)
+	dispatcher := utils.NewDispatcher(db)
+	fs := utils.NewFS(models.ENV_VARS.Directory)
 
 	// Add server group to logger
 	serverDispatcher := dispatcher.WithGroup("server")
@@ -87,8 +91,12 @@ func NewServer() *http.Server {
 
 	// Load notification settings from database
 	loadNotificationSettingsFromDB(db, notifier)
+	qemuService := services.NewQemuService(serverDispatcher, logger)
+	qemuService := services.NewQemuService(serverDispatcher, fs, logger)
 
 	NewServer := &Server{
+		firewallService:  firewallService,
+		templatesService: templatesService,
 		port:             port,
 		db:               db,
 		logger:           logger,
@@ -105,6 +113,8 @@ func NewServer() *http.Server {
 		firewallService:  firewallService,
 		templatesService: templatesService,
 		settingsService:  settingsService,
+		firewallService:  firewallService,
+		templatesService: templatesService,
 	}
 
 	// Declare Server config
