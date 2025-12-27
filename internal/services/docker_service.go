@@ -21,7 +21,7 @@ type ClientInfo struct {
 type DockerService struct {
 	Dispatcher    *utils.Dispatcher
 	Logger        *slog.Logger
-	clientManager *clientmanager.Docker
+	ClientManager *clientmanager.Docker
 }
 
 // NewDockerService creates a new DockerService with dependency injection
@@ -29,23 +29,23 @@ func NewDockerService(dispatcher *utils.Dispatcher, logger *slog.Logger) *Docker
 	service := &DockerService{
 		Dispatcher:    dispatcher.WithGroup("docker"),
 		Logger:        logger.WithGroup("docker"),
-		clientManager: clientmanager.NewDockerClientManager(dispatcher, logger),
+		ClientManager: clientmanager.NewDockerClientManager(dispatcher, logger),
 	}
-	service.clientManager.InitializeDockerClients()
-	service.clientManager.InitilizeDefaultDockerClient()
+	service.ClientManager.InitializeDockerClients()
+	service.ClientManager.InitilizeDefaultDockerClient()
 	return service
 }
 
 // GetAvailableClients returns all registered Docker clients
 func (s *DockerService) GetAvailableClients(c echo.Context) error {
-	clients := s.clientManager.ListClients()
+	clients := s.ClientManager.ListClients()
 	return c.JSON(http.StatusOK, clients)
 }
 
 // ListContainers returns list of containers
 func (s *DockerService) ListContainers(c echo.Context) error {
 	ctx := c.Request().Context()
-	cli, err := s.clientManager.GetClient(c)
+	cli, err := s.ClientManager.GetClient(c)
 	if err != nil {
 		return err
 	}
@@ -64,7 +64,7 @@ func (s *DockerService) ListContainers(c echo.Context) error {
 // ListImages returns list of images
 func (s *DockerService) ListImages(c echo.Context) error {
 	ctx := c.Request().Context()
-	cli, err := s.clientManager.GetClient(c)
+	cli, err := s.ClientManager.GetClient(c)
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func (s *DockerService) DeleteImage(c echo.Context) error {
 	ctx := c.Request().Context()
 	imageID := c.Param("id")
 
-	cli, err := s.clientManager.GetClient(c)
+	cli, err := s.ClientManager.GetClient(c)
 	if err != nil {
 		return err
 	}
@@ -108,7 +108,7 @@ func (s *DockerService) InspectContainer(c echo.Context) error {
 	ctx := c.Request().Context()
 	containerID := c.Param("id")
 
-	cli, err := s.clientManager.GetClient(c)
+	cli, err := s.ClientManager.GetClient(c)
 	if err != nil {
 		return err
 	}
@@ -126,7 +126,7 @@ func (s *DockerService) ContainerStats(c echo.Context) error {
 	ctx := c.Request().Context()
 	containerID := c.Param("id")
 
-	cli, err := s.clientManager.GetClient(c)
+	cli, err := s.ClientManager.GetClient(c)
 	if err != nil {
 		return err
 	}
@@ -150,7 +150,7 @@ func (s *DockerService) ContainerStatsStream(c echo.Context) error {
 	ctx := c.Request().Context()
 	containerID := c.Param("id")
 
-	cli, err := s.clientManager.GetClient(c)
+	cli, err := s.ClientManager.GetClient(c)
 	if err != nil {
 		return err
 	}
@@ -170,7 +170,7 @@ func (s *DockerService) ContainerLogs(c echo.Context) error {
 	ctx := c.Request().Context()
 	containerID := c.Param("id")
 
-	cli, err := s.clientManager.GetClient(c)
+	cli, err := s.ClientManager.GetClient(c)
 	if err != nil {
 		return err
 	}
@@ -194,7 +194,7 @@ func (s *DockerService) ContainerLogs(c echo.Context) error {
 func (s *DockerService) CreateContainer(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	cli, err := s.clientManager.GetClient(c)
+	cli, err := s.ClientManager.GetClient(c)
 	if err != nil {
 		return err
 	}
@@ -219,7 +219,7 @@ func (s *DockerService) StartContainer(c echo.Context) error {
 	ctx := c.Request().Context()
 	containerID := c.Param("id")
 
-	cli, err := s.clientManager.GetClient(c)
+	cli, err := s.ClientManager.GetClient(c)
 	if err != nil {
 		return err
 	}
@@ -237,7 +237,7 @@ func (s *DockerService) StopContainer(c echo.Context) error {
 	ctx := c.Request().Context()
 	containerID := c.Param("id")
 
-	cli, err := s.clientManager.GetClient(c)
+	cli, err := s.ClientManager.GetClient(c)
 	if err != nil {
 		return err
 	}
@@ -255,7 +255,7 @@ func (s *DockerService) RestartContainer(c echo.Context) error {
 	ctx := c.Request().Context()
 	containerID := c.Param("id")
 
-	cli, err := s.clientManager.GetClient(c)
+	cli, err := s.ClientManager.GetClient(c)
 	if err != nil {
 		return err
 	}
@@ -273,7 +273,7 @@ func (s *DockerService) DeleteContainer(c echo.Context) error {
 	ctx := c.Request().Context()
 	containerID := c.Param("id")
 
-	cli, err := s.clientManager.GetClient(c)
+	cli, err := s.ClientManager.GetClient(c)
 	if err != nil {
 		return err
 	}
@@ -291,7 +291,7 @@ func (s *DockerService) DeleteContainer(c echo.Context) error {
 // ValidateDockerClientMiddleware validates that the Docker client ID exists
 func (s *DockerService) ValidateDockerClientMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		_, err := s.clientManager.GetClient(c)
+		_, err := s.ClientManager.GetClient(c)
 		if err != nil {
 			return err
 		}
