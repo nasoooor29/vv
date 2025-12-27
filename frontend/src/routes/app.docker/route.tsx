@@ -183,7 +183,7 @@ export default function DockerPage() {
 
       {activeClientId && <ImagesCard clientId={activeClientId} />}
 
-      <containerDetailsDialog.component />
+      <containerDetailsDialog.Component />
       <createContainerDialog.dialog.component />
       <ConfirmationDialog />
     </div>
