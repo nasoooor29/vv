@@ -87,6 +87,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	dockerClientGroup := dockerGroup.Group("/:clientid", s.authService.AuthMiddleware, s.dockerService.ValidateDockerClientMiddleware)
 	dockerClientGroup.GET("/containers", s.dockerService.ListContainers, Roles(models.RBAC_DOCKER_READ))
 	dockerClientGroup.GET("/images", s.dockerService.ListImages, Roles(models.RBAC_DOCKER_READ))
+	dockerClientGroup.DELETE("/images/:id", s.dockerService.DeleteImage, Roles(models.RBAC_DOCKER_DELETE))
 	dockerClientGroup.GET("/containers/:id", s.dockerService.InspectContainer, Roles(models.RBAC_DOCKER_READ))
 	dockerClientGroup.GET("/containers/:id/stats", s.dockerService.ContainerStats, Roles(models.RBAC_DOCKER_READ))
 	dockerClientGroup.GET("/containers/:id/stats/stream", s.dockerService.ContainerStatsStream, Roles(models.RBAC_DOCKER_READ))
@@ -94,6 +95,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	dockerClientGroup.POST("/containers", s.dockerService.CreateContainer, Roles(models.RBAC_DOCKER_WRITE))
 	dockerClientGroup.POST("/containers/:id/start", s.dockerService.StartContainer, Roles(models.RBAC_DOCKER_UPDATE))
 	dockerClientGroup.POST("/containers/:id/stop", s.dockerService.StopContainer, Roles(models.RBAC_DOCKER_UPDATE))
+	dockerClientGroup.POST("/containers/:id/restart", s.dockerService.RestartContainer, Roles(models.RBAC_DOCKER_UPDATE))
 	dockerClientGroup.DELETE("/containers/:id", s.dockerService.DeleteContainer, Roles(models.RBAC_DOCKER_DELETE))
 
 	return e

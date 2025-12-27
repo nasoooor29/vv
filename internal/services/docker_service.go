@@ -82,6 +82,27 @@ func (s *DockerService) ListImages(c echo.Context) error {
 	return c.JSON(http.StatusOK, images)
 }
 
+// DeleteImage removes an image
+func (s *DockerService) DeleteImage(c echo.Context) error {
+	ctx := c.Request().Context()
+	imageID := c.Param("id")
+
+	cli, err := s.clientManager.GetClient(c)
+	if err != nil {
+		return err
+	}
+
+	_, err = cli.ImageRemove(ctx, imageID, image.RemoveOptions{
+		Force:         true,
+		PruneChildren: true,
+	})
+	if err != nil {
+		return s.Dispatcher.NewInternalServerError("Failed to delete image", err)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
 // InspectContainer returns detailed information about a container
 func (s *DockerService) InspectContainer(c echo.Context) error {
 	ctx := c.Request().Context()
@@ -222,6 +243,24 @@ func (s *DockerService) StopContainer(c echo.Context) error {
 	err = cli.ContainerStop(ctx, containerID, container.StopOptions{})
 	if err != nil {
 		return s.Dispatcher.NewInternalServerError("Failed to stop container", err)
+	}
+
+	return c.NoContent(http.StatusOK)
+}
+
+// RestartContainer restarts a container
+func (s *DockerService) RestartContainer(c echo.Context) error {
+	ctx := c.Request().Context()
+	containerID := c.Param("id")
+
+	cli, err := s.clientManager.GetClient(c)
+	if err != nil {
+		return err
+	}
+
+	err = cli.ContainerRestart(ctx, containerID, container.StopOptions{})
+	if err != nil {
+		return s.Dispatcher.NewInternalServerError("Failed to restart container", err)
 	}
 
 	return c.NoContent(http.StatusOK)

@@ -389,3 +389,88 @@ export const getUserAndSessionByTokenRowSchema = z.object({
   user: userSchema,
   user_session: userSessionSchema,
 });
+
+// Docker Types
+export const dockerClientInfoSchema = z.object({
+  id: z.number(),
+  status: z.string(),
+});
+
+export const dockerPortSchema = z.object({
+  IP: z.string().optional(),
+  PrivatePort: z.number(),
+  PublicPort: z.number().optional(),
+  Type: z.string(),
+});
+
+export const dockerLabelsSchema = z.record(z.string());
+
+export const dockerHostConfigSchema = z.object({
+  NetworkMode: z.string(),
+});
+
+export const dockerNetworkSchema = z.object({
+  IPAMConfig: z.any().optional(),
+  Links: z.any().optional(),
+  Aliases: z.any().optional(),
+  MacAddress: z.string().optional(),
+  DriverOpts: z.any().optional(),
+  GwPriority: z.number().optional(),
+  NetworkID: z.string().optional(),
+  EndpointID: z.string().optional(),
+  Gateway: z.string().optional(),
+  IPAddress: z.string().optional(),
+  IPPrefixLen: z.number().optional(),
+  IPv6Gateway: z.string().optional(),
+  GlobalIPv6Address: z.string().optional(),
+  GlobalIPv6PrefixLen: z.number().optional(),
+  DNSNames: z.any().optional(),
+});
+
+export const dockerNetworkSettingsSchema = z.object({
+  Networks: z.record(dockerNetworkSchema),
+});
+
+export const dockerMountSchema = z.object({
+  Type: z.string(),
+  Name: z.string().optional(),
+  Source: z.string(),
+  Destination: z.string(),
+  Driver: z.string().optional(),
+  Mode: z.string(),
+  RW: z.boolean(),
+  Propagation: z.string(),
+});
+
+export const dockerContainerSchema = z.object({
+  Id: z.string(),
+  Names: z.array(z.string()),
+  Image: z.string(),
+  ImageID: z.string(),
+  Command: z.string(),
+  Created: z.number(),
+  Ports: z.array(dockerPortSchema),
+  Labels: dockerLabelsSchema,
+  State: z.string(),
+  Status: z.string(),
+  HostConfig: dockerHostConfigSchema,
+  NetworkSettings: dockerNetworkSettingsSchema,
+  Mounts: z.array(dockerMountSchema),
+});
+
+export const dockerImageSchema = z.object({
+  Containers: z.number(),
+  Created: z.number(),
+  Id: z.string(),
+  Labels: dockerLabelsSchema.optional(),
+  ParentId: z.string(),
+  RepoDigests: z.array(z.string()).nullable(),
+  RepoTags: z.array(z.string()).nullable(),
+  SharedSize: z.number(),
+  Size: z.number(),
+});
+
+export const containerCreateResponseSchema = z.object({
+  Id: z.string(),
+  Warnings: z.array(z.string()).nullable(),
+});

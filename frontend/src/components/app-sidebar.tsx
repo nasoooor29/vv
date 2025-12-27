@@ -107,13 +107,13 @@ export function AppSidebar() {
       requiredPermission: RBAC_QEMU_READ,
     },
     {
-      id: "containers",
+      id: "docker",
       label: "Containers",
       icon: Container,
       requiredPermission: RBAC_DOCKER_READ,
     },
     {
-      id: "monitoring",
+      id: "monitor",
       label: "Monitoring",
       icon: Activity,
       requiredPermission: RBAC_EVENT_VIEWER,
@@ -181,7 +181,7 @@ export function AppSidebar() {
               {visibleMenuItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
                   <SidebarMenuButton asChild>
-                    <Link to={`/${item.id}`}>
+                    <Link to={`/app/${item.id}`}>
                       <item.icon />
                       <span>{item.label}</span>
                     </Link>
