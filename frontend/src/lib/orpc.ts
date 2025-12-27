@@ -11,6 +11,7 @@ import { storageRouter } from "./routers/storage";
 import { usersRouter } from "./routers/users";
 import { logsRouter } from "./routers/logs";
 import { metricsRouter } from "./routers/metrics";
+import { qemuRouter } from "./routers/qemu";
 import { dockerRouter } from "./routers/docker";
 import { Z } from "@/types";
 
@@ -61,6 +62,7 @@ export const contract = {
   users: usersRouter,
   logs: logsRouter,
   metrics: metricsRouter,
+  qemu: qemuRouter,
   docker: dockerRouter,
 };
 
