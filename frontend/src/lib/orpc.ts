@@ -11,6 +11,7 @@ import { storageRouter } from "./routers/storage";
 import { usersRouter } from "./routers/users";
 import { logsRouter } from "./routers/logs";
 import { metricsRouter } from "./routers/metrics";
+import { qemuRouter } from "./routers/qemu";
 import { Z } from "@/types";
 import {
   RequestValidationPlugin,
@@ -64,6 +65,7 @@ export const contract = {
   users: usersRouter,
   logs: logsRouter,
   metrics: metricsRouter,
+  qemu: qemuRouter,
 };
 
 const link = new OpenAPILink(contract, {

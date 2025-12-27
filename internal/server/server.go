@@ -31,6 +31,7 @@ type Server struct {
 	logsService    *services.LogsService
 	docsService    *services.DocsService
 	metricsService *services.MetricsService
+	qemuService    *services.QemuService
 }
 
 func NewServer() *http.Server {
@@ -55,6 +56,7 @@ func NewServer() *http.Server {
 	logsService := services.NewLogsService(db, serverDispatcher, logger)
 	metricsService := services.NewMetricsService(db, serverDispatcher, logger)
 	docsService := services.NewDocsService(db, serverDispatcher, logger)
+	qemuService := services.NewQemuService(serverDispatcher, logger)
 
 	NewServer := &Server{
 		port:           port,
@@ -68,6 +70,7 @@ func NewServer() *http.Server {
 		logsService:    logsService,
 		metricsService: metricsService,
 		docsService:    docsService,
+		qemuService:    qemuService,
 	}
 
 	// Declare Server config

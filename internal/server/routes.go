@@ -78,6 +78,17 @@ func (s *Server) RegisterRoutes() http.Handler {
 	metricsGroup.GET("/health", s.metricsService.GetHealthMetrics, Roles(models.RBAC_HEALTH_CHECKER))
 	metricsGroup.GET("/:service", s.metricsService.GetServiceMetrics, Roles(models.RBAC_AUDIT_LOG_VIEWER))
 
+	// QEMU/Virtualization routes
+	qemuGroup := api.Group("/qemu", s.authService.AuthMiddleware, RequestLogger(s.qemuService.Logger, s.qemuService.Dispatcher))
+	qemuGroup.GET("/virtual-machines", s.qemuService.GetVirtualMachines, Roles(models.RBAC_QEMU_READ))
+	qemuGroup.GET("/virtual-machines/info", s.qemuService.GetVirtualMachinesInfo, Roles(models.RBAC_QEMU_READ))
+	qemuGroup.GET("/virtual-machines/:uuid", s.qemuService.GetVirtualMachine, Roles(models.RBAC_QEMU_READ))
+	qemuGroup.GET("/virtual-machines/:uuid/info", s.qemuService.GetVirtualMachineInfo, Roles(models.RBAC_QEMU_READ))
+	qemuGroup.POST("/virtual-machines", s.qemuService.CreateVirtualMachine, Roles(models.RBAC_QEMU_WRITE))
+	qemuGroup.POST("/virtual-machines/:uuid/start", s.qemuService.StartVirtualMachine, Roles(models.RBAC_QEMU_WRITE))
+	qemuGroup.POST("/virtual-machines/:uuid/reboot", s.qemuService.RebootVirtualMachine, Roles(models.RBAC_QEMU_UPDATE))
+	qemuGroup.POST("/virtual-machines/:uuid/shutdown", s.qemuService.ShutdownVirtualMachine, Roles(models.RBAC_QEMU_UPDATE))
+
 	docsGroup := api.Group("/docs", RequestLogger(s.docsService.Logger, s.docsService.Dispatcher))
 	docsGroup.GET("", s.docsService.ServeRedoc)
 	docsGroup.GET("/swagger", s.docsService.ServeSwagger)
