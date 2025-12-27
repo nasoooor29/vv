@@ -237,6 +237,13 @@ export interface EnvVars {
   SessionSecret: string;
   FRONTEND_DASH: string;
   BaseUrlWithPort: string;
+  /**
+   * Discord Webhook Configuration
+   */
+  DiscordWebhookURL: string;
+  DiscordNotifyOnError: boolean;
+  DiscordNotifyOnWarn: boolean;
+  DiscordNotifyOnInfo: boolean;
 }
 /**
  * PortainerTemplate represents a single template from the Portainer templates JSON
@@ -439,6 +446,15 @@ export interface GetLogsRequest {
   PageSize: number /* int */;
   Days: number /* int */; // Filter logs from last N days
 }
+export interface UpsertNotificationSettingParams {
+  provider: string;
+  enabled?: boolean;
+  webhook_url?: string;
+  notify_on_error?: boolean;
+  notify_on_warn?: boolean;
+  notify_on_info?: boolean;
+  config?: string;
+}
 export interface CountLogsByLevelParams {
   level: string;
   created_at: string;
@@ -586,6 +602,18 @@ export interface Notification {
   user_id: number /* int64 */;
   message: string;
   read?: boolean;
+  created_at: string;
+  updated_at: string;
+}
+export interface NotificationSetting {
+  id: number /* int64 */;
+  provider: string;
+  enabled?: boolean;
+  webhook_url?: string;
+  notify_on_error?: boolean;
+  notify_on_warn?: boolean;
+  notify_on_info?: boolean;
+  config?: string;
   created_at: string;
   updated_at: string;
 }

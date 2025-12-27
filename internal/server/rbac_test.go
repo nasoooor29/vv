@@ -17,6 +17,7 @@ import (
 	dbsessions "visory/internal/database/sessions"
 	"visory/internal/database/user"
 	"visory/internal/models"
+	"visory/internal/notifications"
 	"visory/internal/services"
 	"visory/internal/utils"
 
@@ -69,9 +70,10 @@ func setupTestServer(t *testing.T) *testHelper {
 	})
 
 	dbService := database.New()
-	dispatcher := utils.NewDispatcher(dbService)
+	dispatcher := utils.NewDispatcher(dbService, nil)
 
 	dockerService := services.NewDockerService(dispatcher, logger)
+	notifManager := notifications.NewManager()
 	s := &Server{
 		port:             9999,
 		logger:           logger,
@@ -87,6 +89,7 @@ func setupTestServer(t *testing.T) *testHelper {
 		docsService:      services.NewDocsService(dbService, dispatcher, logger),
 		firewallService:  services.NewFirewallService(dispatcher, logger),
 		templatesService: services.NewTemplatesService(dispatcher, logger, dockerService.ClientManager),
+		settingsService:  services.NewSettingsService(dbService, dispatcher, logger, notifManager),
 	}
 
 	handler := s.RegisterRoutes()
