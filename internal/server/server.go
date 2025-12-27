@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"time"
+
 	"visory/internal/database"
 	"visory/internal/models"
 	"visory/internal/services"
@@ -25,15 +26,17 @@ type Server struct {
 	OAuthProviders map[string]goth.Provider
 
 	// Services
-	authService    *services.AuthService
-	usersService   *services.UsersService
-	storageService *services.StorageService
-	logsService    *services.LogsService
-	docsService    *services.DocsService
-	metricsService *services.MetricsService
-	qemuService    *services.QemuService
-	isoService     *services.ISOService
-	dockerService  *services.DockerService
+	authService      *services.AuthService
+	usersService     *services.UsersService
+	storageService   *services.StorageService
+	logsService      *services.LogsService
+	docsService      *services.DocsService
+	metricsService   *services.MetricsService
+	qemuService      *services.QemuService
+	isoService       *services.ISOService
+	dockerService    *services.DockerService
+	firewallService  *services.FirewallService
+	templatesService *services.TemplatesService
 }
 
 func NewServer() *http.Server {
@@ -59,6 +62,8 @@ func NewServer() *http.Server {
 	logsService := services.NewLogsService(db, serverDispatcher, logger)
 	metricsService := services.NewMetricsService(db, serverDispatcher, logger)
 	dockerService := services.NewDockerService(serverDispatcher, logger)
+	firewallService := services.NewFirewallService(serverDispatcher, logger)
+	templatesService := services.NewTemplatesService(serverDispatcher, logger, dockerService.ClientManager)
 
 	// Initialize Docker clients from environment variables
 	docsService := services.NewDocsService(db, serverDispatcher, logger)
@@ -66,21 +71,23 @@ func NewServer() *http.Server {
 	isoService := services.NewISOService(serverDispatcher, fs, logger)
 
 	NewServer := &Server{
-		port:           port,
-		db:             db,
-		logger:         logger,
-		fs:             fs,
-		dispatcher:     serverDispatcher,
-		OAuthProviders: authService.OAuthProviders,
-		authService:    authService,
-		usersService:   usersService,
-		storageService: storageService,
-		logsService:    logsService,
-		metricsService: metricsService,
-		dockerService:  dockerService,
-		docsService:    docsService,
-		qemuService:    qemuService,
-		isoService:     isoService,
+		port:             port,
+		db:               db,
+		logger:           logger,
+		fs:               fs,
+		dispatcher:       serverDispatcher,
+		OAuthProviders:   authService.OAuthProviders,
+		authService:      authService,
+		usersService:     usersService,
+		storageService:   storageService,
+		logsService:      logsService,
+		metricsService:   metricsService,
+		dockerService:    dockerService,
+		docsService:      docsService,
+		qemuService:      qemuService,
+		isoService:       isoService,
+		firewallService:  firewallService,
+		templatesService: templatesService,
 	}
 
 	// Declare Server config

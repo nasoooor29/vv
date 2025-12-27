@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
 import { toast } from "sonner";
-import { T } from "@/types";
+import type { T } from "@/types";
 import { Button } from "@/components/ui/button";
 import MultipleSelector from "@/components/ui/multi-select";
 import { roleStringToArray, roleArrayToString } from "@/lib/rbac";

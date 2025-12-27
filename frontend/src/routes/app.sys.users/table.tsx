@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Edit, Shield } from "lucide-react";
-import { T } from "@/types";
+import type { T } from "@/types";
 import { roleStringToArray } from "@/lib/rbac";
 import { useQuery } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";

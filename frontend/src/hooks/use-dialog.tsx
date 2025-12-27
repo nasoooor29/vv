@@ -18,6 +18,7 @@ interface DialogOrDrawerProps {
   title?: string;
   description?: string;
   children?: React.ReactNode | ((close: () => void) => React.ReactNode);
+  className?: string;
 }
 
 interface DialogComponentProps {
@@ -68,7 +69,7 @@ export const useDialog = (defaultProps?: DialogOrDrawerProps) => {
 
       return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogContent className="sm:max-w-106.25">
+          <DialogContent className={defaultProps?.className}>
             <DialogHeader>
               {resolvedTitle && <DialogTitle>{resolvedTitle}</DialogTitle>}
               {resolvedDescription && (

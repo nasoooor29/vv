@@ -2,16 +2,27 @@ import { useMutation } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
 import { toast } from "sonner";
 import { useFormGenerator } from "@/hooks";
-import { Z, T } from "@/types";
+import { Z } from "@/types";
+import type { T } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
+import { allPolicies } from "@/lib";
+import z from "zod";
 
 interface EditUserDialogContentProps {
   user: T.User | null;
   onClose: () => void;
 }
 
-export function EditUserDialogContent({ user, onClose }: EditUserDialogContentProps) {
+// Schema defined outside component to maintain stable reference
+const editUserSchema = Z.updateUserParamsSchema.omit({ role: true }).extend({
+  roles: z.enum(allPolicies).array(),
+});
+
+export function EditUserDialogContent({
+  user,
+  onClose,
+}: EditUserDialogContentProps) {
   const updateUserMutation = useMutation(
     orpc.users.updateUser.mutationOptions({
       onSuccess() {
@@ -24,12 +35,12 @@ export function EditUserDialogContent({ user, onClose }: EditUserDialogContentPr
     }),
   );
 
-  const EditForm = useFormGenerator(Z.updateUserParamsSchema, {
+  const EditForm = useFormGenerator(editUserSchema, {
     defaultValues: user
       ? {
           username: user.username,
           email: user.email,
-          role: user.role,
+          roles: user.role.split(","),
           id: user.id,
         }
       : undefined,
@@ -40,7 +51,7 @@ export function EditUserDialogContent({ user, onClose }: EditUserDialogContentPr
           body: {
             username: data.username,
             email: data.email,
-            role: data.role,
+            role: data.roles.join(","),
           },
         });
       }
@@ -57,14 +68,19 @@ export function EditUserDialogContent({ user, onClose }: EditUserDialogContentPr
         id: user.id,
       });
     }
-  }, [user, EditForm.form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   if (!user) return null;
 
   return (
     <EditForm.parts.wrapper>
       <EditForm.parts.errors />
-      {EditForm.parts.fields}
+      {EditForm.parts.fieldsList.map((field) => (
+        <div key={field} className={`mb-4${field === "id" ? " hidden" : ""}`}>
+          <EditForm.parts.field name={field} />
+        </div>
+      ))}
       <div className="flex gap-2 pt-4">
         <Button variant="secondary" onClick={onClose}>
           Cancel

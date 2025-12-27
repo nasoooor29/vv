@@ -36,6 +36,7 @@ bin
 visory
 
 visory.db*
+visory_test_*.db*
 api
 
 legacy-visory

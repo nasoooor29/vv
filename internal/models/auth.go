@@ -28,6 +28,11 @@ const (
 	RBAC_SETTINGS_MANAGER RBACPolicy = "settings_manager"
 	RBAC_AUDIT_LOG_VIEWER RBACPolicy = "audit_log_viewer"
 	RBAC_HEALTH_CHECKER   RBACPolicy = "health_checker"
+
+	RBAC_FIREWALL_READ   RBACPolicy = "firewall_read"
+	RBAC_FIREWALL_WRITE  RBACPolicy = "firewall_write"
+	RBAC_FIREWALL_UPDATE RBACPolicy = "firewall_update"
+	RBAC_FIREWALL_DELETE RBACPolicy = "firewall_delete"
 )
 
 var AllRBACPolicies = map[string]RBACPolicy{
@@ -48,6 +53,11 @@ var AllRBACPolicies = map[string]RBACPolicy{
 	string(RBAC_SETTINGS_MANAGER): RBAC_SETTINGS_MANAGER,
 	string(RBAC_AUDIT_LOG_VIEWER): RBAC_AUDIT_LOG_VIEWER,
 	string(RBAC_HEALTH_CHECKER):   RBAC_HEALTH_CHECKER,
+
+	string(RBAC_FIREWALL_READ):   RBAC_FIREWALL_READ,
+	string(RBAC_FIREWALL_WRITE):  RBAC_FIREWALL_WRITE,
+	string(RBAC_FIREWALL_UPDATE): RBAC_FIREWALL_UPDATE,
+	string(RBAC_FIREWALL_DELETE): RBAC_FIREWALL_DELETE,
 }
 
 // user role to roles

@@ -14,6 +14,8 @@ import { metricsRouter } from "./routers/metrics";
 import { qemuRouter } from "./routers/qemu";
 import { isoRouter } from "./routers/iso";
 import { dockerRouter } from "./routers/docker";
+import { firewallRouter } from "./routers/firewall";
+import { templatesRouter } from "./routers/templates";
 import { Z } from "@/types";
 
 export const queryClient = new QueryClient({
@@ -36,7 +38,7 @@ export const queryClient = new QueryClient({
           }
           return;
         } else {
-          toast.error("wtf");
+          toast.error("backend is probably down");
         }
       },
     },
@@ -66,6 +68,8 @@ export const contract = {
   qemu: qemuRouter,
   iso: isoRouter,
   docker: dockerRouter,
+  firewall: firewallRouter,
+  templates: templatesRouter,
 };
 
 const link = new OpenAPILink(contract, {

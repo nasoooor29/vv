@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+
 	"visory/internal/models"
 	"visory/internal/utils"
 
@@ -21,16 +22,22 @@ type QemuService struct {
 	FS         *utils.FS
 }
 
-// NewQemuService creates a new QemuService with dependency injection
 func NewQemuService(dispatcher *utils.Dispatcher, fs *utils.FS, logger *slog.Logger) *QemuService {
+	service := &QemuService{
+		Dispatcher: dispatcher.WithGroup("qemu"),
+		Logger:     logger.WithGroup("qemu"),
+	}
+
 	// Connect to libvirt QEMU system
 	uri, _ := url.Parse(string(libvirt.QEMUSession))
 	l, err := libvirt.ConnectToURI(uri)
 	if err != nil {
 		logger.Error("Failed to connect to libvirt", "error", err)
-		return nil
+		// Return service without LibVirt connection - methods will check for nil
+		return service
 	}
 
+	service.LibVirt = l
 	return &QemuService{
 		Dispatcher: dispatcher.WithGroup("qemu"),
 		Logger:     logger.WithGroup("qemu"),

@@ -3,6 +3,7 @@ package models
 import (
 	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
@@ -17,9 +18,9 @@ type EnvVars struct {
 	GoogleOAuthSecret string `envconfig:"GOOGLE_OAUTH_SECRET" required:"true"`
 	GithubOAuthKey    string `envconfig:"GITHUB_OAUTH_KEY" required:"true"`
 	GithubOAuthSecret string `envconfig:"GITHUB_OAUTH_SECRET" required:"true"`
-	Directory         string `envconfig:"DIRECTORY" required:"true" default:"tmp/"`
 	// OAuthCallbackURL  string `envconfig:"OAUTH_CALLBACK_URL" default:"http://localhost:9999/api/auth/oauth/callback" required:"true"`
 	BaseUrl         string `envconfig:"BASE_URL" default:"http://localhost"`
+	Directory       string `envconfig:"DIRECTORY" required:"true" default:"tmp/"`
 	SessionSecret   string `envconfig:"SESSION_SECRET" required:"true"`
 	FRONTEND_DASH   string `envconfig:"FRONTEND_DASH_URL" default:"http://localhost:5173/app"`
 	BaseUrlWithPort string
@@ -37,7 +38,7 @@ func LoadEnv() EnvVars {
 
 	var cfg EnvVars
 	err = envconfig.Process("", &cfg)
-	if err != nil && !IsCiEnvironment() {
+	if err != nil && !IsCiEnvironment() && !IsTestEnvironment() {
 		slog.Error("error processing environment variables", "err", err)
 		panic(err)
 	}
@@ -48,7 +49,12 @@ func LoadEnv() EnvVars {
 }
 
 func IsCiEnvironment() bool {
-	return os.Getenv("CI") != "" || os.Getenv("GITHUB_ACTIONS") != ""
+	return os.Getenv("CI") != "" || os.Getenv("GITHUB_ACTIONS") != "" || os.Getenv("GO_TEST") != ""
+}
+
+func IsTestEnvironment() bool {
+	// Check if running under go test
+	return len(os.Args) > 0 && (strings.Contains(os.Args[0], "test") || strings.Contains(os.Args[0], ".test"))
 }
 
 func init() {

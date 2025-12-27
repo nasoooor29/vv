@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/stores/user";
-import { Cloud } from "lucide-react";
+import { Cloud, BookOpen } from "lucide-react";
 import { Link, Outlet } from "react-router";
 
 export default function LandingLayout() {
@@ -15,6 +15,12 @@ export default function LandingLayout() {
           <h1 className="text-2xl font-bold text-foreground">Visory</h1>
         </div>
         <div className="flex items-center gap-4">
+          <Link to="/docs">
+            <Button variant="ghost" className="gap-2">
+              <BookOpen className="w-4 h-4" />
+              Docs
+            </Button>
+          </Link>
           {s ? (
             <Link to="/app/dashboard">
               <Button>Dashboard</Button>

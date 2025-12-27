@@ -48,15 +48,13 @@ func (s *Server) RegisterRoutes() http.Handler {
 	authGroup.POST("/logout", s.authService.Logout)
 
 	// Storage routes
-	storageGroup := api.Group("/storage", RequestLogger(s.storageService.Logger, s.storageService.Dispatcher))
-	storageGroup.Use(s.authService.AuthMiddleware)
+	storageGroup := api.Group("/storage", s.authService.AuthMiddleware, RequestLogger(s.storageService.Logger, s.storageService.Dispatcher))
 	storageGroup.Use(Roles(models.RBAC_SETTINGS_MANAGER))
 	storageGroup.GET("/devices", s.storageService.GetStorageDevices)
 	storageGroup.GET("/mount-points", s.storageService.GetMountPoints)
 
 	// Users routes
-	usersGroup := api.Group("/users", RequestLogger(s.usersService.Logger, s.usersService.Dispatcher))
-	usersGroup.Use(s.authService.AuthMiddleware)
+	usersGroup := api.Group("/users", s.authService.AuthMiddleware, RequestLogger(s.usersService.Logger, s.usersService.Dispatcher))
 	usersGroup.GET("", s.usersService.GetAllUsers, Roles(models.RBAC_USER_ADMIN))
 	usersGroup.GET("/", s.usersService.GetAllUsers, Roles(models.RBAC_USER_ADMIN))
 	usersGroup.GET("/:id", s.usersService.GetUserById, Roles(models.RBAC_USER_ADMIN))
@@ -98,11 +96,11 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	// Docker routes
 	dockerLogger := RequestLogger(s.dockerService.Logger, s.dockerService.Dispatcher)
-	dockerGroup := api.Group("/docker", dockerLogger)
-	dockerGroup.GET("", s.dockerService.GetAvailableClients, s.authService.AuthMiddleware, Roles(models.RBAC_DOCKER_READ))
+	dockerGroup := api.Group("/docker", s.authService.AuthMiddleware, dockerLogger)
+	dockerGroup.GET("", s.dockerService.GetAvailableClients, Roles(models.RBAC_DOCKER_READ))
 
 	// Docker client routes with validation middleware
-	dockerClientGroup := dockerGroup.Group("/:clientid", s.authService.AuthMiddleware, s.dockerService.ValidateDockerClientMiddleware)
+	dockerClientGroup := dockerGroup.Group("/:clientid", s.dockerService.ValidateDockerClientMiddleware)
 	dockerClientGroup.GET("/containers", s.dockerService.ListContainers, Roles(models.RBAC_DOCKER_READ))
 	dockerClientGroup.GET("/images", s.dockerService.ListImages, Roles(models.RBAC_DOCKER_READ))
 	dockerClientGroup.DELETE("/images/:id", s.dockerService.DeleteImage, Roles(models.RBAC_DOCKER_DELETE))
@@ -115,6 +113,26 @@ func (s *Server) RegisterRoutes() http.Handler {
 	dockerClientGroup.POST("/containers/:id/stop", s.dockerService.StopContainer, Roles(models.RBAC_DOCKER_UPDATE))
 	dockerClientGroup.POST("/containers/:id/restart", s.dockerService.RestartContainer, Roles(models.RBAC_DOCKER_UPDATE))
 	dockerClientGroup.DELETE("/containers/:id", s.dockerService.DeleteContainer, Roles(models.RBAC_DOCKER_DELETE))
+
+	// Docker Templates routes
+	templatesLogger := RequestLogger(s.templatesService.Logger, s.templatesService.Dispatcher)
+	templatesGroup := api.Group("/templates", s.authService.AuthMiddleware, templatesLogger)
+	templatesGroup.GET("", s.templatesService.ListTemplates, Roles(models.RBAC_DOCKER_READ))
+	templatesGroup.GET("/categories", s.templatesService.GetCategories, Roles(models.RBAC_DOCKER_READ))
+	templatesGroup.POST("/refresh", s.templatesService.RefreshCache, Roles(models.RBAC_DOCKER_WRITE))
+	templatesGroup.GET("/:id", s.templatesService.GetTemplate, Roles(models.RBAC_DOCKER_READ))
+
+	// Template deploy routes (under docker client context)
+	dockerClientGroup.POST("/templates/:id/deploy", s.templatesService.DeployTemplate, Roles(models.RBAC_DOCKER_WRITE))
+
+	// Firewall routes
+	firewallGroup := api.Group("/firewall", s.authService.AuthMiddleware, RequestLogger(s.firewallService.Logger, s.firewallService.Dispatcher))
+	firewallGroup.GET("/status", s.firewallService.GetStatus, Roles(models.RBAC_FIREWALL_READ))
+	firewallGroup.GET("/rules", s.firewallService.ListRules, Roles(models.RBAC_FIREWALL_READ))
+	firewallGroup.POST("/rules", s.firewallService.AddRule, Roles(models.RBAC_FIREWALL_WRITE))
+	firewallGroup.POST("/rules/reorder", s.firewallService.ReorderRules, Roles(models.RBAC_FIREWALL_UPDATE))
+	firewallGroup.DELETE("/rules/:handle", s.firewallService.DeleteRule, Roles(models.RBAC_FIREWALL_DELETE))
+
 	docsGroup := api.Group("/docs", RequestLogger(s.docsService.Logger, s.docsService.Dispatcher))
 	docsGroup.GET("", s.docsService.ServeRedoc)
 	docsGroup.GET("/swagger", s.docsService.ServeSwagger)

@@ -161,6 +161,7 @@ export const dockerRouter = {
     .input(
       detailed({
         params: { clientId: z.string() },
+        query: { name: z.string().optional() },
         body: {
           Image: z.string(),
           Cmd: z.array(z.string()).optional(),

@@ -13,6 +13,9 @@ dist-ssr
 build
 *.local
 
+# Fumadocs generated files
+.source
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

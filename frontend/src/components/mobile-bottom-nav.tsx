@@ -22,7 +22,7 @@ import {
 } from "./ui/drawer";
 import { Button } from "./ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { orpc } from "@/lib/orpc";
+import { orpc, queryClient } from "@/lib/orpc";
 import { toast } from "sonner";
 import { useSession } from "@/stores/user";
 import { useNavigate } from "react-router";
@@ -136,6 +136,13 @@ function MobileMoreMenu({
       onSuccess() {
         toast.success("Logged out successfully");
         clearSession();
+        queryClient.clear(); // Clear all query cache
+        nav("/auth/login");
+      },
+      onError() {
+        // Even if logout fails on backend, clear local session
+        clearSession();
+        queryClient.clear();
         nav("/auth/login");
       },
     }),
