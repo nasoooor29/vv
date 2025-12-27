@@ -40,6 +40,22 @@ type GetLogsRequest struct {
 	Days         int    `query:"days"` // Filter logs from last N days
 }
 
+//	@Summary      get logs
+//	@Description  retrieve logs with filtering and pagination
+//	@Tags         logs
+//	@Produce      json
+//	@Param        service_group  query    string  false  "Filter by service group"
+//	@Param        level          query    string  false  "Filter by log level"
+//	@Param        page           query    int     false  "Page number (default 1)"
+//	@Param        page_size      query    int     false  "Page size (default 20, max 100)"
+//	@Param        days           query    int     false  "Number of days to filter (default 7)"
+//	@Success      200            {object}  models.GetLogsResponse
+//	@Failure      400            {object}  models.HTTPError
+//	@Failure      401            {object}  models.HTTPError
+//	@Failure      403            {object}  models.HTTPError
+//	@Failure      500            {object}  models.HTTPError
+//	@Router       /logs [get]
+//
 // GetLogs retrieves logs with filtering and pagination
 func (s *LogsService) GetLogs(c echo.Context) error {
 	req := new(GetLogsRequest)
@@ -170,6 +186,17 @@ func (s *LogsService) GetLogs(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
+//	@Summary      get log statistics
+//	@Description  retrieve statistics about logs
+//	@Tags         logs
+//	@Produce      json
+//	@Param        days  query    int     false  "Number of days to filter (default 7)"
+//	@Success      200   {object}  models.LogStatsResponse
+//	@Failure      401   {object}  models.HTTPError
+//	@Failure      403   {object}  models.HTTPError
+//	@Failure      500   {object}  models.HTTPError
+//	@Router       /logs/stats [get]
+//
 // GetLogStats returns statistics about logs
 func (s *LogsService) GetLogStats(c echo.Context) error {
 	daysStr := c.QueryParam("days")
@@ -210,6 +237,17 @@ func (s *LogsService) GetLogStats(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
+//	@Summary      clear old logs
+//	@Description  delete logs older than specified retention period
+//	@Tags         logs
+//	@Produce      json
+//	@Param        days  query    int     false  "Retention days (default 30)"
+//	@Success      200   {object}  models.ClearOldLogsResponse
+//	@Failure      401   {object}  models.HTTPError
+//	@Failure      403   {object}  models.HTTPError
+//	@Failure      500   {object}  models.HTTPError
+//	@Router       /logs/cleanup [delete]
+//
 // ClearOldLogs removes logs older than the specified days (retention policy)
 func (s *LogsService) ClearOldLogs(c echo.Context) error {
 	// Parse days from query

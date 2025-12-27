@@ -7,6 +7,7 @@ import (
 
 	"visory/internal/database"
 	"visory/internal/database/user"
+	_ "visory/internal/models"
 	"visory/internal/utils"
 
 	"github.com/labstack/echo/v4"
@@ -29,6 +30,15 @@ func NewUsersService(db *database.Service, dispatcher *utils.Dispatcher, logger 
 	}
 }
 
+// @Summary      get all users
+// @Description  fetch all users (admin only)
+// @Tags         users
+// @Produce      json
+// @Success      200   {array}   user.User
+// @Failure      401   {object}  models.HTTPError
+// @Failure      403   {object}  models.HTTPError
+// @Failure      500   {object}  models.HTTPError
+// @Router       /users [get]
 // GetAllUsers returns all users
 func (s *UsersService) GetAllUsers(c echo.Context) error {
 	users, err := s.db.User.GetAllUsers(c.Request().Context())
@@ -39,6 +49,17 @@ func (s *UsersService) GetAllUsers(c echo.Context) error {
 	return c.JSON(http.StatusOK, users)
 }
 
+// @Summary      get user by ID
+// @Description  fetch a specific user by their ID (admin only)
+// @Tags         users
+// @Produce      json
+// @Param        id  path      int      true  "User ID"
+// @Success      200   {object}  user.User
+// @Failure      401   {object}  models.HTTPError
+// @Failure      403   {object}  models.HTTPError
+// @Failure      404   {object}  models.HTTPError
+// @Failure      500   {object}  models.HTTPError
+// @Router       /users/{id} [get]
 // GetUserById returns a user by ID
 func (s *UsersService) GetUserById(c echo.Context) error {
 	userID := c.Param("id")
@@ -61,6 +82,19 @@ func (s *UsersService) GetUserById(c echo.Context) error {
 	return s.Dispatcher.NewNotFound("User not found", nil)
 }
 
+// @Summary      create new user
+// @Description  create a new user (admin only)
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        user  body      user.CreateUserParams  true  "User creation info"
+// @Success      200   {object}  user.User
+// @Failure      400   {object}  models.HTTPError
+// @Failure      401   {object}  models.HTTPError
+// @Failure      403   {object}  models.HTTPError
+// @Failure      409   {object}  models.HTTPError
+// @Failure      500   {object}  models.HTTPError
+// @Router       /users [post]
 // CreateUser creates a new user
 func (s *UsersService) CreateUser(c echo.Context) error {
 	p := user.CreateUserParams{}
@@ -97,6 +131,19 @@ func (s *UsersService) CreateUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, newUser)
 }
 
+// @Summary      update user
+// @Description  update an existing user (admin only)
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        id    path      int    true  "User ID"
+// @Param        user  body      object{username=string,email=string,role=string}  true  "User update info"
+// @Success      200   {object}  user.User
+// @Failure      400   {object}  models.HTTPError
+// @Failure      401   {object}  models.HTTPError
+// @Failure      403   {object}  models.HTTPError
+// @Failure      500   {object}  models.HTTPError
+// @Router       /users/{id} [put]
 // UpdateUser updates an existing user
 func (s *UsersService) UpdateUser(c echo.Context) error {
 	userID := c.Param("id")
@@ -132,6 +179,16 @@ func (s *UsersService) UpdateUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, updatedUser)
 }
 
+// @Summary      delete user
+// @Description  delete a user by ID (admin only)
+// @Tags         users
+// @Produce      json
+// @Param        id  path      int  true  "User ID"
+// @Success      204
+// @Failure      401   {object}  models.HTTPError
+// @Failure      403   {object}  models.HTTPError
+// @Failure      500   {object}  models.HTTPError
+// @Router       /users/{id} [delete]
 // DeleteUser deletes a user by ID
 func (s *UsersService) DeleteUser(c echo.Context) error {
 	userID := c.Param("id")
@@ -146,6 +203,20 @@ func (s *UsersService) DeleteUser(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
+//	@Summary      update user role
+//	@Description  update a user's role (admin only)
+//	@Tags         users
+//	@Accept       json
+//	@Produce      json
+//	@Param        id    path      int                            true  "User ID"
+//	@Param        role  body      object{role=string}           true  "Role to assign"
+//	@Success      200   {object}  user.User
+//	@Failure      400   {object}  models.HTTPError
+//	@Failure      401   {object}  models.HTTPError
+//	@Failure      403   {object}  models.HTTPError
+//	@Failure      500   {object}  models.HTTPError
+//	@Router       /users/{id}/role [patch]
+//
 // UpdateUserRole updates a user's role
 func (s *UsersService) UpdateUserRole(c echo.Context) error {
 	userID := c.Param("id")

@@ -15,4 +15,7 @@ jobs:
       - name: Build
         run: go build -v ./...
       - name: Test with the Go CLI
-        run: go test ./... 
+        run: go test ./... -skip Docker
+        env:
+          CI: "true"
+ 

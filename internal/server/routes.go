@@ -97,10 +97,21 @@ func (s *Server) RegisterRoutes() http.Handler {
 	dockerClientGroup.POST("/containers/:id/stop", s.dockerService.StopContainer, Roles(models.RBAC_DOCKER_UPDATE))
 	dockerClientGroup.POST("/containers/:id/restart", s.dockerService.RestartContainer, Roles(models.RBAC_DOCKER_UPDATE))
 	dockerClientGroup.DELETE("/containers/:id", s.dockerService.DeleteContainer, Roles(models.RBAC_DOCKER_DELETE))
+	docsGroup := api.Group("/docs", RequestLogger(s.docsService.Logger, s.docsService.Dispatcher))
+	docsGroup.GET("", s.docsService.ServeRedoc)
+	docsGroup.GET("/swagger", s.docsService.ServeSwagger)
+	docsGroup.GET("/redoc", s.docsService.ServeRedoc)
+	docsGroup.GET("/spec", s.docsService.ServeSpec)
 
 	return e
 }
 
+// @Summary      hello world
+// @Description  simple hello world endpoint
+// @Tags         general
+// @Produce      json
+// @Success      200  {object}  map[string]string
+// @Router       / [get]
 func (s *Server) HelloWorldHandler(c echo.Context) error {
 	resp := map[string]string{
 		"message": "Hello World",
@@ -109,10 +120,23 @@ func (s *Server) HelloWorldHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+// @Summary      health check
+// @Description  check database health status
+// @Tags         health
+// @Produce      json
+// @Success      200  {object}  database.Health
+// @Failure      500  {object}  models.HTTPError
+// @Router       /health [get]
 func (s *Server) healthHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, s.db.Health())
 }
 
+// websocketHandler handles WebSocket connections
+//
+//	@Summary      websocket connection
+//	@Description  establishes websocket connection for real-time updates
+//	@Tags         websocket
+//	@Router       /websocket [get]
 func (s *Server) websocketHandler(c echo.Context) error {
 	w := c.Response().Writer
 	r := c.Request()

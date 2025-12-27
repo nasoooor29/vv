@@ -36,6 +36,9 @@ func TestHandler(t *testing.T) {
 		logsService:    services.NewLogsService(db, dispatcher, logger),
 		metricsService: services.NewMetricsService(db, dispatcher, logger),
 		dockerService:  services.NewDockerService(dispatcher, logger),
+		authService:    services.NewAuthService(db, mySlog),
+		usersService:   services.NewUsersService(db, logger),
+		storageService: services.NewStorageService(logger),
 	}
 
 	e := echo.New()

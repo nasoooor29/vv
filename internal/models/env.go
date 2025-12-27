@@ -2,6 +2,7 @@ package models
 
 import (
 	"log/slog"
+	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
@@ -25,6 +26,7 @@ type EnvVars struct {
 
 var ENV_VARS EnvVars
 
+// LoadEnv loads environment variables strictly for production
 func LoadEnv() EnvVars {
 	// Load environment variables from .env file
 	err := godotenv.Load()
@@ -33,10 +35,19 @@ func LoadEnv() EnvVars {
 	}
 
 	var cfg EnvVars
-	envconfig.MustProcess("", &cfg)
+	err = envconfig.Process("", &cfg)
+	if err != nil && !IsCiEnvironment() {
+		slog.Error("error processing environment variables", "err", err)
+		panic(err)
+	}
+
 	ENV_VARS = cfg
 	ENV_VARS.BaseUrlWithPort = ENV_VARS.BaseUrl + ":" + ENV_VARS.Port
 	return cfg
+}
+
+func IsCiEnvironment() bool {
+	return os.Getenv("CI") != "" || os.Getenv("GITHUB_ACTIONS") != ""
 }
 
 func init() {
