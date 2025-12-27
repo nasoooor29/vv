@@ -93,12 +93,9 @@ export default function UsersPage() {
         </CardContent>
       </Card>
 
-      {/* {createDialog.} */}
-      <createUser.dialog.component />
-      <editUser.dialog.component />
-      <editRoles.dialog.component />
-      {/* {editDialog()} */}
-      {/* {rolesDialog()} */}
+      <createUser.dialog.Component />
+      <editUser.dialog.Component />
+      <editRoles.dialog.Component />
       <ConfirmationDialog />
     </div>
   );

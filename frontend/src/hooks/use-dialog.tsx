@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useIsMobile } from "./use-mobile";
 
 import {
@@ -17,52 +17,71 @@ import {
 interface DialogOrDrawerProps {
   title?: string;
   description?: string;
-  children: React.ReactNode;
+  children?: React.ReactNode | ((close: () => void) => React.ReactNode);
 }
 
-export const useDialog = (props: DialogOrDrawerProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+interface DialogComponentProps {
+  children?: React.ReactNode | ((close: () => void) => React.ReactNode);
+  title?: string;
+  description?: string;
+}
 
+export const useDialog = (defaultProps?: DialogOrDrawerProps) => {
+  const [isOpen, setIsOpen] = useState(false);
   const isMobile = useIsMobile();
-  const dialogContent = () => {
-    if (isMobile) {
+
+  const open = useCallback(() => setIsOpen(true), []);
+  const close = useCallback(() => setIsOpen(false), []);
+
+  const Component = useMemo(() => {
+    const DialogComponent = ({ children, title, description }: DialogComponentProps) => {
+      // Props passed to Component override default props
+      const resolvedTitle = title ?? defaultProps?.title;
+      const resolvedDescription = description ?? defaultProps?.description;
+      const resolvedChildren = children ?? defaultProps?.children;
+      const content = typeof resolvedChildren === "function" ? resolvedChildren(close) : resolvedChildren;
+
+      if (isMobile) {
+        return (
+          <Drawer open={isOpen} onOpenChange={setIsOpen}>
+            <DrawerContent>
+              <DrawerHeader>
+                {resolvedTitle && <DrawerTitle>{resolvedTitle}</DrawerTitle>}
+                {resolvedDescription && (
+                  <p className="text-sm text-muted-foreground">
+                    {resolvedDescription}
+                  </p>
+                )}
+              </DrawerHeader>
+              <div className="px-4 pb-4">{content}</div>
+            </DrawerContent>
+          </Drawer>
+        );
+      }
+
       return (
-        <Drawer open={isOpen} onOpenChange={setIsOpen}>
-          <DrawerContent>
-            <DrawerHeader>
-              {props.title && <DrawerTitle>{props.title}</DrawerTitle>}
-              {props.description && (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogContent className="sm:max-w-106.25">
+            <DialogHeader>
+              {resolvedTitle && <DialogTitle>{resolvedTitle}</DialogTitle>}
+              {resolvedDescription && (
                 <p className="text-sm text-muted-foreground">
-                  {props.description}
+                  {resolvedDescription}
                 </p>
               )}
-            </DrawerHeader>
-            <div className="px-4 pb-4">{props.children}</div>
-          </DrawerContent>
-        </Drawer>
+            </DialogHeader>
+            {content}
+          </DialogContent>
+        </Dialog>
       );
-    }
+    };
+    return DialogComponent;
+  }, [isOpen, isMobile, close, defaultProps?.title, defaultProps?.description, defaultProps?.children]);
 
-    return (
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-106.25">
-          <DialogHeader>
-            {props.title && <DialogTitle>{props.title}</DialogTitle>}
-            {props.description && (
-              <p className="text-sm text-muted-foreground">
-                {props.description}
-              </p>
-            )}
-          </DialogHeader>
-          {props.children}
-        </DialogContent>
-      </Dialog>
-    );
-  };
   return {
-    component: dialogContent,
-    open: () => setIsOpen(true),
-    close: () => setIsOpen(false),
+    Component,
+    open,
+    close,
     isOpen,
   };
 };
