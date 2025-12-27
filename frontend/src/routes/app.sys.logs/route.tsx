@@ -1,8 +1,10 @@
 import { orpc } from "@/lib/orpc";
+import { exportData, type ExportFormat } from "@/lib/export";
 import { usePermission } from "@/components/protected-content";
-import { RBAC_AUDIT_LOG_VIEWER } from "@/types/types.gen";
+import { RBAC_AUDIT_LOG_VIEWER, type LogResponse } from "@/types/types.gen";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import {
@@ -28,7 +30,32 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
+import { Download } from "lucide-react";
+
+function exportLogs(logs: LogResponse[], exportFormat: ExportFormat): void {
+  exportData(logs as unknown as Record<string, unknown>[], exportFormat, {
+    filename: "logs",
+    headers: ["id", "created_at", "service_group", "level", "action", "details", "user_id"],
+    rowMapper: (log) => [
+      log.id as number,
+      log.created_at as string,
+      log.service_group as string,
+      log.level as string,
+      log.action as string,
+      (log.details as string) || "",
+      (log.user_id as number) || "",
+    ],
+  });
+}
 
 interface LogFilters {
   service_group?: string;
@@ -117,6 +144,27 @@ export default function LogsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Audit Logs</h1>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" disabled={logs.length === 0}>
+              <Download className="mr-2 h-4 w-4" />
+              Export
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Export Format</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => exportLogs(logs, "csv")}>
+              CSV (.csv)
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => exportLogs(logs, "json")}>
+              JSON (.json)
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => exportLogs(logs, "xml")}>
+              XML (.xml)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Stats Cards */}
