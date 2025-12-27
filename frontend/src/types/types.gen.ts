@@ -387,7 +387,7 @@ export interface CreateVMRequest {
   name: string;
   memory: number /* int64 */;
   vcpus: number /* int32 */;
-  disk_size: number /* int64 */;
+  disk: number /* int64 */;
   os_image?: string;
   autostart?: boolean;
 }
