@@ -21,10 +21,31 @@ func setupDocsServiceTest(t *testing.T) *DocsService {
 		Level: slog.LevelDebug,
 	}))
 
+	// Load swagger spec from possible paths (same logic as NewDocsService)
+	possiblePaths := []string{
+		"./docs/swagger.json",
+		"docs/swagger.json",
+		"../../docs/swagger.json",
+	}
+
+	var spec []byte
+	var err error
+	for _, path := range possiblePaths {
+		spec, err = os.ReadFile(path)
+		if err == nil {
+			break
+		}
+	}
+
+	if err != nil {
+		t.Fatalf("failed to read swagger.json from any path: %v", err)
+	}
+
 	return &DocsService{
 		db:         nil,
 		Dispatcher: dispatcher,
 		Logger:     logger,
+		Spec:       spec,
 	}
 }
 
@@ -191,7 +212,7 @@ func TestServeSpecContainsDefinitions(t *testing.T) {
 	assert.NotEmpty(t, definitions, "should have type definitions")
 
 	// Check for essential model definitions
-	assert.Contains(t, definitions, "visory_internal_models.HTTPError")
+	assert.Contains(t, definitions, "models.HTTPError")
 }
 
 func TestServeSpecJSONStructure(t *testing.T) {

@@ -141,22 +141,24 @@ func (s *Service) Health() *Health {
 	stats.Stats.MaxIdleClosed = dbStats.MaxIdleClosed
 	stats.Stats.MaxLifetimeClosed = dbStats.MaxLifetimeClosed
 
-	// Evaluate stats to provide a health message
-	if dbStats.OpenConnections > 40 { // Assuming 50 is the max for this example
-		stats.Message = "The database is experiencing heavy load."
-	}
+	// NOTE: sqlite does not provide extensive stats like some other databases,
 
-	if dbStats.WaitCount > 1000 {
-		stats.Message = "The database has a high number of wait events, indicating potential bottlenecks."
-	}
-
-	if dbStats.MaxIdleClosed > int64(dbStats.OpenConnections)/2 {
-		stats.Message = "Many idle connections are being closed, consider revising the connection pool settings."
-	}
-
-	if dbStats.MaxLifetimeClosed > int64(dbStats.OpenConnections)/2 {
-		stats.Message = "Many connections are being closed due to max lifetime, consider increasing max lifetime or revising the connection usage pattern."
-	}
+	// // Evaluate stats to provide a health message
+	// if dbStats.OpenConnections > 40 { // Assuming 50 is the max for this example
+	// 	stats.Message = "The database is experiencing heavy load."
+	// }
+	//
+	// if dbStats.WaitCount > 1000 {
+	// 	stats.Message = "The database has a high number of wait events, indicating potential bottlenecks."
+	// }
+	//
+	// if dbStats.MaxIdleClosed > int64(dbStats.OpenConnections)/2 {
+	// 	stats.Message = "Many idle connections are being closed, consider revising the connection pool settings."
+	// }
+	//
+	// if dbStats.MaxLifetimeClosed > int64(dbStats.OpenConnections)/2 {
+	// 	stats.Message = "Many connections are being closed due to max lifetime, consider increasing max lifetime or revising the connection usage pattern."
+	// }
 
 	return stats
 }
