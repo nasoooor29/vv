@@ -36,6 +36,10 @@ export const allPolicies = [
   RBAC_SETTINGS_MANAGER,
   RBAC_AUDIT_LOG_VIEWER,
   RBAC_HEALTH_CHECKER,
+  RBAC_FIREWALL_READ,
+  RBAC_FIREWALL_WRITE,
+  RBAC_FIREWALL_UPDATE,
+  RBAC_FIREWALL_DELETE,
 ];
 
 /**
@@ -51,44 +55,6 @@ export function roleToRBACPolicies(roleString: string): Set<RBACPolicy> {
 
   // Split by comma and trim whitespace (same as backend)
   const roles = roleString.split(",").map((r) => r.trim());
-
-  // All available RBAC policies to compare against
-  const allPolicies = [
-    RBAC_DOCKER_READ,
-    RBAC_DOCKER_WRITE,
-    RBAC_DOCKER_UPDATE,
-    RBAC_DOCKER_DELETE,
-    RBAC_QEMU_READ,
-    RBAC_QEMU_WRITE,
-    RBAC_QEMU_UPDATE,
-    RBAC_QEMU_DELETE,
-    RBAC_EVENT_VIEWER,
-    RBAC_EVENT_MANAGER,
-    RBAC_USER_ADMIN,
-    RBAC_SETTINGS_MANAGER,
-    RBAC_AUDIT_LOG_VIEWER,
-    RBAC_HEALTH_CHECKER,
-    RBAC_FIREWALL_READ,
-    RBAC_FIREWALL_WRITE,
-    RBAC_FIREWALL_UPDATE,
-    RBAC_FIREWALL_DELETE,
-  ];
-  const allPolicies = [
-    RBAC_DOCKER_READ,
-    RBAC_DOCKER_WRITE,
-    RBAC_DOCKER_UPDATE,
-    RBAC_DOCKER_DELETE,
-    RBAC_QEMU_READ,
-    RBAC_QEMU_WRITE,
-    RBAC_QEMU_UPDATE,
-    RBAC_QEMU_DELETE,
-    RBAC_EVENT_VIEWER,
-    RBAC_EVENT_MANAGER,
-    RBAC_USER_ADMIN,
-    RBAC_SETTINGS_MANAGER,
-    RBAC_AUDIT_LOG_VIEWER,
-    RBAC_HEALTH_CHECKER,
-  ];
 
   // For each role, check if it matches any of the available policies
   for (const role of roles) {
