@@ -17,7 +17,6 @@ import {
   Activity,
   Network,
   Database,
-  Shield,
   Users,
   Settings,
   FileText,
@@ -108,13 +107,13 @@ export function AppSidebar() {
       requiredPermission: RBAC_QEMU_READ,
     },
     {
-      id: "containers",
+      id: "docker",
       label: "Containers",
       icon: Container,
       requiredPermission: RBAC_DOCKER_READ,
     },
     {
-      id: "monitoring",
+      id: "monitor",
       label: "Monitoring",
       icon: Activity,
       requiredPermission: RBAC_EVENT_VIEWER,

@@ -27,10 +27,13 @@ func TestHandler(t *testing.T) {
 	dispatcher := utils.NewDispatcher(db)
 	s := &Server{
 		port:           9999,
+		logger:         logger,
 		dispatcher:     dispatcher,
 		db:             db,
 		authService:    services.NewAuthService(db, dispatcher, logger),
 		usersService:   services.NewUsersService(db, dispatcher, logger),
+		logsService:    services.NewLogsService(db, dispatcher, logger),
+		metricsService: services.NewMetricsService(db, dispatcher, logger),
 		storageService: services.NewStorageService(dispatcher, logger),
 	}
 

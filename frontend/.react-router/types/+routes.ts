@@ -35,11 +35,6 @@ type Pages = {
   "/app/sys/storage": {
     params: {};
   };
-  "/app/docker/:id": {
-    params: {
-      "id": string;
-    };
-  };
   "/app/dashboard": {
     params: {};
   };
@@ -52,6 +47,9 @@ type Pages = {
   "/app/monitor": {
     params: {};
   };
+  "/app/docker": {
+    params: {};
+  };
   "/app/vms": {
     params: {};
   };
@@ -60,7 +58,7 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/auth" | "/auth/register" | "/auth/login" | "/app" | "/app/sys/networking" | "/app/sys/settings" | "/app/sys/storage" | "/app/docker/:id" | "/app/dashboard" | "/app/sys/users" | "/app/sys/logs" | "/app/monitor" | "/app/vms";
+    page: "/" | "/auth" | "/auth/register" | "/auth/login" | "/app" | "/app/sys/networking" | "/app/sys/settings" | "/app/sys/storage" | "/app/dashboard" | "/app/sys/users" | "/app/sys/logs" | "/app/monitor" | "/app/docker" | "/app/vms";
   };
   "routes/_landing.tsx": {
     id: "routes/_landing";
@@ -84,7 +82,7 @@ type RouteFiles = {
   };
   "routes/app.tsx": {
     id: "routes/app";
-    page: "/app" | "/app/sys/networking" | "/app/sys/settings" | "/app/sys/storage" | "/app/docker/:id" | "/app/dashboard" | "/app/sys/users" | "/app/sys/logs" | "/app/monitor" | "/app/vms";
+    page: "/app" | "/app/sys/networking" | "/app/sys/settings" | "/app/sys/storage" | "/app/dashboard" | "/app/sys/users" | "/app/sys/logs" | "/app/monitor" | "/app/docker" | "/app/vms";
   };
   "routes/app.sys.networking.tsx": {
     id: "routes/app.sys.networking";
@@ -97,10 +95,6 @@ type RouteFiles = {
   "routes/app.sys.storage/route.tsx": {
     id: "routes/app.sys.storage";
     page: "/app/sys/storage";
-  };
-  "routes/app.docker.$id.tsx": {
-    id: "routes/app.docker.$id";
-    page: "/app/docker/:id";
   };
   "routes/app.dashboard.tsx": {
     id: "routes/app.dashboard";
@@ -122,6 +116,10 @@ type RouteFiles = {
     id: "routes/app._index";
     page: "/app";
   };
+  "routes/app.docker/route.tsx": {
+    id: "routes/app.docker";
+    page: "/app/docker";
+  };
   "routes/app.vms.tsx": {
     id: "routes/app.vms";
     page: "/app/vms";
@@ -139,11 +137,11 @@ type RouteModules = {
   "routes/app.sys.networking": typeof import("./src/routes/app.sys.networking.tsx");
   "routes/app.sys.settings": typeof import("./src/routes/app.sys.settings.tsx");
   "routes/app.sys.storage": typeof import("./src/routes/app.sys.storage/route.tsx");
-  "routes/app.docker.$id": typeof import("./src/routes/app.docker.$id.tsx");
   "routes/app.dashboard": typeof import("./src/routes/app.dashboard.tsx");
   "routes/app.sys.users": typeof import("./src/routes/app.sys.users/route.tsx");
   "routes/app.sys.logs": typeof import("./src/routes/app.sys.logs/route.tsx");
   "routes/app.monitor": typeof import("./src/routes/app.monitor.tsx");
   "routes/app._index": typeof import("./src/routes/app._index.tsx");
+  "routes/app.docker": typeof import("./src/routes/app.docker/route.tsx");
   "routes/app.vms": typeof import("./src/routes/app.vms.tsx");
 };

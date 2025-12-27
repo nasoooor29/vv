@@ -34,12 +34,19 @@ export const useDialog = (defaultProps?: DialogOrDrawerProps) => {
   const close = useCallback(() => setIsOpen(false), []);
 
   const Component = useMemo(() => {
-    const DialogComponent = ({ children, title, description }: DialogComponentProps) => {
+    const DialogComponent = ({
+      children,
+      title,
+      description,
+    }: DialogComponentProps) => {
       // Props passed to Component override default props
       const resolvedTitle = title ?? defaultProps?.title;
       const resolvedDescription = description ?? defaultProps?.description;
       const resolvedChildren = children ?? defaultProps?.children;
-      const content = typeof resolvedChildren === "function" ? resolvedChildren(close) : resolvedChildren;
+      const content =
+        typeof resolvedChildren === "function"
+          ? resolvedChildren(close)
+          : resolvedChildren;
 
       if (isMobile) {
         return (
@@ -76,7 +83,14 @@ export const useDialog = (defaultProps?: DialogOrDrawerProps) => {
       );
     };
     return DialogComponent;
-  }, [isOpen, isMobile, close, defaultProps?.title, defaultProps?.description, defaultProps?.children]);
+  }, [
+    isOpen,
+    isMobile,
+    close,
+    defaultProps?.title,
+    defaultProps?.description,
+    defaultProps?.children,
+  ]);
 
   return {
     Component,
