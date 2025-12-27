@@ -1,5 +1,7 @@
-function Dashboard() {
-  return <div>dash index</div>;
+import { Navigate } from "react-router";
+
+function AppIndex() {
+  return <Navigate to="/app/dashboard" replace />;
 }
 
-export default Dashboard;
+export default AppIndex;

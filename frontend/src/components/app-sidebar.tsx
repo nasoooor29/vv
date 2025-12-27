@@ -32,7 +32,6 @@ import { usePermission } from "./protected-content";
 import {
   RBAC_QEMU_READ,
   RBAC_DOCKER_READ,
-  RBAC_EVENT_VIEWER,
   RBAC_SETTINGS_MANAGER,
   RBAC_USER_ADMIN,
   RBAC_AUDIT_LOG_VIEWER,
@@ -45,7 +44,7 @@ import { CONSTANTS } from "@/lib";
 function RelativeTimeDisplay({
   timestamp,
 }: {
-  timestamp: number | Date | null;
+  timestamp: number | Date | string | null;
 }) {
   const [displayTime, setDisplayTime] = useState(() =>
     timestamp ? formatTimeDifference(timestamp) : "",
@@ -116,7 +115,7 @@ export function AppSidebar() {
       id: "monitor",
       label: "Monitoring",
       icon: Activity,
-      requiredPermission: RBAC_EVENT_VIEWER,
+      requiredPermission: RBAC_AUDIT_LOG_VIEWER,
     },
   ];
 

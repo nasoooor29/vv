@@ -17,7 +17,7 @@ export async function redirectToOAuthProvider(provider: string) {
 }
 
 // Utility function to format time difference
-export function formatTimeDifference(timestamp: number | Date): string {
+export function formatTimeDifference(timestamp: number | Date | string): string {
   const now = Date.now();
   const updated = new Date(timestamp).getTime();
   const diffMs = now - updated;
