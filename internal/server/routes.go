@@ -114,6 +114,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	firewallGroup.GET("/status", s.firewallService.GetStatus, Roles(models.RBAC_FIREWALL_READ))
 	firewallGroup.GET("/rules", s.firewallService.ListRules, Roles(models.RBAC_FIREWALL_READ))
 	firewallGroup.POST("/rules", s.firewallService.AddRule, Roles(models.RBAC_FIREWALL_WRITE))
+	firewallGroup.POST("/rules/reorder", s.firewallService.ReorderRules, Roles(models.RBAC_FIREWALL_UPDATE))
 	firewallGroup.DELETE("/rules/:handle", s.firewallService.DeleteRule, Roles(models.RBAC_FIREWALL_DELETE))
 
 	docsGroup := api.Group("/docs", RequestLogger(s.docsService.Logger, s.docsService.Dispatcher))

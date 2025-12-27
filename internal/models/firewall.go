@@ -27,3 +27,9 @@ type CreateRuleRequest struct {
 	Action   string `json:"action" validate:"required,oneof=accept drop"`
 	Comment  string `json:"comment"`
 }
+
+// ReorderRulesRequest is the request body for reordering firewall rules
+type ReorderRulesRequest struct {
+	Chain   string   `json:"chain" validate:"required,oneof=input forward output"`
+	Handles []uint64 `json:"handles" validate:"required"` // Rule handles in desired order
+}

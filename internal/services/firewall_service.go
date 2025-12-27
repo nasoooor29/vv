@@ -25,6 +25,8 @@ const (
 	tableName       = "filter"
 	persistenceFile = "firewall.json"
 	tableFamily     = nftables.TableFamilyINet
+	// Safety rule comment prefix to identify system-managed rules
+	safetyRulePrefix = "__visory_safety__"
 )
 
 type FirewallService struct {
@@ -90,6 +92,11 @@ func (s *FirewallService) initialize() error {
 		return err
 	}
 
+	// Add essential safety rules (loopback, established connections)
+	if err := s.ensureSafetyRules(); err != nil {
+		s.Logger.Warn("failed to add safety rules", "error", err)
+	}
+
 	// Load persisted rules
 	if err := s.loadPersistedRules(); err != nil {
 		s.Logger.Warn("failed to load persisted rules", "error", err)
@@ -145,6 +152,117 @@ func (s *FirewallService) ensureChains() error {
 	}
 
 	return nil
+}
+
+// ensureSafetyRules adds essential rules to prevent lockout
+// These rules allow loopback traffic and established/related connections
+func (s *FirewallService) ensureSafetyRules() error {
+	inputChain := s.chains["input"]
+	if inputChain == nil {
+		return fmt.Errorf("input chain not found")
+	}
+
+	// Check if safety rules already exist
+	rules, err := s.conn.GetRules(s.table, inputChain)
+	if err != nil {
+		return fmt.Errorf("failed to get rules: %w", err)
+	}
+
+	// Check if we already have safety rules by looking at the first rules
+	hasSafetyRules := false
+	for _, rule := range rules {
+		// Check if this is an accept rule on loopback (our safety rule marker)
+		for _, e := range rule.Exprs {
+			if meta, ok := e.(*expr.Meta); ok {
+				if meta.Key == expr.MetaKeyIIFNAME {
+					hasSafetyRules = true
+					break
+				}
+			}
+		}
+		if hasSafetyRules {
+			break
+		}
+	}
+
+	if hasSafetyRules {
+		s.Logger.Debug("safety rules already exist")
+		return nil
+	}
+
+	s.Logger.Info("adding safety rules to prevent lockout")
+
+	// Rule 1: Accept all loopback (lo) interface traffic
+	// This is critical for local services to communicate
+	s.conn.InsertRule(&nftables.Rule{
+		Table: s.table,
+		Chain: inputChain,
+		Exprs: []expr.Any{
+			// Match interface name "lo"
+			&expr.Meta{Key: expr.MetaKeyIIFNAME, Register: 1},
+			&expr.Cmp{
+				Op:       expr.CmpOpEq,
+				Register: 1,
+				Data:     []byte("lo\x00"), // null-terminated string
+			},
+			&expr.Counter{},
+			&expr.Verdict{Kind: expr.VerdictAccept},
+		},
+	})
+
+	// Rule 2: Accept established and related connections
+	// This is CRITICAL - without this, existing TCP connections break immediately
+	// when you add a drop rule
+	s.conn.InsertRule(&nftables.Rule{
+		Table: s.table,
+		Chain: inputChain,
+		Exprs: []expr.Any{
+			// Load conntrack state
+			&expr.Ct{Key: expr.CtKeySTATE, Register: 1},
+			// Match established (bit 1) or related (bit 2)
+			&expr.Bitwise{
+				SourceRegister: 1,
+				DestRegister:   1,
+				Len:            4,
+				Mask:           binaryutil.NativeEndian.PutUint32(expr.CtStateBitESTABLISHED | expr.CtStateBitRELATED),
+				Xor:            binaryutil.NativeEndian.PutUint32(0),
+			},
+			&expr.Cmp{
+				Op:       expr.CmpOpNeq,
+				Register: 1,
+				Data:     binaryutil.NativeEndian.PutUint32(0),
+			},
+			&expr.Counter{},
+			&expr.Verdict{Kind: expr.VerdictAccept},
+		},
+	})
+
+	if err := s.conn.Flush(); err != nil {
+		return fmt.Errorf("failed to add safety rules: %w", err)
+	}
+
+	s.Logger.Info("safety rules added successfully")
+	return nil
+}
+
+// isSafetyRule checks if a rule is a system-managed safety rule
+// Safety rules use Meta IIFNAME (loopback) or Ct (conntrack state)
+func (s *FirewallService) isSafetyRule(rule *nftables.Rule) bool {
+	for _, e := range rule.Exprs {
+		switch v := e.(type) {
+		case *expr.Meta:
+			// Loopback rule uses IIFNAME
+			if v.Key == expr.MetaKeyIIFNAME {
+				return true
+			}
+		case *expr.Ct:
+			// Established/related connection rule uses conntrack
+			if v.Key == expr.CtKeySTATE {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // GetStatus returns the current firewall status
@@ -226,6 +344,11 @@ func (s *FirewallService) ListRules(c echo.Context) error {
 
 // parseRule converts an nftables rule to our FirewallRule model
 func (s *FirewallService) parseRule(rule *nftables.Rule, chainName string) *models.FirewallRule {
+	// Skip safety rules (system-managed) - they shouldn't be visible to users
+	if s.isSafetyRule(rule) {
+		return nil
+	}
+
 	fr := &models.FirewallRule{
 		Handle: rule.Handle,
 		Chain:  chainName,
@@ -296,6 +419,11 @@ func (s *FirewallService) AddRule(c echo.Context) error {
 	chain, ok := s.chains[req.Chain]
 	if !ok {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid chain: must be input, forward, or output")
+	}
+
+	// Validate protocol is required when port is specified
+	if req.Port > 0 && req.Protocol == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "protocol (tcp or udp) is required when specifying a port")
 	}
 
 	// Build rule expressions
@@ -470,6 +598,11 @@ func (s *FirewallService) DeleteRule(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "rule not found")
 	}
 
+	// Prevent deletion of safety rules
+	if s.isSafetyRule(foundRule) {
+		return echo.NewHTTPError(http.StatusForbidden, "cannot delete system safety rules (loopback/established connections)")
+	}
+
 	// Delete the rule
 	s.conn.DelRule(&nftables.Rule{
 		Table:  s.table,
@@ -487,6 +620,98 @@ func (s *FirewallService) DeleteRule(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
+}
+
+// ReorderRules changes the order of rules in a chain
+//
+//	@Summary      reorder firewall rules
+//	@Description  reorders rules in a chain by re-adding them in the specified order
+//	@Tags         firewall
+//	@Accept       json
+//	@Produce      json
+//	@Param        order  body      models.ReorderRulesRequest  true  "New rule order"
+//	@Success      200    {array}   models.FirewallRule
+//	@Failure      400    {object}  models.HTTPError
+//	@Failure      401    {object}  models.HTTPError
+//	@Failure      403    {object}  models.HTTPError
+//	@Failure      500    {object}  models.HTTPError
+//	@Router       /firewall/rules/reorder [post]
+func (s *FirewallService) ReorderRules(c echo.Context) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	var req models.ReorderRulesRequest
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
+	}
+
+	chain, ok := s.chains[req.Chain]
+	if !ok {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid chain: must be input, forward, or output")
+	}
+
+	// Get current rules in the chain
+	currentRules, err := s.conn.GetRules(s.table, chain)
+	if err != nil {
+		return s.Dispatcher.NewInternalServerError("failed to get rules", err)
+	}
+
+	// Build a map of handle -> rule for quick lookup
+	ruleMap := make(map[uint64]*nftables.Rule)
+	for _, rule := range currentRules {
+		ruleMap[rule.Handle] = rule
+	}
+
+	// Validate all handles exist
+	for _, handle := range req.Handles {
+		if _, exists := ruleMap[handle]; !exists {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("rule with handle %d not found in chain %s", handle, req.Chain))
+		}
+	}
+
+	// Delete all rules in the chain
+	for _, rule := range currentRules {
+		s.conn.DelRule(rule)
+	}
+
+	if err := s.conn.Flush(); err != nil {
+		return s.Dispatcher.NewInternalServerError("failed to delete rules for reorder", err)
+	}
+
+	// Re-add rules in the new order
+	for _, handle := range req.Handles {
+		oldRule := ruleMap[handle]
+		s.conn.AddRule(&nftables.Rule{
+			Table: s.table,
+			Chain: chain,
+			Exprs: oldRule.Exprs,
+		})
+	}
+
+	if err := s.conn.Flush(); err != nil {
+		return s.Dispatcher.NewInternalServerError("failed to re-add rules", err)
+	}
+
+	// Persist the new order
+	if err := s.persistRules(); err != nil {
+		s.Logger.Error("failed to persist rules", "error", err)
+	}
+
+	// Return updated rules
+	newRules, err := s.conn.GetRules(s.table, chain)
+	if err != nil {
+		return s.Dispatcher.NewInternalServerError("failed to get reordered rules", err)
+	}
+
+	var result []models.FirewallRule
+	for _, rule := range newRules {
+		parsed := s.parseRule(rule, req.Chain)
+		if parsed != nil {
+			result = append(result, *parsed)
+		}
+	}
+
+	return c.JSON(http.StatusOK, result)
 }
 
 // persistRules saves the current rules to a JSON file
@@ -541,6 +766,20 @@ func (s *FirewallService) loadPersistedRules() error {
 	var rules []models.FirewallRule
 	if err := json.Unmarshal(data, &rules); err != nil {
 		return fmt.Errorf("failed to unmarshal rules: %w", err)
+	}
+
+	// Clear existing rules in our chains to prevent duplicates on restart
+	for _, chain := range s.chains {
+		existingRules, err := s.conn.GetRules(s.table, chain)
+		if err != nil {
+			continue
+		}
+		for _, rule := range existingRules {
+			s.conn.DelRule(rule)
+		}
+	}
+	if err := s.conn.Flush(); err != nil {
+		s.Logger.Warn("failed to clear existing rules", "error", err)
 	}
 
 	// Apply each rule

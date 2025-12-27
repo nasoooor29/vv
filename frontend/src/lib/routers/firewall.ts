@@ -70,4 +70,21 @@ export const firewallRouter = {
       }),
     )
     .output(z.void()),
+
+  // Reorder firewall rules
+  reorderRules: base
+    .route({
+      method: "POST",
+      path: "/firewall/rules/reorder",
+      inputStructure: "detailed",
+    })
+    .input(
+      detailed({
+        body: {
+          chain: z.enum(["input", "forward", "output"]),
+          handles: z.array(z.number()),
+        },
+      }),
+    )
+    .output(firewallRuleSchema.array()),
 };
