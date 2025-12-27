@@ -1,21 +1,23 @@
+import { useState } from "react";
 import { orpc } from "@/lib/orpc";
 import { usePermission } from "@/components/protected-content";
 import { RBAC_USER_ADMIN } from "@/types/types.gen";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { useConfirmation } from "@/hooks";
+import { useConfirmation, useDialog } from "@/hooks";
 import { T } from "@/types";
 import { UsersTable } from "./table";
-import { CreateUserDialog } from "./create-dialog";
-import { EditUserDialog } from "./edit-dialog";
-import { ManageRolesDialog } from "./roles-dialog";
+import { CreateUserDialogContent } from "./create-dialog";
+import { EditUserDialogContent } from "./edit-dialog";
+import { ManageRolesDialogContent } from "./roles-dialog";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export default function UsersPage() {
   const { hasPermission: checkPermission } = usePermission();
   const { confirm, ConfirmationDialog } = useConfirmation();
+  const [selectedUser, setSelectedUser] = useState<T.User | null>(null);
 
   const deleteUserMutation = useMutation(
     orpc.users.deleteUser.mutationOptions({
@@ -28,11 +30,17 @@ export default function UsersPage() {
     }),
   );
 
-  const createUser = CreateUserDialog();
+  const createDialog = useDialog({
+    title: "Create New User",
+    description: "Add a new user to the system",
+  });
 
-  const editUser = EditUserDialog(null);
+  const editDialog = useDialog({
+    title: "Edit User",
+    description: "Update user information below",
+  });
 
-  const editRoles = ManageRolesDialog(null);
+  const rolesDialog = useDialog();
 
   // Check permission
   if (!checkPermission(RBAC_USER_ADMIN)) {
@@ -46,15 +54,13 @@ export default function UsersPage() {
   }
 
   const handleEdit = (user: T.User) => {
-    console.log("Editing user:", user);
-    editUser.form.setDefaultValues(user);
-    editUser.dialog.open();
+    setSelectedUser(user);
+    editDialog.open();
   };
 
   const handleManageRoles = (user: T.User) => {
-    console.log("Managing roles for user:", user);
-    editRoles.setRoles(user.role);
-    editRoles.dialog.open();
+    setSelectedUser(user);
+    rolesDialog.open();
   };
 
   const handleDelete = (user: T.User) => {
@@ -74,7 +80,7 @@ export default function UsersPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Users Management</h1>
-        <Button onClick={() => createUser.dialog.open()}>
+        <Button onClick={createDialog.open}>
           <Plus className="h-4 w-4 mr-2" />
           Create User
         </Button>
@@ -93,9 +99,21 @@ export default function UsersPage() {
         </CardContent>
       </Card>
 
-      <createUser.dialog.Component />
-      <editUser.dialog.Component />
-      <editRoles.dialog.Component />
+      <createDialog.Component>
+        {(close) => <CreateUserDialogContent onClose={close} />}
+      </createDialog.Component>
+
+      <editDialog.Component>
+        {(close) => <EditUserDialogContent user={selectedUser} onClose={close} />}
+      </editDialog.Component>
+
+      <rolesDialog.Component
+        title="Update User Roles"
+        description={`Select roles for ${selectedUser?.username || ""}`}
+      >
+        {(close) => <ManageRolesDialogContent user={selectedUser} onClose={close} />}
+      </rolesDialog.Component>
+
       <ConfirmationDialog />
     </div>
   );
