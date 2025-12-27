@@ -19,6 +19,7 @@ type EnvVars struct {
 	GithubOAuthSecret string `envconfig:"GITHUB_OAUTH_SECRET" required:"true"`
 	// OAuthCallbackURL  string `envconfig:"OAUTH_CALLBACK_URL" default:"http://localhost:9999/api/auth/oauth/callback" required:"true"`
 	BaseUrl         string `envconfig:"BASE_URL" default:"http://localhost"`
+	Directory       string `envconfig:"DIRECTORY" default:"./tmp"`
 	SessionSecret   string `envconfig:"SESSION_SECRET" required:"true"`
 	FRONTEND_DASH   string `envconfig:"FRONTEND_DASH_URL" default:"http://localhost:5173/app"`
 	BaseUrlWithPort string

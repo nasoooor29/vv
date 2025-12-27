@@ -108,6 +108,14 @@ func (s *Server) RegisterRoutes() http.Handler {
 	dockerClientGroup.POST("/containers/:id/stop", s.dockerService.StopContainer, Roles(models.RBAC_DOCKER_UPDATE))
 	dockerClientGroup.POST("/containers/:id/restart", s.dockerService.RestartContainer, Roles(models.RBAC_DOCKER_UPDATE))
 	dockerClientGroup.DELETE("/containers/:id", s.dockerService.DeleteContainer, Roles(models.RBAC_DOCKER_DELETE))
+
+	// Firewall routes
+	firewallGroup := api.Group("/firewall", s.authService.AuthMiddleware, RequestLogger(s.firewallService.Logger, s.firewallService.Dispatcher))
+	firewallGroup.GET("/status", s.firewallService.GetStatus, Roles(models.RBAC_FIREWALL_READ))
+	firewallGroup.GET("/rules", s.firewallService.ListRules, Roles(models.RBAC_FIREWALL_READ))
+	firewallGroup.POST("/rules", s.firewallService.AddRule, Roles(models.RBAC_FIREWALL_WRITE))
+	firewallGroup.DELETE("/rules/:handle", s.firewallService.DeleteRule, Roles(models.RBAC_FIREWALL_DELETE))
+
 	docsGroup := api.Group("/docs", RequestLogger(s.docsService.Logger, s.docsService.Dispatcher))
 	docsGroup.GET("", s.docsService.ServeRedoc)
 	docsGroup.GET("/swagger", s.docsService.ServeSwagger)

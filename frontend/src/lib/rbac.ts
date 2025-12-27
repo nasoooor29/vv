@@ -14,6 +14,10 @@ import {
   RBAC_SETTINGS_MANAGER,
   RBAC_AUDIT_LOG_VIEWER,
   RBAC_HEALTH_CHECKER,
+  RBAC_FIREWALL_READ,
+  RBAC_FIREWALL_WRITE,
+  RBAC_FIREWALL_UPDATE,
+  RBAC_FIREWALL_DELETE,
   type RBACPolicy,
 } from "@/types/types.gen";
 
@@ -47,6 +51,10 @@ export function roleToRBACPolicies(roleString: string): Set<RBACPolicy> {
     RBAC_SETTINGS_MANAGER,
     RBAC_AUDIT_LOG_VIEWER,
     RBAC_HEALTH_CHECKER,
+    RBAC_FIREWALL_READ,
+    RBAC_FIREWALL_WRITE,
+    RBAC_FIREWALL_UPDATE,
+    RBAC_FIREWALL_DELETE,
   ];
 
   // For each role, check if it matches any of the available policies

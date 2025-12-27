@@ -17,6 +17,10 @@ export const RBAC_USER_ADMIN: RBACPolicy = "user_admin";
 export const RBAC_SETTINGS_MANAGER: RBACPolicy = "settings_manager";
 export const RBAC_AUDIT_LOG_VIEWER: RBACPolicy = "audit_log_viewer";
 export const RBAC_HEALTH_CHECKER: RBACPolicy = "health_checker";
+export const RBAC_FIREWALL_READ: RBACPolicy = "firewall_read";
+export const RBAC_FIREWALL_WRITE: RBACPolicy = "firewall_write";
+export const RBAC_FIREWALL_UPDATE: RBACPolicy = "firewall_update";
+export const RBAC_FIREWALL_DELETE: RBACPolicy = "firewall_delete";
 /**
  * this is just to mimic the echo error structure
  * eg: {"message":"Failed to list virtual-machines"}

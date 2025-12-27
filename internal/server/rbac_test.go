@@ -72,18 +72,19 @@ func setupTestServer(t *testing.T) *testHelper {
 	dispatcher := utils.NewDispatcher(dbService)
 
 	s := &Server{
-		port:           9999,
-		logger:         logger,
-		dispatcher:     dispatcher,
-		db:             dbService,
-		authService:    services.NewAuthService(dbService, dispatcher, logger),
-		usersService:   services.NewUsersService(dbService, dispatcher, logger),
-		logsService:    services.NewLogsService(dbService, dispatcher, logger),
-		metricsService: services.NewMetricsService(dbService, dispatcher, logger),
-		storageService: services.NewStorageService(dispatcher, logger),
-		qemuService:    services.NewQemuService(dispatcher, logger),
-		dockerService:  services.NewDockerService(dispatcher, logger),
-		docsService:    services.NewDocsService(dbService, dispatcher, logger),
+		port:            9999,
+		logger:          logger,
+		dispatcher:      dispatcher,
+		db:              dbService,
+		authService:     services.NewAuthService(dbService, dispatcher, logger),
+		usersService:    services.NewUsersService(dbService, dispatcher, logger),
+		logsService:     services.NewLogsService(dbService, dispatcher, logger),
+		metricsService:  services.NewMetricsService(dbService, dispatcher, logger),
+		storageService:  services.NewStorageService(dispatcher, logger),
+		qemuService:     services.NewQemuService(dispatcher, logger),
+		dockerService:   services.NewDockerService(dispatcher, logger),
+		docsService:     services.NewDocsService(dbService, dispatcher, logger),
+		firewallService: services.NewFirewallService(dispatcher, logger),
 	}
 
 	handler := s.RegisterRoutes()
@@ -633,6 +634,10 @@ func TestAllRBACPolicies(t *testing.T) {
 		models.RBAC_SETTINGS_MANAGER,
 		models.RBAC_AUDIT_LOG_VIEWER,
 		models.RBAC_HEALTH_CHECKER,
+		models.RBAC_FIREWALL_READ,
+		models.RBAC_FIREWALL_WRITE,
+		models.RBAC_FIREWALL_UPDATE,
+		models.RBAC_FIREWALL_DELETE,
 	}
 
 	for _, policy := range expectedPolicies {

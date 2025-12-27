@@ -13,6 +13,7 @@ import { logsRouter } from "./routers/logs";
 import { metricsRouter } from "./routers/metrics";
 import { qemuRouter } from "./routers/qemu";
 import { dockerRouter } from "./routers/docker";
+import { firewallRouter } from "./routers/firewall";
 import { Z } from "@/types";
 
 export const queryClient = new QueryClient({
@@ -64,6 +65,7 @@ export const contract = {
   metrics: metricsRouter,
   qemu: qemuRouter,
   docker: dockerRouter,
+  firewall: firewallRouter,
 };
 
 const link = new OpenAPILink(contract, {
