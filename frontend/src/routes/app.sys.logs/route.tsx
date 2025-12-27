@@ -50,11 +50,11 @@ export default function LogsPage() {
   const logsQuery = useQuery(
     orpc.logs.getLogs.queryOptions({
       input: {
-        service_group: filters.service_group || "",
-        level: filters.level || "",
-        page: filters.page,
-        page_size: filters.page_size,
-        days: filters.days,
+        ServiceGroup: filters.service_group || "",
+        Level: filters.level || "",
+        Page: filters.page,
+        PageSize: filters.page_size,
+        Days: filters.days,
       },
     }),
   );

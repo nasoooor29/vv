@@ -39,3 +39,4 @@ visory.db*
 api
 
 cmd/depscan/depscan
+legacy-visory

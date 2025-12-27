@@ -11,11 +11,9 @@ import { storageRouter } from "./routers/storage";
 import { usersRouter } from "./routers/users";
 import { logsRouter } from "./routers/logs";
 import { metricsRouter } from "./routers/metrics";
+import { qemuRouter } from "./routers/qemu";
+import { dockerRouter } from "./routers/docker";
 import { Z } from "@/types";
-import {
-  RequestValidationPlugin,
-  ResponseValidationPlugin,
-} from "@orpc/contract/plugins";
 
 export const queryClient = new QueryClient({
   mutationCache: new MutationCache({
@@ -64,6 +62,8 @@ export const contract = {
   users: usersRouter,
   logs: logsRouter,
   metrics: metricsRouter,
+  qemu: qemuRouter,
+  docker: dockerRouter,
 };
 
 const link = new OpenAPILink(contract, {

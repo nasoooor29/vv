@@ -78,6 +78,36 @@ func (s *Server) RegisterRoutes() http.Handler {
 	metricsGroup.GET("/health", s.metricsService.GetHealthMetrics, Roles(models.RBAC_HEALTH_CHECKER))
 	metricsGroup.GET("/:service", s.metricsService.GetServiceMetrics, Roles(models.RBAC_AUDIT_LOG_VIEWER))
 
+	// QEMU/Virtualization routes
+	qemuGroup := api.Group("/qemu", s.authService.AuthMiddleware, RequestLogger(s.qemuService.Logger, s.qemuService.Dispatcher))
+	qemuGroup.GET("/virtual-machines", s.qemuService.GetVirtualMachines, Roles(models.RBAC_QEMU_READ))
+	qemuGroup.GET("/virtual-machines/info", s.qemuService.GetVirtualMachinesInfo, Roles(models.RBAC_QEMU_READ))
+	qemuGroup.GET("/virtual-machines/:uuid", s.qemuService.GetVirtualMachine, Roles(models.RBAC_QEMU_READ))
+	qemuGroup.GET("/virtual-machines/:uuid/info", s.qemuService.GetVirtualMachineInfo, Roles(models.RBAC_QEMU_READ))
+	qemuGroup.POST("/virtual-machines", s.qemuService.CreateVirtualMachine, Roles(models.RBAC_QEMU_WRITE))
+	qemuGroup.POST("/virtual-machines/:uuid/start", s.qemuService.StartVirtualMachine, Roles(models.RBAC_QEMU_WRITE))
+	qemuGroup.POST("/virtual-machines/:uuid/reboot", s.qemuService.RebootVirtualMachine, Roles(models.RBAC_QEMU_UPDATE))
+	qemuGroup.POST("/virtual-machines/:uuid/shutdown", s.qemuService.ShutdownVirtualMachine, Roles(models.RBAC_QEMU_UPDATE))
+
+	// Docker routes
+	dockerLogger := RequestLogger(s.dockerService.Logger, s.dockerService.Dispatcher)
+	dockerGroup := api.Group("/docker", dockerLogger)
+	dockerGroup.GET("", s.dockerService.GetAvailableClients, s.authService.AuthMiddleware, Roles(models.RBAC_DOCKER_READ))
+
+	// Docker client routes with validation middleware
+	dockerClientGroup := dockerGroup.Group("/:clientid", s.authService.AuthMiddleware, s.dockerService.ValidateDockerClientMiddleware)
+	dockerClientGroup.GET("/containers", s.dockerService.ListContainers, Roles(models.RBAC_DOCKER_READ))
+	dockerClientGroup.GET("/images", s.dockerService.ListImages, Roles(models.RBAC_DOCKER_READ))
+	dockerClientGroup.DELETE("/images/:id", s.dockerService.DeleteImage, Roles(models.RBAC_DOCKER_DELETE))
+	dockerClientGroup.GET("/containers/:id", s.dockerService.InspectContainer, Roles(models.RBAC_DOCKER_READ))
+	dockerClientGroup.GET("/containers/:id/stats", s.dockerService.ContainerStats, Roles(models.RBAC_DOCKER_READ))
+	dockerClientGroup.GET("/containers/:id/stats/stream", s.dockerService.ContainerStatsStream, Roles(models.RBAC_DOCKER_READ))
+	dockerClientGroup.GET("/containers/:id/logs", s.dockerService.ContainerLogs, Roles(models.RBAC_DOCKER_READ))
+	dockerClientGroup.POST("/containers", s.dockerService.CreateContainer, Roles(models.RBAC_DOCKER_WRITE))
+	dockerClientGroup.POST("/containers/:id/start", s.dockerService.StartContainer, Roles(models.RBAC_DOCKER_UPDATE))
+	dockerClientGroup.POST("/containers/:id/stop", s.dockerService.StopContainer, Roles(models.RBAC_DOCKER_UPDATE))
+	dockerClientGroup.POST("/containers/:id/restart", s.dockerService.RestartContainer, Roles(models.RBAC_DOCKER_UPDATE))
+	dockerClientGroup.DELETE("/containers/:id", s.dockerService.DeleteContainer, Roles(models.RBAC_DOCKER_DELETE))
 	docsGroup := api.Group("/docs", RequestLogger(s.docsService.Logger, s.docsService.Dispatcher))
 	docsGroup.GET("", s.docsService.ServeRedoc)
 	docsGroup.GET("/swagger", s.docsService.ServeSwagger)
