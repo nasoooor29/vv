@@ -74,6 +74,8 @@ func setupTestServer(t *testing.T) *testHelper {
 
 	dockerService := services.NewDockerService(dispatcher, logger)
 	notifManager := notifications.NewManager()
+
+	fs := utils.NewFS(fmt.Sprintf("%v-test-%d", "visory", time.Now().UnixNano()))
 	s := &Server{
 		port:             9999,
 		logger:           logger,
@@ -84,7 +86,7 @@ func setupTestServer(t *testing.T) *testHelper {
 		logsService:      services.NewLogsService(dbService, dispatcher, logger),
 		metricsService:   services.NewMetricsService(dbService, dispatcher, logger),
 		storageService:   services.NewStorageService(dispatcher, logger),
-		qemuService:      services.NewQemuService(dispatcher, logger),
+		qemuService:      services.NewQemuService(dispatcher, fs, logger),
 		dockerService:    dockerService,
 		docsService:      services.NewDocsService(dbService, dispatcher, logger),
 		firewallService:  services.NewFirewallService(dispatcher, logger),
