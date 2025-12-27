@@ -1,0 +1,189 @@
+---
+title: Audit Logs
+description: Security monitoring and compliance logging
+---
+
+# Audit Logging
+
+Visory maintains comprehensive audit logs for security monitoring and compliance.
+
+## Overview
+
+The audit logging system:
+- Records all significant actions
+- Associates logs with users
+- Categorizes by service and severity
+- Provides filtering and search capabilities
+
+## Required Permissions
+
+| Action | Permission |
+|--------|------------|
+| View logs | `audit_log_viewer` |
+| Delete old logs | `user_admin` |
+
+## Accessing Audit Logs
+
+Navigate to **System** > **Logs** in the sidebar.
+
+## Log Entry Structure
+
+Each log entry contains:
+
+| Field | Description |
+|-------|-------------|
+| ID | Unique log identifier |
+| User ID | User who performed the action |
+| Action | Brief action description |
+| Details | Extended information |
+| Service Group | Category (auth, docker, qemu, etc.) |
+| Level | Severity (DEBUG, INFO, WARN, ERROR) |
+| Created At | Timestamp |
+
+## Log Levels
+
+| Level | Description | Use Case |
+|-------|-------------|----------|
+| `DEBUG` | Detailed debugging info | Development troubleshooting |
+| `INFO` | Normal operations | Successful actions, logins |
+| `WARN` | Potential issues | Failed attempts, deprecations |
+| `ERROR` | Errors and failures | Failed operations, exceptions |
+
+## Service Groups
+
+Logs are categorized by service:
+
+| Service | Description |
+|---------|-------------|
+| `auth` | Authentication events |
+| `docker` | Docker operations |
+| `qemu` | VM operations |
+| `users` | User management |
+| `storage` | Storage operations |
+| `system` | System events |
+
+## Filtering Logs
+
+The log viewer supports filtering by:
+
+### Service Group
+Filter to show only specific service logs:
+```
+?service_group=docker
+```
+
+### Log Level
+Filter by minimum severity:
+```
+?level=WARN
+```
+
+### Time Range
+Filter by days:
+```
+?days=7
+```
+
+### Pagination
+```
+?page=1&page_size=50
+```
+
+## Log Statistics
+
+The stats panel shows:
+- Total log count
+- Unique service groups
+- Unique log levels
+- Time range of logs
+
+## API Reference
+
+### Get Logs
+
+```
+GET /api/logs
+```
+
+Query Parameters:
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `service_group` | - | Filter by service |
+| `level` | - | Filter by log level |
+| `page` | 1 | Page number |
+| `page_size` | 20 | Results per page (max 100) |
+| `days` | 7 | Time range in days |
+
+Response:
+```json
+{
+  "logs": [
+    {
+      "id": 1,
+      "user_id": 5,
+      "action": "container.start",
+      "details": "Started container nginx-proxy",
+      "service_group": "docker",
+      "level": "INFO",
+      "created_at": "2024-01-15T10:30:00Z"
+    }
+  ],
+  "total": 150,
+  "page": 1,
+  "page_size": 20
+}
+```
+
+### Get Log Statistics
+
+```
+GET /api/logs/stats
+```
+
+Response:
+```json
+{
+  "total_count": 1500,
+  "service_groups": ["auth", "docker", "qemu", "users"],
+  "levels": ["DEBUG", "INFO", "WARN", "ERROR"],
+  "earliest": "2024-01-01T00:00:00Z",
+  "latest": "2024-01-15T23:59:59Z"
+}
+```
+
+### Cleanup Old Logs
+
+```
+DELETE /api/logs/cleanup
+```
+
+Removes logs older than the configured retention period.
+
+## Logged Actions
+
+### Authentication
+- User login (success/failure)
+- User logout
+- OAuth authentication
+- Session creation/invalidation
+
+### Docker
+- Container create/delete
+- Container start/stop/restart
+- Image delete
+
+### QEMU
+- VM create/delete
+- VM start/shutdown/reboot
+
+### User Management
+- User create/update/delete
+- Role changes
+
+## Best Practices
+
+1. **Regular Review**: Check logs periodically for suspicious activity
+2. **Set Up Alerts**: Monitor for ERROR level logs
+3. **Retention Policy**: Configure appropriate log retention
+4. **Export for Compliance**: Export logs for compliance requirements
+5. **Correlate Events**: Use timestamps to correlate related events
