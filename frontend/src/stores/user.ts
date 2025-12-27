@@ -1,3 +1,4 @@
+import { CONSTANTS } from "@/lib";
 import { client } from "@/lib/orpc";
 import type { Z } from "@/types";
 import { ORPCError } from "@orpc/client";
@@ -59,4 +60,4 @@ const initSession = async () => {
 initSession();
 
 // Then poll every second
-setInterval(initSession, 10000);
+setInterval(initSession, CONSTANTS.POLLING_INTERVAL_MS);

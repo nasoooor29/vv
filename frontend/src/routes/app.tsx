@@ -4,6 +4,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { CONSTANTS } from "@/lib";
 import { orpc } from "@/lib/orpc";
 import { ORPCError } from "@orpc/client";
 import { useQuery } from "@tanstack/react-query";
@@ -13,7 +14,7 @@ import { Outlet, useNavigate } from "react-router";
 function AppLayout() {
   const data = useQuery(
     orpc.auth.me.queryOptions({
-      staleTime: 1 * 1000, // 1 second
+      staleTime: CONSTANTS.POLLING_INTERVAL_MS, // 1 second
       retry: 1,
     }),
   );
