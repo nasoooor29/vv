@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"path/filepath"
 
 	"visory/internal/models"
 	"visory/internal/utils"
@@ -18,17 +19,17 @@ type QemuService struct {
 	Dispatcher *utils.Dispatcher
 	Logger     *slog.Logger
 	LibVirt    *libvirt.Libvirt
+	FS         *utils.FS
 }
 
-// NewQemuService creates a new QemuService with dependency injection
-func NewQemuService(dispatcher *utils.Dispatcher, logger *slog.Logger) *QemuService {
+func NewQemuService(dispatcher *utils.Dispatcher, fs *utils.FS, logger *slog.Logger) *QemuService {
 	service := &QemuService{
 		Dispatcher: dispatcher.WithGroup("qemu"),
 		Logger:     logger.WithGroup("qemu"),
 	}
 
 	// Connect to libvirt QEMU system
-	uri, _ := url.Parse(string(libvirt.QEMUSystem))
+	uri, _ := url.Parse(string(libvirt.QEMUSession))
 	l, err := libvirt.ConnectToURI(uri)
 	if err != nil {
 		logger.Error("Failed to connect to libvirt", "error", err)
@@ -37,7 +38,12 @@ func NewQemuService(dispatcher *utils.Dispatcher, logger *slog.Logger) *QemuServ
 	}
 
 	service.LibVirt = l
-	return service
+	return &QemuService{
+		Dispatcher: dispatcher.WithGroup("qemu"),
+		Logger:     logger.WithGroup("qemu"),
+		LibVirt:    l,
+		FS:         fs,
+	}
 }
 
 //	@Summary      List virtual machines
@@ -224,6 +230,14 @@ func (s *QemuService) GetVirtualMachineInfo(c echo.Context) error {
 				s.Logger.Error("Failed to get domain info", "domain", domain.Name, "error", err)
 				return s.Dispatcher.NewInternalServerError("Failed to get virtual machine info", err)
 			}
+			dXml, err := s.LibVirt.DomainGetXMLDesc(domain, libvirt.DomainXMLUpdateCPU)
+			if err != nil {
+				return err
+			}
+			rVNCIP, rVNCPort, err := utils.VNCFromDomainXML(dXml)
+			if err != nil {
+				return err
+			}
 
 			return c.JSON(http.StatusOK, models.VirtualMachineWithInfo{
 				ID:   domain.ID,
@@ -235,6 +249,8 @@ func (s *QemuService) GetVirtualMachineInfo(c echo.Context) error {
 					MemoryKB:  rMemory,
 					VCPUs:     rNrVirtCPU,
 					CPUTimeNs: rCPUTime,
+					VNCIP:     rVNCIP,
+					VNCPort:   rVNCPort,
 				},
 			})
 		}
@@ -363,6 +379,8 @@ func (s *QemuService) ShutdownVirtualMachine(c echo.Context) error {
 	})
 }
 
+type CreateVirtualMachineRequest struct{}
+
 //	@Summary      Create virtual machine
 //	@Description  Create a new virtual machine
 //	@Tags         qemu
@@ -386,7 +404,6 @@ func (s *QemuService) CreateVirtualMachine(c echo.Context) error {
 	if err := c.Bind(req); err != nil {
 		return s.Dispatcher.NewBadRequest("Invalid request format", err)
 	}
-
 	// Validate request
 	if req.Name == "" {
 		return s.Dispatcher.NewBadRequest("Virtual machine name is required", nil)
@@ -407,17 +424,46 @@ func (s *QemuService) CreateVirtualMachine(c echo.Context) error {
 		"memory_mb", req.Memory,
 		"vcpus", req.VCPUs,
 		"disk_size_gb", req.DiskSize,
-		"autostart", req.Autostart,
 	)
 
-	// TODO: Implement actual VM creation via libvirt
-	// This would require XML domain definition generation and DefineDOM + Create
-	// For now, return a placeholder response indicating the feature is pending implementation
+	xmlDom, err := utils.BuildLibVirtDomain(&utils.LibVirtDomainParams{
+		Name:                  req.Name,
+		DiskLocation:          s.FS.Images,
+		InstallationMediaPath: filepath.Join(s.FS.ISOs, req.OSImage),
+		MemorySize:            uint(req.Memory),
+		VirtualCpus:           uint(req.VCPUs),
+		DiskSize:              uint(req.DiskSize),
+		SpiceListenPort:       -1,
+		SpiceListenIpAddr:     "127.0.0.1",
+		VNCListenPort:         -1,
+		VNCListenIpAddr:       "127.0.0.1",
+	})
+	if err != nil {
+		s.Logger.Error("Failed to create virtual machine", "name", req.Name, "error", err)
+		return s.Dispatcher.NewInternalServerError("Failed to create virtual machine", err)
+	}
+
+	var rDom libvirt.Domain
+	if req.Autostart {
+		rDom, err = s.LibVirt.DomainCreateXML(xmlDom, libvirt.DomainStartValidate)
+	} else {
+		rDom, err = s.LibVirt.DomainCreateXML(xmlDom, libvirt.DomainStartPaused)
+	}
+	if err != nil {
+		s.Logger.Error("Failed to create virtual machine", "name", req.Name, "error", err)
+		return s.Dispatcher.NewInternalServerError("Failed to create virtual machine", err)
+	}
+
+	uuid, err := uuid.FromBytes(rDom.UUID[:])
+	if err != nil {
+		s.Logger.Error("Failed to create virtual machine", "name", req.Name, "error", err)
+		return s.Dispatcher.NewInternalServerError("Failed to create virtual machine", err)
+	}
 
 	return c.JSON(http.StatusCreated, models.VirtualMachine{
-		ID:   0,
-		Name: req.Name,
-		UUID: "pending-implementation",
+		ID:   rDom.ID,
+		Name: rDom.Name,
+		UUID: uuid.String(),
 	})
 }
 
