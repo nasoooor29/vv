@@ -18,6 +18,8 @@ interface DialogOrDrawerProps {
   title?: string;
   description?: string;
   children: React.ReactNode;
+  /** Custom className for DialogContent to control width, etc. */
+  className?: string;
 }
 
 export const useDialog = (props: DialogOrDrawerProps) => {
@@ -45,7 +47,7 @@ export const useDialog = (props: DialogOrDrawerProps) => {
 
     return (
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-106.25">
+        <DialogContent className={props.className}>
           <DialogHeader>
             {props.title && <DialogTitle>{props.title}</DialogTitle>}
             {props.description && (
