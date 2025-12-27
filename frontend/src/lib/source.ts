@@ -1,5 +1,5 @@
 import browserCollections from "../../.source/browser";
-import meta from "../../content/docs/meta.json";
+import meta from "../../../content/docs/meta.json";
 
 // Page info type
 interface PageInfo {
