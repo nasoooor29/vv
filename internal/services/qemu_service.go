@@ -22,19 +22,22 @@ type QemuService struct {
 
 // NewQemuService creates a new QemuService with dependency injection
 func NewQemuService(dispatcher *utils.Dispatcher, logger *slog.Logger) *QemuService {
+	service := &QemuService{
+		Dispatcher: dispatcher.WithGroup("qemu"),
+		Logger:     logger.WithGroup("qemu"),
+	}
+
 	// Connect to libvirt QEMU system
 	uri, _ := url.Parse(string(libvirt.QEMUSystem))
 	l, err := libvirt.ConnectToURI(uri)
 	if err != nil {
 		logger.Error("Failed to connect to libvirt", "error", err)
-		return nil
+		// Return service without LibVirt connection - methods will check for nil
+		return service
 	}
 
-	return &QemuService{
-		Dispatcher: dispatcher.WithGroup("qemu"),
-		Logger:     logger.WithGroup("qemu"),
-		LibVirt:    l,
-	}
+	service.LibVirt = l
+	return service
 }
 
 //	@Summary      List virtual machines

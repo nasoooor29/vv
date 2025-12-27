@@ -71,20 +71,22 @@ func setupTestServer(t *testing.T) *testHelper {
 	dbService := database.New()
 	dispatcher := utils.NewDispatcher(dbService)
 
+	dockerService := services.NewDockerService(dispatcher, logger)
 	s := &Server{
-		port:            9999,
-		logger:          logger,
-		dispatcher:      dispatcher,
-		db:              dbService,
-		authService:     services.NewAuthService(dbService, dispatcher, logger),
-		usersService:    services.NewUsersService(dbService, dispatcher, logger),
-		logsService:     services.NewLogsService(dbService, dispatcher, logger),
-		metricsService:  services.NewMetricsService(dbService, dispatcher, logger),
-		storageService:  services.NewStorageService(dispatcher, logger),
-		qemuService:     services.NewQemuService(dispatcher, logger),
-		dockerService:   services.NewDockerService(dispatcher, logger),
-		docsService:     services.NewDocsService(dbService, dispatcher, logger),
-		firewallService: services.NewFirewallService(dispatcher, logger),
+		port:             9999,
+		logger:           logger,
+		dispatcher:       dispatcher,
+		db:               dbService,
+		authService:      services.NewAuthService(dbService, dispatcher, logger),
+		usersService:     services.NewUsersService(dbService, dispatcher, logger),
+		logsService:      services.NewLogsService(dbService, dispatcher, logger),
+		metricsService:   services.NewMetricsService(dbService, dispatcher, logger),
+		storageService:   services.NewStorageService(dispatcher, logger),
+		qemuService:      services.NewQemuService(dispatcher, logger),
+		dockerService:    dockerService,
+		docsService:      services.NewDocsService(dbService, dispatcher, logger),
+		firewallService:  services.NewFirewallService(dispatcher, logger),
+		templatesService: services.NewTemplatesService(dispatcher, logger, dockerService.ClientManager),
 	}
 
 	handler := s.RegisterRoutes()
