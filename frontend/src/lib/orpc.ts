@@ -36,7 +36,7 @@ export const queryClient = new QueryClient({
           }
           return;
         } else {
-          toast.error("wtf");
+          toast.error("backend is probably down");
         }
       },
     },

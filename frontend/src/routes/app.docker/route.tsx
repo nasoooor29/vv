@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useConfirmation } from "@/hooks";
+import { useConfirmation, useDialog } from "@/hooks";
 import { toast } from "sonner";
 import { ContainersGrid } from "./containers-grid";
 import { ImagesCard } from "./images-card";
@@ -20,8 +20,8 @@ import { usePermission } from "@/components/protected-content";
 import { RBAC_DOCKER_READ } from "@/types/types.gen";
 import type { z } from "zod";
 import type { Z } from "@/types";
-import { ContainerDetailsDialog } from "./container-details";
-import { CreateContainerDialog } from "./create-container-dialog";
+import { ContainerDetailsContent } from "./container-details";
+import { CreateContainerContent } from "./create-container-dialog";
 
 type DockerContainer = z.infer<typeof Z.dockerContainerSchema>;
 
@@ -50,13 +50,15 @@ export default function DockerPage() {
   const clients = clientsQuery.data ?? [];
   const activeClientId = selectedClient ?? clients[0]?.id?.toString() ?? null;
 
-  const containerDetailsDialog = ContainerDetailsDialog(
-    activeClientId,
-    selectedContainer,
-  );
+  // Dialog hooks at page level - stable across re-renders
+  const containerDetailsDialog = useDialog({
+    className: "max-w-4xl",
+  });
 
-  const createContainerDialog = CreateContainerDialog({
-    clientId: activeClientId,
+  const createContainerDialog = useDialog({
+    title: "Create New Container",
+    description: "Configure and create a new Docker container",
+    className: "sm:max-w-lg",
   });
 
   // Check permission
@@ -156,7 +158,7 @@ export default function DockerPage() {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={() => createContainerDialog.dialog.open()}>
+          <Button onClick={createContainerDialog.open}>
             <Plus className="mr-2 h-4 w-4" />
             Create Container
           </Button>
@@ -183,8 +185,27 @@ export default function DockerPage() {
 
       {activeClientId && <ImagesCard clientId={activeClientId} />}
 
-      <containerDetailsDialog.Component />
-      <createContainerDialog.dialog.component />
+      {/* Container Details Dialog */}
+      <containerDetailsDialog.Component
+        title={selectedContainer?.Names[0]?.slice(1) || "Container Details"}
+        description={selectedContainer?.Image}
+      >
+        <ContainerDetailsContent
+          clientId={activeClientId}
+          container={selectedContainer}
+        />
+      </containerDetailsDialog.Component>
+
+      {/* Create Container Dialog */}
+      <createContainerDialog.Component>
+        {(close) => (
+          <CreateContainerContent
+            clientId={activeClientId}
+            onClose={close}
+          />
+        )}
+      </createContainerDialog.Component>
+
       <ConfirmationDialog />
     </div>
   );
