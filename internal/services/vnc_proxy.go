@@ -26,7 +26,12 @@ func (p *VNCProxy) ConnectVNC(c echo.Context, vncIP string, vncPort int) error {
 	vncAddr := net.JoinHostPort(vncIP, fmt.Sprintf("%d", vncPort))
 	p.logger.Info("Connecting to VNC server", "address", vncAddr)
 
-	vncProxy := newVNCProxy(":5901")
+	vncProxy := vncproxy.New(&vncproxy.Config{
+		LogLevel: vncproxy.DebugLevel,
+		TokenHandler: func(r *http.Request) (string, error) {
+			return vncAddr, nil
+		},
+	})
 
 	websocket.Handler(vncProxy.ServeWS).ServeHTTP(
 		c.Response().Writer,
@@ -34,13 +39,4 @@ func (p *VNCProxy) ConnectVNC(c echo.Context, vncIP string, vncPort int) error {
 	)
 
 	return nil
-}
-
-func newVNCProxy(addr string) *vncproxy.Proxy {
-	return vncproxy.New(&vncproxy.Config{
-		LogLevel: vncproxy.DebugLevel,
-		TokenHandler: func(r *http.Request) (string, error) {
-			return addr, nil
-		},
-	})
 }
