@@ -1,42 +1,4 @@
 /**
- * FirewallRule represents a single nftables rule
- */
-export interface FirewallRule {
-  handle: number /* uint64 */; // nftables rule handle (unique ID)
-  chain: string; // "input", "forward", or "output"
-  protocol: string; // "tcp", "udp", or "" for any
-  port: number /* uint16 */; // destination port (0 = any)
-  source_ip: string; // source IP/CIDR or "" for any
-  action: string; // "accept" or "drop"
-  comment: string; // optional user comment
-}
-/**
- * FirewallStatus represents the current firewall state
- */
-export interface FirewallStatus {
-  enabled: boolean;
-  rule_count: number /* int */;
-  table_name: string;
-}
-/**
- * CreateRuleRequest is the request body for creating a new firewall rule
- */
-export interface CreateRuleRequest {
-  chain: string;
-  protocol: string;
-  port: number /* uint16 */;
-  source_ip: string;
-  action: string;
-  comment: string;
-}
-/**
- * ReorderRulesRequest is the request body for reordering firewall rules
- */
-export interface ReorderRulesRequest {
-  chain: string;
-  handles: number /* uint64 */[]; // Rule handles in desired order
-}
-/**
  * VirtualMachine represents a QEMU virtual machine
  */
 export interface VirtualMachine {
@@ -115,24 +77,36 @@ export const VIR_DOMAIN_CRASHED = 6; // The domain is crashed
  * QEMU VM States (libvirt domain states)
  */
 export const VIR_DOMAIN_PMSUSPENDED = 7; // The domain is suspended by guest power management
-export const COOKIE_NAME = "token";
-export const BYPASS_RBAC_HEADER = "X-Bypass-RBAC";
-export interface StorageDevice {
-  name: string;
-  size: string;
-  size_bytes: number /* int64 */;
-  type: string;
-  mount_point: string;
-  usage_percent: number /* int32 */;
+export interface Login {
+  username: string;
+  password: string;
 }
-export interface MountPoint {
-  path: string;
-  device: string;
-  fs_type: string;
-  total: number /* int64 */;
-  used: number /* int64 */;
-  available: number /* int64 */;
-  use_percent: number /* int32 */;
+export type RBACPolicy = string;
+export const RBAC_DOCKER_READ: RBACPolicy = "docker_read";
+export const RBAC_DOCKER_WRITE: RBACPolicy = "docker_write";
+export const RBAC_DOCKER_UPDATE: RBACPolicy = "docker_update";
+export const RBAC_DOCKER_DELETE: RBACPolicy = "docker_delete";
+export const RBAC_QEMU_READ: RBACPolicy = "qemu_read";
+export const RBAC_QEMU_WRITE: RBACPolicy = "qemu_write";
+export const RBAC_QEMU_UPDATE: RBACPolicy = "qemu_update";
+export const RBAC_QEMU_DELETE: RBACPolicy = "qemu_delete";
+export const RBAC_EVENT_VIEWER: RBACPolicy = "event_viewer";
+export const RBAC_EVENT_MANAGER: RBACPolicy = "event_manager";
+export const RBAC_USER_ADMIN: RBACPolicy = "user_admin";
+export const RBAC_SETTINGS_MANAGER: RBACPolicy = "settings_manager";
+export const RBAC_AUDIT_LOG_VIEWER: RBACPolicy = "audit_log_viewer";
+export const RBAC_HEALTH_CHECKER: RBACPolicy = "health_checker";
+export const RBAC_FIREWALL_READ: RBACPolicy = "firewall_read";
+export const RBAC_FIREWALL_WRITE: RBACPolicy = "firewall_write";
+export const RBAC_FIREWALL_UPDATE: RBACPolicy = "firewall_update";
+export const RBAC_FIREWALL_DELETE: RBACPolicy = "firewall_delete";
+/**
+ * this is just to mimic the echo error structure
+ * eg: {"message":"Failed to list virtual-machines"}
+ * reprod: echo.NewHTTPError(http.StatusInternalServerError, "Failed to list virtual-machines").SetInternal(fmt.Errorf("database connection error"))
+ */
+export interface HTTPError {
+  message: string;
 }
 export interface LogResponse {
   id: number /* int64 */;
@@ -231,6 +205,48 @@ export interface HealthMetricsResponse {
   overall_status: string;
   alerts: string[];
 }
+export interface StorageDevice {
+  name: string;
+  size: string;
+  size_bytes: number /* int64 */;
+  type: string;
+  mount_point: string;
+  usage_percent: number /* int32 */;
+}
+export interface MountPoint {
+  path: string;
+  device: string;
+  fs_type: string;
+  total: number /* int64 */;
+  used: number /* int64 */;
+  available: number /* int64 */;
+  use_percent: number /* int32 */;
+}
+export interface EnvVars {
+  Port: string;
+  AppEnv: string;
+  DBPath: string;
+  APP_VERSION: string;
+  GoogleOAuthKey: string;
+  GoogleOAuthSecret: string;
+  GithubOAuthKey: string;
+  GithubOAuthSecret: string;
+  /**
+   * OAuthCallbackURL  string `envconfig:"OAUTH_CALLBACK_URL" default:"http://localhost:9999/api/auth/oauth/callback" required:"true"`
+   */
+  BaseUrl: string;
+  Directory: string;
+  SessionSecret: string;
+  FRONTEND_DASH: string;
+  BaseUrlWithPort: string;
+  /**
+   * Discord Webhook Configuration
+   */
+  DiscordWebhookURL: string;
+  DiscordNotifyOnError: boolean;
+  DiscordNotifyOnWarn: boolean;
+  DiscordNotifyOnInfo: boolean;
+}
 /**
  * PortainerTemplate represents a single template from the Portainer templates JSON
  */
@@ -328,99 +344,46 @@ export interface DeployResponse {
   name: string;
   message: string;
 }
+export const COOKIE_NAME = "token";
+export const BYPASS_RBAC_HEADER = "X-Bypass-RBAC";
 /**
- * this is just to mimic the echo error structure
- * eg: {"message":"Failed to list virtual-machines"}
- * reprod: echo.NewHTTPError(http.StatusInternalServerError, "Failed to list virtual-machines").SetInternal(fmt.Errorf("database connection error"))
+ * FirewallRule represents a single nftables rule
  */
-export interface HTTPError {
-  message: string;
-}
-export interface EnvVars {
-  Port: string;
-  AppEnv: string;
-  DBPath: string;
-  APP_VERSION: string;
-  GoogleOAuthKey: string;
-  GoogleOAuthSecret: string;
-  GithubOAuthKey: string;
-  GithubOAuthSecret: string;
-  /**
-   * OAuthCallbackURL  string `envconfig:"OAUTH_CALLBACK_URL" default:"http://localhost:9999/api/auth/oauth/callback" required:"true"`
-   */
-  BaseUrl: string;
-  Directory: string;
-  SessionSecret: string;
-  FRONTEND_DASH: string;
-  BaseUrlWithPort: string;
-  /**
-   * Discord Webhook Configuration
-   */
-  DiscordWebhookURL: string;
-  DiscordNotifyOnError: boolean;
-  DiscordNotifyOnWarn: boolean;
-  DiscordNotifyOnInfo: boolean;
-}
-export interface Login {
-  username: string;
-  password: string;
-}
-export type RBACPolicy = string;
-export const RBAC_DOCKER_READ: RBACPolicy = "docker_read";
-export const RBAC_DOCKER_WRITE: RBACPolicy = "docker_write";
-export const RBAC_DOCKER_UPDATE: RBACPolicy = "docker_update";
-export const RBAC_DOCKER_DELETE: RBACPolicy = "docker_delete";
-export const RBAC_QEMU_READ: RBACPolicy = "qemu_read";
-export const RBAC_QEMU_WRITE: RBACPolicy = "qemu_write";
-export const RBAC_QEMU_UPDATE: RBACPolicy = "qemu_update";
-export const RBAC_QEMU_DELETE: RBACPolicy = "qemu_delete";
-export const RBAC_EVENT_VIEWER: RBACPolicy = "event_viewer";
-export const RBAC_EVENT_MANAGER: RBACPolicy = "event_manager";
-export const RBAC_USER_ADMIN: RBACPolicy = "user_admin";
-export const RBAC_SETTINGS_MANAGER: RBACPolicy = "settings_manager";
-export const RBAC_AUDIT_LOG_VIEWER: RBACPolicy = "audit_log_viewer";
-export const RBAC_HEALTH_CHECKER: RBACPolicy = "health_checker";
-export const RBAC_FIREWALL_READ: RBACPolicy = "firewall_read";
-export const RBAC_FIREWALL_WRITE: RBACPolicy = "firewall_write";
-export const RBAC_FIREWALL_UPDATE: RBACPolicy = "firewall_update";
-export const RBAC_FIREWALL_DELETE: RBACPolicy = "firewall_delete";
-export interface ISOService {
-  Dispatcher?: any /* utils.Dispatcher */;
-  Logger?: any /* slog.Logger */;
-  FS?: any /* utils.FS */;
+export interface FirewallRule {
+  handle: number /* uint64 */; // nftables rule handle (unique ID)
+  chain: string; // "input", "forward", or "output"
+  protocol: string; // "tcp", "udp", or "" for any
+  port: number /* uint16 */; // destination port (0 = any)
+  source_ip: string; // source IP/CIDR or "" for any
+  action: string; // "accept" or "drop"
+  comment: string; // optional user comment
 }
 /**
- * Validate file size (max 5GB)
+ * FirewallStatus represents the current firewall state
  */
-export interface AuthService {
-  Dispatcher?: any /* utils.Dispatcher */;
-  Logger?: any /* slog.Logger */;
-  OAuthProviders: { [key: string]: any /* goth.Provider */ };
-}
-export interface ClientInfo {
-  id: number /* int */;
-  status: string;
-}
-export interface DockerService {
-  Dispatcher?: any /* utils.Dispatcher */;
-  Logger?: any /* slog.Logger */;
-  ClientManager?: any /* clientmanager.Docker */;
-}
-export interface UsersService {
-  Dispatcher?: any /* utils.Dispatcher */;
-  Logger?: any /* slog.Logger */;
-}
-export interface QemuService {
-  Dispatcher?: any /* utils.Dispatcher */;
-  Logger?: any /* slog.Logger */;
-  LibVirt?: any /* libvirt.Libvirt */;
-  FS?: any /* utils.FS */;
+export interface FirewallStatus {
+  enabled: boolean;
+  rule_count: number /* int */;
+  table_name: string;
 }
 /**
- * DomainState: 0=NoState, 1=Running, 2=Blocked, 3=Paused, 4=ShuttingDown, 5=ShutOff, 6=Crashed, 7=Suspended
+ * CreateRuleRequest is the request body for creating a new firewall rule
  */
-export const DomainPaused = 3;
-export interface CreateVirtualMachineRequest {}
+export interface CreateRuleRequest {
+  chain: string;
+  protocol: string;
+  port: number /* uint16 */;
+  source_ip: string;
+  action: string;
+  comment: string;
+}
+/**
+ * ReorderRulesRequest is the request body for reordering firewall rules
+ */
+export interface ReorderRulesRequest {
+  chain: string;
+  handles: number /* uint64 */[]; // Rule handles in desired order
+}
 export interface SettingsService {
   Dispatcher?: any /* utils.Dispatcher */;
   Logger?: any /* slog.Logger */;
@@ -438,7 +401,67 @@ export interface NotificationSettingRequest {
   notify_on_info: boolean;
   config?: string;
 }
+export interface FirewallService {
+  Dispatcher?: any /* utils.Dispatcher */;
+  Logger?: any /* slog.Logger */;
+}
+export interface ISOService {
+  Dispatcher?: any /* utils.Dispatcher */;
+  Logger?: any /* slog.Logger */;
+  FS?: any /* utils.FS */;
+}
+/**
+ * Validate file size (max 5GB)
+ */
+export interface QemuService {
+  Dispatcher?: any /* utils.Dispatcher */;
+  Logger?: any /* slog.Logger */;
+  LibVirt?: any /* libvirt.Libvirt */;
+  FS?: any /* utils.FS */;
+}
+/**
+ * DomainState: 0=NoState, 1=Running, 2=Blocked, 3=Paused, 4=ShuttingDown, 5=ShutOff, 6=Crashed, 7=Suspended
+ */
+export const DomainPaused = 3;
+export interface CreateVirtualMachineRequest {}
 export interface StorageService {
+  Dispatcher?: any /* utils.Dispatcher */;
+  Logger?: any /* slog.Logger */;
+}
+export interface DocsService {
+  Dispatcher?: any /* utils.Dispatcher */;
+  Logger?: any /* slog.Logger */;
+  Spec: string;
+}
+export interface UsersService {
+  Dispatcher?: any /* utils.Dispatcher */;
+  Logger?: any /* slog.Logger */;
+}
+export interface ClientInfo {
+  id: number /* int */;
+  status: string;
+}
+export interface DockerService {
+  Dispatcher?: any /* utils.Dispatcher */;
+  Logger?: any /* slog.Logger */;
+  ClientManager?: any /* clientmanager.Docker */;
+}
+export interface AuthService {
+  Dispatcher?: any /* utils.Dispatcher */;
+  Logger?: any /* slog.Logger */;
+  OAuthProviders: { [key: string]: any /* goth.Provider */ };
+}
+export interface MetricsService {
+  Dispatcher?: any /* utils.Dispatcher */;
+  Logger?: any /* slog.Logger */;
+}
+/**
+ * GetMetricsRequest represents metrics query parameters
+ */
+export interface GetMetricsRequest {
+  Days: number /* int */;
+}
+export interface TemplatesService {
   Dispatcher?: any /* utils.Dispatcher */;
   Logger?: any /* slog.Logger */;
 }
@@ -456,29 +479,15 @@ export interface GetLogsRequest {
   PageSize: number /* int */;
   Days: number /* int */; // Filter logs from last N days
 }
-export interface DocsService {
-  Dispatcher?: any /* utils.Dispatcher */;
-  Logger?: any /* slog.Logger */;
-  Spec: string;
-}
 export interface VNCProxy {}
-export interface MetricsService {
-  Dispatcher?: any /* utils.Dispatcher */;
-  Logger?: any /* slog.Logger */;
-}
-/**
- * GetMetricsRequest represents metrics query parameters
- */
-export interface GetMetricsRequest {
-  Days: number /* int */;
-}
-export interface FirewallService {
-  Dispatcher?: any /* utils.Dispatcher */;
-  Logger?: any /* slog.Logger */;
-}
-export interface TemplatesService {
-  Dispatcher?: any /* utils.Dispatcher */;
-  Logger?: any /* slog.Logger */;
+export interface UpsertNotificationSettingParams {
+  provider: string;
+  enabled?: boolean;
+  webhook_url?: string;
+  notify_on_error?: boolean;
+  notify_on_warn?: boolean;
+  notify_on_info?: boolean;
+  config?: string;
 }
 export interface CountLogsByLevelParams {
   level: string;
@@ -552,6 +561,10 @@ export interface GetServiceGroupDistributionRow {
   count: number /* int64 */;
   percentage: number /* float64 */;
 }
+export interface UpsertSessionParams {
+  user_id: number /* int64 */;
+  session_token: string;
+}
 export interface Service {
   User?: any /* user.Queries */; // Assuming user.Queries is a struct generated by sqlc for user-related queries
   Session?: any /* sessions.Queries */;
@@ -574,10 +587,6 @@ export interface HealthStats {
   wait_duration: string;
   max_idle_closed: number /* int64 */;
   max_lifetime_closed: number /* int64 */;
-}
-export interface UpsertSessionParams {
-  user_id: number /* int64 */;
-  session_token: string;
 }
 export interface CreateUserParams {
   username: string;
@@ -612,15 +621,6 @@ export interface UpsertUserParams {
   email: string;
   password: string;
   role: string;
-}
-export interface UpsertNotificationSettingParams {
-  provider: string;
-  enabled?: boolean;
-  webhook_url?: string;
-  notify_on_error?: boolean;
-  notify_on_warn?: boolean;
-  notify_on_info?: boolean;
-  config?: string;
 }
 export interface Log {
   id: number /* int64 */;
