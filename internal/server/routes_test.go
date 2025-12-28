@@ -24,7 +24,7 @@ func TestHandler(t *testing.T) {
 
 	// Create a server with minimal dependencies for testing
 	db := database.New()
-	dispatcher := utils.NewDispatcher(db)
+	dispatcher := utils.NewDispatcher(db, nil)
 	s := &Server{
 		port:           9999,
 		logger:         logger,

@@ -12,19 +12,22 @@ import (
 	"visory/internal/database"
 	"visory/internal/database/logs"
 	"visory/internal/models"
+	"visory/internal/notifications"
 
 	"github.com/labstack/echo/v4"
 )
 
 type Dispatcher struct {
-	db     *database.Service
-	Groups []string
+	db       *database.Service
+	Groups   []string
+	notifier *notifications.Manager
 }
 
-func NewDispatcher(db *database.Service) *Dispatcher {
+func NewDispatcher(db *database.Service, notifier *notifications.Manager) *Dispatcher {
 	return &Dispatcher{
-		db:     db,
-		Groups: []string{},
+		db:       db,
+		Groups:   []string{},
+		notifier: notifier,
 	}
 }
 
@@ -32,8 +35,9 @@ func (m *Dispatcher) WithGroup(name string) *Dispatcher {
 	newGroups := append(m.Groups, name)
 
 	return &Dispatcher{
-		db:     m.db,
-		Groups: newGroups,
+		db:       m.db,
+		Groups:   newGroups,
+		notifier: m.notifier,
 	}
 }
 
@@ -64,6 +68,7 @@ func (m *Dispatcher) InsertIntoDB(data models.LogRequestData) error {
 		slog.Error("error inserting log into DB", "err", err)
 		return err
 	}
+
 	return nil
 }
 
@@ -113,4 +118,44 @@ func StatusCodeToLogLevel(status int) (string, slog.Level) {
 	default:
 		return "INFO", slog.LevelInfo
 	}
+}
+
+// getGroupName returns the current group name or a default
+func (m *Dispatcher) getGroupName() string {
+	if len(m.Groups) > 0 {
+		return m.Groups[len(m.Groups)-1]
+	}
+	return "Visory"
+}
+
+// SendError sends an error notification to all registered senders
+func (m *Dispatcher) SendError(title string, message string, fields map[string]string) {
+	if m.notifier == nil {
+		return
+	}
+	m.notifier.SendError(title, message, fields, m.getGroupName(), models.ENV_VARS.APP_VERSION)
+}
+
+// SendWarning sends a warning notification to all registered senders
+func (m *Dispatcher) SendWarning(title string, message string, fields map[string]string) {
+	if m.notifier == nil {
+		return
+	}
+	m.notifier.SendWarning(title, message, fields, m.getGroupName(), models.ENV_VARS.APP_VERSION)
+}
+
+// SendInfo sends an info notification to all registered senders
+func (m *Dispatcher) SendInfo(title string, message string, fields map[string]string) {
+	if m.notifier == nil {
+		return
+	}
+	m.notifier.SendInfo(title, message, fields, m.getGroupName(), models.ENV_VARS.APP_VERSION)
+}
+
+// SendSuccess sends a success notification to all registered senders
+func (m *Dispatcher) SendSuccess(title string, message string, fields map[string]string) {
+	if m.notifier == nil {
+		return
+	}
+	m.notifier.SendSuccess(title, message, fields, m.getGroupName(), models.ENV_VARS.APP_VERSION)
 }

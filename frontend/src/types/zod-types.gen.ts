@@ -191,6 +191,10 @@ export const envVarsSchema = z.object({
   SessionSecret: z.string(),
   FRONTEND_DASH: z.string(),
   BaseUrlWithPort: z.string(),
+  DiscordWebhookURL: z.string(),
+  DiscordNotifyOnError: z.boolean(),
+  DiscordNotifyOnWarn: z.boolean(),
+  DiscordNotifyOnInfo: z.boolean(),
 });
 
 export const templateVolumeSchema = z.object({
@@ -607,6 +611,16 @@ export const getLogsRequestSchema = z.object({
   Days: z.number(),
 });
 
+export const upsertNotificationSettingParamsSchema = z.object({
+  provider: z.string(),
+  enabled: z.boolean().optional(),
+  webhook_url: z.string().optional(),
+  notify_on_error: z.boolean().optional(),
+  notify_on_warn: z.boolean().optional(),
+  notify_on_info: z.boolean().optional(),
+  config: z.string().optional(),
+});
+
 export const countLogsByLevelParamsSchema = z.object({
   level: z.string(),
   created_at: z.string(),
@@ -784,6 +798,19 @@ export const notificationSchema = z.object({
   user_id: z.number(),
   message: z.string(),
   read: z.boolean().optional(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export const notificationSettingSchema = z.object({
+  id: z.number(),
+  provider: z.string(),
+  enabled: z.boolean().optional(),
+  webhook_url: z.string().optional(),
+  notify_on_error: z.boolean().optional(),
+  notify_on_warn: z.boolean().optional(),
+  notify_on_info: z.boolean().optional(),
+  config: z.string().optional(),
   created_at: z.string(),
   updated_at: z.string(),
 });

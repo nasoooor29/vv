@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -74,6 +75,58 @@ func RequestLogger(logger *slog.Logger, dispatcher *utils.Dispatcher) echo.Middl
 
 			if req.Method != "GET" {
 				dispatcher.InsertIntoDB(data)
+
+				// Send notification based on log level
+				_, logLevel := utils.StatusCodeToLogLevel(data.Status)
+				if logLevel == slog.LevelError {
+					dispatcher.SendError(
+						"Request Error",
+						fmt.Sprintf("%s %s returned %d", data.Method, data.Path, data.Status),
+						map[string]string{
+							"Method":    data.Method,
+							"Path":      data.Path,
+							"Status":    fmt.Sprintf("%d", data.Status),
+							"Remote IP": data.RemoteIp,
+							"Latency":   data.Latency.String(),
+						},
+					)
+				} else if data.Method == "DELETE" {
+					dispatcher.SendWarning(
+						"Request Warning",
+						fmt.Sprintf("%s %s returned %d", data.Method, data.Path, data.Status),
+						map[string]string{
+							"Method":    data.Method,
+							"Path":      data.Path,
+							"Status":    fmt.Sprintf("%d", data.Status),
+							"Remote IP": data.RemoteIp,
+							"Latency":   data.Latency.String(),
+						},
+					)
+				} else if logLevel == slog.LevelWarn {
+					dispatcher.SendWarning(
+						"Request Warning",
+						fmt.Sprintf("%s %s returned %d", data.Method, data.Path, data.Status),
+						map[string]string{
+							"Method":    data.Method,
+							"Path":      data.Path,
+							"Status":    fmt.Sprintf("%d", data.Status),
+							"Remote IP": data.RemoteIp,
+							"Latency":   data.Latency.String(),
+						},
+					)
+				} else {
+					dispatcher.SendInfo(
+						"Request Info",
+						fmt.Sprintf("%s %s returned %d", data.Method, data.Path, data.Status),
+						map[string]string{
+							"Method":    data.Method,
+							"Path":      data.Path,
+							"Status":    fmt.Sprintf("%d", data.Status),
+							"Remote IP": data.RemoteIp,
+							"Latency":   data.Latency.String(),
+						},
+					)
+				}
 			}
 
 			_, logLevel := utils.StatusCodeToLogLevel(data.Status)
