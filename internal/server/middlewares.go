@@ -73,9 +73,7 @@ func RequestLogger(logger *slog.Logger, dispatcher *utils.Dispatcher) echo.Middl
 				Error:     errMsg,
 			}
 
-			if models.ENV_VARS.VerboseNotifications {
-				notifyAndInsert(dispatcher, data)
-			} else if req.Method != "GET" {
+			if req.Method != "GET" {
 				notifyAndInsert(dispatcher, data)
 			}
 
