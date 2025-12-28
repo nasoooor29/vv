@@ -9,13 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import * as VNC from "novnc/core/rfb";
+// import * as VNC from "novnc/core/rfb";
 
 export default function VMConsolePage() {
+  console.log("help");
   const { uuid } = useParams<{ uuid: string }>();
   const navigate = useNavigate();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rfbRef = useRef<VNC.RFB | null>(null);
+  const rfbRef = useRef<any | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
 
@@ -48,7 +49,7 @@ export default function VMConsolePage() {
         // The backend at /api/qemu/virtual-machines/{uuid}/console proxies to the VNC server
         const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
         const url = `${protocol}//${window.location.host}/api/qemu/virtual-machines/${uuid}/console`;
-        
+
         console.log(`Connecting to VNC via backend proxy at ${url}`);
 
         const rfb = new VNC.RFB(canvasRef.current!, url, {
@@ -128,7 +129,8 @@ export default function VMConsolePage() {
       <Alert className="border-yellow-500 bg-yellow-500/10">
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          VNC is not available for this VM. Please ensure the VM is running and has VNC configured.
+          VNC is not available for this VM. Please ensure the VM is running and
+          has VNC configured.
         </AlertDescription>
       </Alert>
     );
@@ -157,15 +159,21 @@ export default function VMConsolePage() {
           <CardTitle className="text-sm">
             <div className="space-y-2">
               <div>
-                <span className="text-muted-foreground">VNC Server:</span> {vncIP}:{vncPort}
+                <span className="text-muted-foreground">VNC Server:</span>{" "}
+                {vncIP}:{vncPort}
               </div>
               <div>
-                <span className="text-muted-foreground">Proxy Status:</span> Backend WebSocket
+                <span className="text-muted-foreground">Proxy Status:</span>{" "}
+                Backend WebSocket
               </div>
               <div className="flex items-center gap-2">
                 <div
                   className={`h-2 w-2 rounded-full ${
-                    isConnected ? "bg-green-500" : isConnecting ? "bg-yellow-500" : "bg-red-500"
+                    isConnected
+                      ? "bg-green-500"
+                      : isConnecting
+                        ? "bg-yellow-500"
+                        : "bg-red-500"
                   }`}
                 />
                 <span className="text-xs text-muted-foreground">

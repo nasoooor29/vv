@@ -86,6 +86,8 @@ func (m *Dispatcher) NewHTTPError(status int, message string, internal error, ot
 }
 
 func (m *Dispatcher) NewBadRequest(message string, internal error, otherInfo ...any) *echo.HTTPError {
+	fmt.Printf("internal: %v\n", internal)
+	fmt.Printf("message: %v\n", message)
 	return m.NewHTTPError(http.StatusBadRequest, message, internal, otherInfo...)
 }
 

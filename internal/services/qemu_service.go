@@ -203,11 +203,13 @@ func (s *QemuService) GetVirtualMachine(c echo.Context) error {
 // GetVirtualMachineInfo returns detailed info for a specific VM
 func (s *QemuService) GetVirtualMachineInfo(c echo.Context) error {
 	if s.LibVirt == nil {
+		s.Logger.Error("nil libvert")
 		return s.Dispatcher.NewInternalServerError("LibVirt connection not available", nil)
 	}
 
 	vmUUID := c.Param("uuid")
 	if vmUUID == "" {
+		s.Logger.Error("no vm uuid")
 		return s.Dispatcher.NewBadRequest("Virtual machine UUID is required", nil)
 	}
 
@@ -232,11 +234,12 @@ func (s *QemuService) GetVirtualMachineInfo(c echo.Context) error {
 			}
 			dXml, err := s.LibVirt.DomainGetXMLDesc(domain, libvirt.DomainXMLUpdateCPU)
 			if err != nil {
-				return err
+				s.Logger.Error("Failed to get domain xml", "domain", domain.Name, "error", err)
+				return s.Dispatcher.NewInternalServerError("Failed to get virtual machine info", err)
 			}
 			rVNCIP, rVNCPort, err := utils.VNCFromDomainXML(dXml)
 			if err != nil {
-				return err
+				s.Logger.Warn("Failed to parse VNC info from domain xml", "domain", domain.Name, "error", err)
 			}
 
 			return c.JSON(http.StatusOK, models.VirtualMachineWithInfo{

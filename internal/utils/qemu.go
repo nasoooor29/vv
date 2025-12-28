@@ -215,6 +215,8 @@ func BuildLibVirtDomain(p *LibVirtDomainParams) (string, error) {
 	return dom.Marshal()
 }
 
+var ErrVNCNotFound = fmt.Errorf("VNC configuration not found in domain XML")
+
 // Extract VNC configuration from domain XML
 func VNCFromDomainXML(domainXML string) (string, int, error) {
 	var dom libvirtxml.Domain
@@ -226,5 +228,5 @@ func VNCFromDomainXML(domainXML string) (string, int, error) {
 			return g.VNC.Listen, g.VNC.Port, nil
 		}
 	}
-	return "", 0, fmt.Errorf("no VNC configuration found in domain XML")
+	return "", 0, ErrVNCNotFound
 }

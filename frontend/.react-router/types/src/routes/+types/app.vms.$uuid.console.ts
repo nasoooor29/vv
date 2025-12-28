@@ -16,9 +16,6 @@ type Matches = [{
   id: "routes/app";
   module: typeof import("../app.js");
 }, {
-  id: "routes/app.vms";
-  module: typeof import("../app.vms.js");
-}, {
   id: "routes/app.vms.$uuid.console";
   module: typeof import("../app.vms.$uuid.console.js");
 }];
