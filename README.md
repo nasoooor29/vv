@@ -94,6 +94,10 @@ Open your browser and navigate to:
 
 ## System Requirements
 
+> **IMPORTANT: Linux Only**
+> 
+> Visory requires **Linux** to run. It is **not compatible with Windows or macOS** due to its dependency on `nftables` for firewall management, which is a Linux-specific kernel feature. The application will fail to start on non-Linux systems.
+
 ### For Docker Management
 - Docker Engine installed and running
 - User must have permissions to access Docker socket
@@ -102,6 +106,10 @@ Open your browser and navigate to:
 - libvirt installed and running
 - QEMU/KVM packages installed
 - User must be in the `libvirt` group
+
+### For Firewall Management
+- nftables installed and running
+- Root privileges or appropriate capabilities for firewall rules
 
 ```bash
 # Ubuntu/Debian
