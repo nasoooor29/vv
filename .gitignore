@@ -43,3 +43,4 @@ cmd/depscan/depscan
 legacy-visory
 *.db-shm
 *.db-wal
+depscan

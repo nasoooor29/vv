@@ -1,12 +1,16 @@
 package main
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"visory/pkg/depscan"
 )
@@ -38,8 +42,12 @@ func main() {
 	sortBy := flag.String("sort", "path", "Sort by: path, license, or version")
 	outputFile := flag.String("out", "", "Write output to file instead of stdout")
 	summary := flag.Bool("summary", false, "Show summary statistics only")
+	warnNonMIT := flag.Bool("warn-non-mit", false, "Send Discord warning for non-MIT licenses (requires DISCORD_WEBHOOK_URL env var)")
 
 	flag.Parse()
+
+	// Get Discord webhook URL from environment variable
+	discordWebhook := os.Getenv("DISCORD_WEBHOOK_URL")
 
 	// Handle shorthand flags
 	if *jsonFlag {
@@ -83,6 +91,24 @@ func main() {
 				}
 			}
 			os.Exit(1)
+		}
+	}
+
+	// Check for non-MIT licenses and send Discord warning
+	if *warnNonMIT {
+		if discordWebhook == "" {
+			fatal("DISCORD_WEBHOOK_URL environment variable is required when using --warn-non-mit")
+		}
+
+		nonMITDeps := findNonMITLicenses(filtered)
+		if len(nonMITDeps) > 0 {
+			fmt.Fprintf(os.Stderr, "Found %d non-MIT dependencies, sending Discord notification...\n", len(nonMITDeps))
+			if err := sendDiscordWarning(discordWebhook, nonMITDeps); err != nil {
+				fatal("failed to send Discord notification: %v", err)
+			}
+			fmt.Fprintf(os.Stderr, "Discord notification sent successfully for %d non-MIT dependencies\n", len(nonMITDeps))
+		} else {
+			fmt.Fprintf(os.Stderr, "All dependencies have MIT-compatible licenses\n")
 		}
 	}
 
@@ -357,4 +383,119 @@ func stringInSlice(target string, slice []string) bool {
 func fatal(format string, args ...interface{}) {
 	fmt.Fprintf(os.Stderr, "ERROR: "+format+"\n", args...)
 	os.Exit(1)
+}
+
+// findNonMITLicenses returns all dependencies that don't have an MIT license
+func findNonMITLicenses(deps []depscan.Dependency) []depscan.Dependency {
+	var nonMIT []depscan.Dependency
+	for _, dep := range deps {
+		license := strings.ToUpper(dep.License)
+		if !strings.Contains(license, "MIT") {
+			nonMIT = append(nonMIT, dep)
+		}
+	}
+	return nonMIT
+}
+
+// sendDiscordWarning sends a warning notification to Discord about non-MIT licenses
+func sendDiscordWarning(webhookURL string, deps []depscan.Dependency) error {
+	// Build the message
+	var depList strings.Builder
+	for i, dep := range deps {
+		if i >= 10 {
+			depList.WriteString(fmt.Sprintf("\n... and %d more", len(deps)-10))
+			break
+		}
+		depList.WriteString(fmt.Sprintf("• `%s` (%s) - **%s**\n", dep.Path, dep.Version, dep.License))
+	}
+
+	// Group licenses by type
+	licenseCount := make(map[string]int)
+	for _, dep := range deps {
+		licenseCount[dep.License]++
+	}
+
+	var licenseSummary strings.Builder
+	for license, count := range licenseCount {
+		licenseSummary.WriteString(fmt.Sprintf("• %s: %d\n", license, count))
+	}
+
+	embed := discordEmbed{
+		Title:       "[WARNING] Non-MIT Licenses Detected",
+		Description: fmt.Sprintf("Found **%d** dependencies with non-MIT licenses that may require review.", len(deps)),
+		Color:       0xFFA500, // Orange
+		Fields: []discordEmbedField{
+			{
+				Name:   "License Summary",
+				Value:  licenseSummary.String(),
+				Inline: false,
+			},
+			{
+				Name:   "Dependencies",
+				Value:  depList.String(),
+				Inline: false,
+			},
+		},
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		Footer: &discordFooter{
+			Text: "Visory License Scanner",
+		},
+	}
+
+	msg := discordWebhookMessage{
+		Username: "Visory License Scanner",
+		Embeds:   []discordEmbed{embed},
+	}
+
+	payload, err := json.Marshal(msg)
+	if err != nil {
+		return fmt.Errorf("failed to marshal discord message: %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, webhookURL, bytes.NewBuffer(payload))
+	if err != nil {
+		return fmt.Errorf("failed to create discord webhook request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send discord webhook: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("discord webhook returned status %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
+// Discord webhook types
+type discordEmbed struct {
+	Title       string              `json:"title,omitempty"`
+	Description string              `json:"description,omitempty"`
+	Color       int                 `json:"color,omitempty"`
+	Fields      []discordEmbedField `json:"fields,omitempty"`
+	Timestamp   string              `json:"timestamp,omitempty"`
+	Footer      *discordFooter      `json:"footer,omitempty"`
+}
+
+type discordEmbedField struct {
+	Name   string `json:"name"`
+	Value  string `json:"value"`
+	Inline bool   `json:"inline,omitempty"`
+}
+
+type discordFooter struct {
+	Text string `json:"text"`
+}
+
+type discordWebhookMessage struct {
+	Username string         `json:"username,omitempty"`
+	Embeds   []discordEmbed `json:"embeds,omitempty"`
 }

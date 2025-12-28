@@ -149,32 +149,86 @@ func classifyLicense(licenseFilePath string) (string, error) {
 func detectLicenseByKeywords(content string) string {
 	contentUpper := strings.ToUpper(content)
 
-	// Check for common licenses in order
-	licensePatterns := map[string][]string{
-		"MIT":          {"MIT LICENSE", "PERMISSION IS HEREBY GRANTED, FREE OF CHARGE"},
-		"Apache-2.0":   {"APACHE LICENSE", "APACHE SOFTWARE FOUNDATION"},
-		"GPL-2.0":      {"GNU GENERAL PUBLIC LICENSE", "VERSION 2"},
-		"GPL-3.0":      {"GNU GENERAL PUBLIC LICENSE", "VERSION 3"},
-		"AGPL-3.0":     {"AFFERO GENERAL PUBLIC LICENSE", "VERSION 3"},
-		"BSD-2-Clause": {"BSD 2-CLAUSE LICENSE", "SIMPLIFIED BSD LICENSE"},
-		"BSD-3-Clause": {"BSD 3-CLAUSE LICENSE"},
-		"ISC":          {"ISC LICENSE"},
-		"MPL-2.0":      {"MOZILLA PUBLIC LICENSE", "VERSION 2.0"},
-		"LGPL-2.1":     {"LESSER GENERAL PUBLIC LICENSE", "VERSION 2.1"},
-		"LGPL-3.0":     {"LESSER GENERAL PUBLIC LICENSE", "VERSION 3"},
+	// Check licenses in priority order (more specific first)
+	// Each check uses characteristic phrases from the actual license text
+
+	// ISC License - "Permission to use, copy, modify, and distribute" + "WITH OR WITHOUT FEE"
+	if strings.Contains(contentUpper, "PERMISSION TO USE, COPY, MODIFY, AND DISTRIBUTE") &&
+		strings.Contains(contentUpper, "WITH OR WITHOUT FEE") {
+		return "ISC"
 	}
 
-	for license, patterns := range licensePatterns {
-		found := true
-		for _, pattern := range patterns {
-			if !strings.Contains(contentUpper, pattern) {
-				found = false
-				break
-			}
-		}
-		if found {
-			return license
-		}
+	// MIT License - "Permission is hereby granted, free of charge"
+	if strings.Contains(contentUpper, "PERMISSION IS HEREBY GRANTED, FREE OF CHARGE") {
+		return "MIT"
+	}
+
+	// Apache 2.0 - "Apache License" + "Version 2.0"
+	if strings.Contains(contentUpper, "APACHE LICENSE") &&
+		strings.Contains(contentUpper, "VERSION 2.0") {
+		return "Apache-2.0"
+	}
+
+	// BSD-3-Clause - Three conditions including "neither the name" clause
+	if strings.Contains(contentUpper, "REDISTRIBUTION AND USE IN SOURCE AND BINARY FORMS") &&
+		strings.Contains(contentUpper, "NEITHER THE NAME") &&
+		strings.Contains(contentUpper, "THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS") {
+		return "BSD-3-Clause"
+	}
+
+	// BSD-2-Clause - Two conditions, no "neither the name" clause
+	if strings.Contains(contentUpper, "REDISTRIBUTION AND USE IN SOURCE AND BINARY FORMS") &&
+		strings.Contains(contentUpper, "THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS") &&
+		!strings.Contains(contentUpper, "NEITHER THE NAME") {
+		return "BSD-2-Clause"
+	}
+
+	// MPL-2.0
+	if strings.Contains(contentUpper, "MOZILLA PUBLIC LICENSE") &&
+		strings.Contains(contentUpper, "VERSION 2.0") {
+		return "MPL-2.0"
+	}
+
+	// LGPL-3.0
+	if strings.Contains(contentUpper, "GNU LESSER GENERAL PUBLIC LICENSE") &&
+		strings.Contains(contentUpper, "VERSION 3") {
+		return "LGPL-3.0"
+	}
+
+	// LGPL-2.1
+	if strings.Contains(contentUpper, "GNU LESSER GENERAL PUBLIC LICENSE") &&
+		strings.Contains(contentUpper, "VERSION 2.1") {
+		return "LGPL-2.1"
+	}
+
+	// AGPL-3.0
+	if strings.Contains(contentUpper, "GNU AFFERO GENERAL PUBLIC LICENSE") &&
+		strings.Contains(contentUpper, "VERSION 3") {
+		return "AGPL-3.0"
+	}
+
+	// GPL-3.0
+	if strings.Contains(contentUpper, "GNU GENERAL PUBLIC LICENSE") &&
+		strings.Contains(contentUpper, "VERSION 3") {
+		return "GPL-3.0"
+	}
+
+	// GPL-2.0
+	if strings.Contains(contentUpper, "GNU GENERAL PUBLIC LICENSE") &&
+		strings.Contains(contentUpper, "VERSION 2") {
+		return "GPL-2.0"
+	}
+
+	// Unlicense
+	if strings.Contains(contentUpper, "THIS IS FREE AND UNENCUMBERED SOFTWARE") &&
+		strings.Contains(contentUpper, "PUBLIC DOMAIN") {
+		return "Unlicense"
+	}
+
+	// CC0-1.0
+	if strings.Contains(contentUpper, "CC0 1.0 UNIVERSAL") ||
+		strings.Contains(contentUpper, "CREATIVE COMMONS ZERO") {
+		return "CC0-1.0"
 	}
 
 	return "UNKNOWN"
@@ -231,7 +285,12 @@ func CollectDependenciesWithConfig(cfg Config) ([]Dependency, error) {
 		}
 
 		// Get indirect flag from go.mod (not from go list)
-		isIndirect := indirectMap[mod.Path]
+		// If module is not in go.mod at all, it's a transitive dependency (indirect)
+		isIndirect, inGoMod := indirectMap[mod.Path]
+		if !inGoMod {
+			// Module not in go.mod means it's a transitive dependency
+			isIndirect = true
+		}
 
 		dependencies = append(dependencies, Dependency{
 			Path:        mod.Path,
