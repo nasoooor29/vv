@@ -275,7 +275,7 @@ func (s *QemuService) StartVirtualMachine(c echo.Context) error {
 		return s.Dispatcher.NewBadRequest("Virtual machine UUID is required", nil)
 	}
 
-	domain, err := s.getDomainByUUID(vmUUID)
+	domain, err := s.GetDomainByUUID(vmUUID)
 	if err != nil {
 		s.Logger.Error("Failed to find domain", "uuid", vmUUID, "error", err)
 		return s.Dispatcher.NewNotFound("Virtual machine not found", err)
@@ -337,7 +337,7 @@ func (s *QemuService) RebootVirtualMachine(c echo.Context) error {
 		return s.Dispatcher.NewBadRequest("Virtual machine UUID is required", nil)
 	}
 
-	domain, err := s.getDomainByUUID(vmUUID)
+	domain, err := s.GetDomainByUUID(vmUUID)
 	if err != nil {
 		s.Logger.Error("Failed to find domain", "uuid", vmUUID, "error", err)
 		return s.Dispatcher.NewNotFound("Virtual machine not found", err)
@@ -377,7 +377,7 @@ func (s *QemuService) ShutdownVirtualMachine(c echo.Context) error {
 		return s.Dispatcher.NewBadRequest("Virtual machine UUID is required", nil)
 	}
 
-	domain, err := s.getDomainByUUID(vmUUID)
+	domain, err := s.GetDomainByUUID(vmUUID)
 	if err != nil {
 		s.Logger.Error("Failed to find domain", "uuid", vmUUID, "error", err)
 		return s.Dispatcher.NewNotFound("Virtual machine not found", err)
@@ -483,7 +483,7 @@ func (s *QemuService) CreateVirtualMachine(c echo.Context) error {
 }
 
 // Helper function to get domain by UUID
-func (s *QemuService) getDomainByUUID(vmUUID string) (libvirt.Domain, error) {
+func (s *QemuService) GetDomainByUUID(vmUUID string) (libvirt.Domain, error) {
 	flags := libvirt.ConnectListDomainsActive | libvirt.ConnectListDomainsInactive
 	domains, _, err := s.LibVirt.ConnectListAllDomains(1, flags)
 	if err != nil {

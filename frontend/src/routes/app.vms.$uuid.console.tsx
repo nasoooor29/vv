@@ -31,12 +31,12 @@ export default function VMConsolePage() {
     }),
   );
 
-  const vncHost = vmQuery.data?.vnc_ip;
-  const vncPort = vmQuery.data?.vnc_port;
   const vmName = vmQuery.data?.name;
+  const vncIP = vmQuery.data?.vnc_ip;
+  const vncPort = vmQuery.data?.vnc_port;
 
   useEffect(() => {
-    if (!vncHost || !vncPort || !canvasRef.current || isConnecting || isConnected) {
+    if (!uuid || !canvasRef.current || isConnecting || isConnected) {
       return;
     }
 
@@ -44,14 +44,12 @@ export default function VMConsolePage() {
       try {
         setIsConnecting(true);
 
-        // Check if host is localhost/127.0.0.1 and adjust for browser access
-        let host = vncHost;
-        if (host === "127.0.0.1" || host === "localhost") {
-          host = window.location.hostname;
-        }
-
-        const url = `ws://${host}:${vncPort}`;
-        console.log(`Connecting to VNC at ${url}`);
+        // Use backend WebSocket proxy instead of direct TCP connection
+        // The backend at /api/qemu/virtual-machines/{uuid}/console proxies to the VNC server
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const url = `${protocol}//${window.location.host}/api/qemu/virtual-machines/${uuid}/console`;
+        
+        console.log(`Connecting to VNC via backend proxy at ${url}`);
 
         const rfb = new VNC.RFB(canvasRef.current!, url, {
           credentials: {
@@ -62,7 +60,7 @@ export default function VMConsolePage() {
         });
 
         rfb.addEventListener("connect", () => {
-          console.log("VNC connected");
+          console.log("VNC connected via proxy");
           setIsConnected(true);
           setIsConnecting(false);
           toast.success("Connected to VM console");
@@ -96,7 +94,7 @@ export default function VMConsolePage() {
         rfbRef.current = null;
       }
     };
-  }, [vncHost, vncPort, isConnecting, isConnected]);
+  }, [uuid, isConnecting, isConnected]);
 
   if (!uuid) {
     return (
@@ -125,7 +123,7 @@ export default function VMConsolePage() {
     );
   }
 
-  if (!vncHost || !vncPort) {
+  if (!vncIP || !vncPort) {
     return (
       <Alert className="border-yellow-500 bg-yellow-500/10">
         <AlertCircle className="h-4 w-4" />
@@ -159,7 +157,10 @@ export default function VMConsolePage() {
           <CardTitle className="text-sm">
             <div className="space-y-2">
               <div>
-                <span className="text-muted-foreground">Host:</span> {vncHost}:{vncPort}
+                <span className="text-muted-foreground">VNC Server:</span> {vncIP}:{vncPort}
+              </div>
+              <div>
+                <span className="text-muted-foreground">Proxy Status:</span> Backend WebSocket
               </div>
               <div className="flex items-center gap-2">
                 <div

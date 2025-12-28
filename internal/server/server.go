@@ -34,6 +34,7 @@ type Server struct {
 	qemuService    *services.QemuService
 	isoService     *services.ISOService
 	dockerService  *services.DockerService
+	vncProxy       *services.VNCProxy
 }
 
 func NewServer() *http.Server {
@@ -64,6 +65,7 @@ func NewServer() *http.Server {
 	docsService := services.NewDocsService(db, serverDispatcher, logger)
 	qemuService := services.NewQemuService(serverDispatcher, fs, logger)
 	isoService := services.NewISOService(serverDispatcher, fs, logger)
+	vncProxy := services.NewVNCProxy(logger)
 
 	NewServer := &Server{
 		port:           port,
@@ -81,6 +83,7 @@ func NewServer() *http.Server {
 		docsService:    docsService,
 		qemuService:    qemuService,
 		isoService:     isoService,
+		vncProxy:       vncProxy,
 	}
 
 	// Declare Server config
