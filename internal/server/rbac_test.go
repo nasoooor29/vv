@@ -81,6 +81,7 @@ func setupTestServer(t *testing.T) *testHelper {
 		logger:           logger,
 		dispatcher:       dispatcher,
 		db:               dbService,
+		fs:               fs,
 		authService:      services.NewAuthService(dbService, dispatcher, logger),
 		usersService:     services.NewUsersService(dbService, dispatcher, logger),
 		logsService:      services.NewLogsService(dbService, dispatcher, logger),
@@ -93,7 +94,6 @@ func setupTestServer(t *testing.T) *testHelper {
 		templatesService: services.NewTemplatesService(dispatcher, logger, dockerService.ClientManager),
 		settingsService:  services.NewSettingsService(dbService, dispatcher, logger, notifManager),
 	}
-
 	handler := s.RegisterRoutes()
 
 	return &testHelper{

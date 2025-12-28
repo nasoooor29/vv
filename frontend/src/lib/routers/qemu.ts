@@ -47,6 +47,20 @@ export const qemuRouter = {
     )
     .output(Z.virtualMachineWithInfoSchema),
 
+  // Get VNC details for a VM
+  getVNCDetails: base
+    .route({
+      method: "GET",
+      path: "/qemu/virtual-machines/{uuid}/info",
+      inputStructure: "detailed",
+    })
+    .input(
+      detailed({
+        params: { uuid: z.string() },
+      }),
+    )
+    .output(Z.virtualMachineWithInfoSchema),
+
   // Create virtual machine
   createVirtualMachine: base
     .route({

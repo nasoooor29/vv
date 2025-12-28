@@ -2,9 +2,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { client } from "@/lib/orpc";
+import { client, orpc } from "@/lib/orpc";
 import type { CreateVMRequest } from "@/types/types.gen";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { CONSTANTS } from "@/lib";
+import { AlertCircle, Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface CreateVMDialogContentProps {
   onSuccess?: () => void;
@@ -18,12 +22,19 @@ export function CreateVMDialogContent({
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<CreateVMRequest>({
     name: "",
-    memory: 2048,
+    memory: 2000,
     vcpus: 2,
-    disk_size: 20,
+    disk: 20000,
     os_image: "",
     autostart: false,
   });
+
+  // Fetch ISO files
+  const isoQuery = useQuery(
+    orpc.iso.listISOs.queryOptions({
+      staleTime: CONSTANTS.POLLING_INTERVAL_MS,
+    }),
+  );
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -59,7 +70,7 @@ export function CreateVMDialogContent({
       return;
     }
 
-    if (formData.disk_size <= 0) {
+    if (formData.disk <= 0) {
       toast.error("Disk size must be greater than 0 GB");
       return;
     }
@@ -71,7 +82,7 @@ export function CreateVMDialogContent({
         name: formData.name,
         memory: formData.memory,
         vcpus: formData.vcpus,
-        disk_size: formData.disk_size,
+        disk: formData.disk,
         os_image: formData.os_image,
         autostart: formData.autostart,
       });
@@ -81,9 +92,9 @@ export function CreateVMDialogContent({
       // Reset form
       setFormData({
         name: "",
-        memory: 2048,
+        memory: 10000,
         vcpus: 2,
-        disk_size: 20,
+        disk: 20000,
         os_image: "",
         autostart: false,
       });
@@ -121,9 +132,8 @@ export function CreateVMDialogContent({
             id="memory"
             name="memory"
             type="number"
-            min="256"
-            max="262144"
-            step="256"
+            min="64"
+            max="32000"
             value={formData.memory}
             onChange={handleInputChange}
             required
@@ -148,15 +158,14 @@ export function CreateVMDialogContent({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="disk_size">Disk Size (GB) *</Label>
+        <Label htmlFor="disk">Disk Size (MB) *</Label>
         <Input
-          id="disk_size"
-          name="disk_size"
+          id="disk"
+          name="disk"
           type="number"
           min="1"
-          max="10000"
-          step="10"
-          value={formData.disk_size}
+          max="40000"
+          value={formData.disk}
           onChange={handleInputChange}
           required
           disabled={loading}
@@ -164,18 +173,44 @@ export function CreateVMDialogContent({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="os_image">OS Image</Label>
-        <Input
-          id="os_image"
-          name="os_image"
-          placeholder="ubuntu-22.04 (optional)"
-          value={formData.os_image}
-          onChange={handleInputChange}
-          disabled={loading}
-        />
-        <p className="text-xs text-muted-foreground">
-          Leave empty to use default image
-        </p>
+        <Label htmlFor="os_image">OS Image *</Label>
+        <div className="relative">
+          {isoQuery.isLoading ? (
+            <div className="flex items-center justify-center h-10 border border-input rounded-md bg-muted">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            </div>
+          ) : isoQuery.isError ? (
+            <Alert className="border-destructive bg-destructive/10">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="text-sm">
+                Failed to load ISO files
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <select
+              id="os_image"
+              name="os_image"
+              value={formData.os_image}
+              onChange={handleInputChange}
+              disabled={loading}
+              className="w-full h-10 px-3 py-2 border border-input rounded-md bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value="">Select an ISO file or leave empty</option>
+              {isoQuery.data?.map((iso) => (
+                <option key={iso.name} value={iso.name}>
+                  {iso.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+        {!isoQuery.isLoading &&
+          !isoQuery.isError &&
+          (!isoQuery.data || isoQuery.data.length === 0) && (
+            <p className="text-xs text-muted-foreground">
+              No ISO files available. Upload one in the ISO Templates section.
+            </p>
+          )}
       </div>
 
       <div className="flex items-center space-x-2">
