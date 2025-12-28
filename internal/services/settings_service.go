@@ -204,7 +204,6 @@ func (s *SettingsService) TestNotification(c echo.Context) error {
 			Group:   "settings",
 			Version: "test",
 		})
-
 		if err != nil {
 			return s.Dispatcher.NewInternalServerError("Failed to send test notification", err)
 		}

@@ -58,6 +58,7 @@
         "isbot": "^5.1.32",
         "lucide-react": "^0.556.0",
         "next-themes": "^0.4.6",
+        "novnc": "^1.2.0",
         "react": "^19.2.1",
         "react-day-picker": "^9.12.0",
         "react-dom": "^19.2.1",
@@ -1220,6 +1221,8 @@
     "next-themes": ["next-themes@0.4.6", "", { "peerDependencies": { "react": "^16.8 || ^17 || ^18 || ^19 || ^19.0.0-rc", "react-dom": "^16.8 || ^17 || ^18 || ^19 || ^19.0.0-rc" } }, "sha512-pZvgD5L0IEvX5/9GWyHMf3m8BKiVQwsCMHfoFosXtXBMnaS0ZnIJ9ST4b4NqLVKDEm8QBxoNNGNaBv2JNF6XNA=="],
 
     "node-releases": ["node-releases@2.0.27", "", {}, "sha512-nmh3lCkYZ3grZvqcCH+fjmQ7X+H0OeZgP40OierEaAptX4XofMh5kwNbWh7lBduUzCcV/8kZ+NDLCwm2iorIlA=="],
+
+    "novnc": ["novnc@1.2.0", "", {}, "sha512-bItTHPXsrKEs79nZoOKGp+qnj5I986suOFva+fgvkO8AO0Uhedn6+FYZTN7QCGS88F33gshzcy55302ke2PPjw=="],
 
     "npm-to-yarn": ["npm-to-yarn@3.0.1", "", {}, "sha512-tt6PvKu4WyzPwWUzy/hvPFqn+uwXO0K1ZHka8az3NnrhWJDmSqI8ncWq0fkL0k/lmmi5tAC11FXwXuh0rFbt1A=="],
 

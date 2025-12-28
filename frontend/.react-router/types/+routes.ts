@@ -23,6 +23,14 @@ type Pages = {
   "/auth/login": {
     params: {};
   };
+  "/docs": {
+    params: {};
+  };
+  "/docs/*": {
+    params: {
+      "*": string;
+    };
+  };
   "/app": {
     params: {};
   };
@@ -39,6 +47,9 @@ type Pages = {
     params: {};
   };
   "/app/sys/users": {
+    params: {};
+  };
+  "/app/templates": {
     params: {};
   };
   "/app/sys/logs": {
@@ -66,7 +77,7 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/auth" | "/auth/register" | "/auth/login" | "/app" | "/app/sys/networking" | "/app/sys/settings" | "/app/sys/storage" | "/app/dashboard" | "/app/sys/users" | "/app/sys/logs" | "/app/monitor" | "/app/docker" | "/app/iso" | "/app/vms" | "/app/vms/:uuid/console";
+    page: "/" | "/auth" | "/auth/register" | "/auth/login" | "/docs" | "/docs/*" | "/app" | "/app/sys/networking" | "/app/sys/settings" | "/app/sys/storage" | "/app/dashboard" | "/app/sys/users" | "/app/templates" | "/app/sys/logs" | "/app/monitor" | "/app/docker" | "/app/iso" | "/app/vms" | "/app/vms/:uuid/console";
   };
   "routes/_landing.tsx": {
     id: "routes/_landing";
@@ -88,9 +99,21 @@ type RouteFiles = {
     id: "routes/auth.login";
     page: "/auth/login";
   };
+  "routes/docs.tsx": {
+    id: "routes/docs";
+    page: "/docs" | "/docs/*";
+  };
+  "routes/docs._index.tsx": {
+    id: "routes/docs._index";
+    page: "/docs";
+  };
+  "routes/docs.$.tsx": {
+    id: "routes/docs.$";
+    page: "/docs/*";
+  };
   "routes/app.tsx": {
     id: "routes/app";
-    page: "/app" | "/app/sys/networking" | "/app/sys/settings" | "/app/sys/storage" | "/app/dashboard" | "/app/sys/users" | "/app/sys/logs" | "/app/monitor" | "/app/docker" | "/app/iso" | "/app/vms" | "/app/vms/:uuid/console";
+    page: "/app" | "/app/sys/networking" | "/app/sys/settings" | "/app/sys/storage" | "/app/dashboard" | "/app/sys/users" | "/app/templates" | "/app/sys/logs" | "/app/monitor" | "/app/docker" | "/app/iso" | "/app/vms" | "/app/vms/:uuid/console";
   };
   "routes/app.sys.networking.tsx": {
     id: "routes/app.sys.networking";
@@ -111,6 +134,10 @@ type RouteFiles = {
   "routes/app.sys.users/route.tsx": {
     id: "routes/app.sys.users";
     page: "/app/sys/users";
+  };
+  "routes/app.templates/route.tsx": {
+    id: "routes/app.templates";
+    page: "/app/templates";
   };
   "routes/app.sys.logs/route.tsx": {
     id: "routes/app.sys.logs";
@@ -149,12 +176,16 @@ type RouteModules = {
   "routes/auth": typeof import("./src/routes/auth.tsx");
   "routes/auth.register": typeof import("./src/routes/auth.register.tsx");
   "routes/auth.login": typeof import("./src/routes/auth.login.tsx");
+  "routes/docs": typeof import("./src/routes/docs.tsx");
+  "routes/docs._index": typeof import("./src/routes/docs._index.tsx");
+  "routes/docs.$": typeof import("./src/routes/docs.$.tsx");
   "routes/app": typeof import("./src/routes/app.tsx");
   "routes/app.sys.networking": typeof import("./src/routes/app.sys.networking.tsx");
   "routes/app.sys.settings": typeof import("./src/routes/app.sys.settings.tsx");
   "routes/app.sys.storage": typeof import("./src/routes/app.sys.storage/route.tsx");
   "routes/app.dashboard": typeof import("./src/routes/app.dashboard.tsx");
   "routes/app.sys.users": typeof import("./src/routes/app.sys.users/route.tsx");
+  "routes/app.templates": typeof import("./src/routes/app.templates/route.tsx");
   "routes/app.sys.logs": typeof import("./src/routes/app.sys.logs/route.tsx");
   "routes/app.monitor": typeof import("./src/routes/app.monitor.tsx");
   "routes/app._index": typeof import("./src/routes/app._index.tsx");
