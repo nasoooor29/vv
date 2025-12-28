@@ -98,6 +98,9 @@ export const RBAC_FIREWALL_READ: RBACPolicy = "firewall_read";
 export const RBAC_FIREWALL_WRITE: RBACPolicy = "firewall_write";
 export const RBAC_FIREWALL_UPDATE: RBACPolicy = "firewall_update";
 export const RBAC_FIREWALL_DELETE: RBACPolicy = "firewall_delete";
+export const RBAC_BACKUP_READ: RBACPolicy = "backup_read";
+export const RBAC_BACKUP_WRITE: RBACPolicy = "backup_write";
+export const RBAC_BACKUP_DELETE: RBACPolicy = "backup_delete";
 /**
  * this is just to mimic the echo error structure
  * eg: {"message":"Failed to list virtual-machines"}
@@ -105,6 +108,175 @@ export const RBAC_FIREWALL_DELETE: RBACPolicy = "firewall_delete";
  */
 export interface HTTPError {
   message: string;
+}
+/**
+ * BackupType represents the type of backup
+ */
+export type BackupType = string;
+export const BackupTypeVMSnapshot: BackupType = "vm_snapshot";
+export const BackupTypeVMExport: BackupType = "vm_export";
+export const BackupTypeContainerExport: BackupType = "container_export";
+export const BackupTypeContainerCommit: BackupType = "container_commit";
+export const BackupTypeFirewall: BackupType = "firewall";
+/**
+ * BackupTargetType represents the type of target being backed up
+ */
+export type BackupTargetType = string;
+export const BackupTargetVM: BackupTargetType = "vm";
+export const BackupTargetContainer: BackupTargetType = "container";
+export const BackupTargetFirewall: BackupTargetType = "firewall";
+/**
+ * BackupStatus represents the status of a backup job
+ */
+export type BackupStatus = string;
+export const BackupStatusPending: BackupStatus = "pending";
+export const BackupStatusRunning: BackupStatus = "running";
+export const BackupStatusCompleted: BackupStatus = "completed";
+export const BackupStatusFailed: BackupStatus = "failed";
+/**
+ * BackupJob represents a backup or restore operation
+ */
+export interface BackupJob {
+  id: number /* int64 */;
+  name: string;
+  type: BackupType;
+  target_type: BackupTargetType;
+  target_id: string;
+  target_name: string;
+  client_id?: string; // For Docker containers
+  status: BackupStatus;
+  progress: number /* int */;
+  destination: string;
+  size_bytes?: number /* int64 */;
+  error_message?: string;
+  started_at?: string;
+  completed_at?: string;
+  created_by?: number /* int64 */;
+  created_at: string;
+}
+/**
+ * BackupSchedule represents a scheduled backup configuration
+ */
+export interface BackupSchedule {
+  id: number /* int64 */;
+  name: string;
+  type: BackupType;
+  target_type: BackupTargetType;
+  target_id: string;
+  target_name: string;
+  client_id?: string;
+  schedule: string; // Simple schedule: "daily", "hourly", etc.
+  schedule_time: string; // Time of day for daily backups: "02:00"
+  destination: string;
+  retention_count: number /* int */; // Keep last N backups
+  enabled: boolean;
+  last_run_at?: string;
+  next_run_at?: string;
+  last_status?: string;
+  created_by?: number /* int64 */;
+  created_at: string;
+  updated_at: string;
+}
+/**
+ * FirewallBackup represents a firewall configuration backup
+ */
+export interface FirewallBackup {
+  id: number /* int64 */;
+  filename: string;
+  size_bytes: number /* int64 */;
+  rule_count: number /* int */;
+  created_at: string;
+}
+/**
+ * VMSnapshot represents a libvirt VM snapshot
+ */
+export interface VMSnapshot {
+  name: string;
+  description?: string;
+  state: string;
+  created_at?: string;
+  is_current: boolean;
+}
+/**
+ * ContainerBackup represents a Docker container backup
+ */
+export interface ContainerBackup {
+  id: string;
+  filename: string;
+  container_id: string;
+  client_id: string;
+  size_bytes: number /* int64 */;
+  created_at: string;
+}
+/**
+ * CreateVMSnapshotRequest is the request to create a VM snapshot
+ */
+export interface CreateVMSnapshotRequest {
+  name: string;
+  description?: string;
+}
+/**
+ * CreateContainerBackupRequest is the request to backup a container
+ */
+export interface CreateContainerBackupRequest {
+  name: string;
+}
+/**
+ * RestoreVMSnapshotRequest is the request to restore a VM snapshot
+ */
+export interface RestoreVMSnapshotRequest {
+  snapshot_name: string;
+}
+/**
+ * RestoreContainerBackupRequest is the request to restore a container from backup
+ */
+export interface RestoreContainerBackupRequest {
+  backup_file: string;
+  container_name?: string; // If empty, use original name
+}
+/**
+ * CreateBackupScheduleRequest is the request to create a backup schedule
+ */
+export interface CreateBackupScheduleRequest {
+  name: string;
+  type: BackupType;
+  target_type: BackupTargetType;
+  target_id: string;
+  target_name: string;
+  client_id?: string;
+  schedule: string; // "daily", "weekly"
+  schedule_time: string; // "02:00" for daily
+  retention_count: number /* int */;
+}
+/**
+ * UpdateBackupScheduleRequest is the request to update a backup schedule
+ */
+export interface UpdateBackupScheduleRequest {
+  name?: string;
+  schedule?: string;
+  schedule_time?: string;
+  retention_count?: number /* int */;
+  enabled?: boolean;
+}
+/**
+ * BackupActionResponse is a generic response for backup actions
+ */
+export interface BackupActionResponse {
+  success: boolean;
+  message: string;
+  job_id?: number /* int64 */;
+}
+/**
+ * BackupStats represents backup statistics
+ */
+export interface BackupStats {
+  total_backups: number /* int */;
+  vm_snapshots: number /* int */;
+  container_backups: number /* int */;
+  firewall_backups: number /* int */;
+  total_size_bytes: number /* int64 */;
+  active_schedules: number /* int */;
+  last_backup_at?: string;
 }
 export interface LogResponse {
   id: number /* int64 */;
@@ -379,6 +551,10 @@ export interface FirewallService {
   Dispatcher?: any /* utils.Dispatcher */;
   Logger?: any /* slog.Logger */;
 }
+export interface BackupService {
+  Dispatcher?: any /* utils.Dispatcher */;
+  Logger?: any /* slog.Logger */;
+}
 export interface QemuService {
   Dispatcher?: any /* utils.Dispatcher */;
   Logger?: any /* slog.Logger */;
@@ -438,6 +614,96 @@ export interface GetLogsRequest {
   Page: number /* int */;
   PageSize: number /* int */;
   Days: number /* int */; // Filter logs from last N days
+}
+export interface CreateBackupJobParams {
+  name: string;
+  type: string;
+  target_type: string;
+  target_id: string;
+  target_name?: string;
+  client_id?: string;
+  status: string;
+  progress?: number /* int64 */;
+  destination?: string;
+  size_bytes?: number /* int64 */;
+  error_message?: string;
+  started_at?: string;
+  completed_at?: string;
+  created_by?: number /* int64 */;
+}
+export interface CreateBackupScheduleParams {
+  name: string;
+  type: string;
+  target_type: string;
+  target_id: string;
+  target_name?: string;
+  client_id?: string;
+  schedule: string;
+  schedule_time?: string;
+  destination: string;
+  retention_count?: number /* int64 */;
+  enabled?: number /* int64 */;
+  next_run_at?: string;
+  created_by?: number /* int64 */;
+}
+export interface GetBackupStatsRow {
+  total_backups: number /* int64 */;
+  vm_snapshots?: number /* float64 */;
+  container_backups?: number /* float64 */;
+  firewall_backups?: number /* float64 */;
+  total_size_bytes: any;
+  last_backup_at: any;
+}
+export interface ListBackupJobsParams {
+  limit: number /* int64 */;
+  offset: number /* int64 */;
+}
+export interface ListBackupJobsByTargetParams {
+  target_type: string;
+  target_id: string;
+  limit: number /* int64 */;
+  offset: number /* int64 */;
+}
+export interface ListBackupJobsByTypeParams {
+  type: string;
+  limit: number /* int64 */;
+  offset: number /* int64 */;
+}
+export interface UpdateBackupJobCompletedParams {
+  completed_at?: string;
+  size_bytes?: number /* int64 */;
+  id: number /* int64 */;
+}
+export interface UpdateBackupJobFailedParams {
+  error_message?: string;
+  completed_at?: string;
+  id: number /* int64 */;
+}
+export interface UpdateBackupJobProgressParams {
+  progress?: number /* int64 */;
+  id: number /* int64 */;
+}
+export interface UpdateBackupJobStatusParams {
+  status: string;
+  progress?: number /* int64 */;
+  error_message?: string;
+  started_at?: string;
+  completed_at?: string;
+  id: number /* int64 */;
+}
+export interface UpdateBackupScheduleParams {
+  name: string;
+  schedule: string;
+  schedule_time?: string;
+  retention_count?: number /* int64 */;
+  enabled?: number /* int64 */;
+  id: number /* int64 */;
+}
+export interface UpdateScheduleAfterRunParams {
+  last_run_at?: string;
+  next_run_at?: string;
+  last_status?: string;
+  id: number /* int64 */;
 }
 export interface CountLogsByLevelParams {
   level: string;
@@ -520,6 +786,7 @@ export interface Service {
   Session?: any /* sessions.Queries */;
   Log?: any /* logs.Queries */;
   Notification?: any /* notifications.Queries */;
+  Backup?: any /* backups.Queries */;
 }
 export interface Health {
   status: string;
@@ -571,6 +838,44 @@ export interface UpsertUserParams {
   email: string;
   password: string;
   role: string;
+}
+export interface BackupJob {
+  id: number /* int64 */;
+  name: string;
+  type: string;
+  target_type: string;
+  target_id: string;
+  target_name?: string;
+  client_id?: string;
+  status: string;
+  progress?: number /* int64 */;
+  destination?: string;
+  size_bytes?: number /* int64 */;
+  error_message?: string;
+  started_at?: string;
+  completed_at?: string;
+  created_by?: number /* int64 */;
+  created_at?: string;
+}
+export interface BackupSchedule {
+  id: number /* int64 */;
+  name: string;
+  type: string;
+  target_type: string;
+  target_id: string;
+  target_name?: string;
+  client_id?: string;
+  schedule: string;
+  schedule_time?: string;
+  destination: string;
+  retention_count?: number /* int64 */;
+  enabled?: number /* int64 */;
+  last_run_at?: string;
+  next_run_at?: string;
+  last_status?: string;
+  created_by?: number /* int64 */;
+  created_at?: string;
+  updated_at?: string;
 }
 export interface Log {
   id: number /* int64 */;

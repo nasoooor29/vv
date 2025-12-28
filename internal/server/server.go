@@ -35,6 +35,7 @@ type Server struct {
 	dockerService    *services.DockerService
 	firewallService  *services.FirewallService
 	templatesService *services.TemplatesService
+	backupService    *services.BackupService
 }
 
 func NewServer() *http.Server {
@@ -61,6 +62,14 @@ func NewServer() *http.Server {
 	dockerService := services.NewDockerService(serverDispatcher, logger)
 	firewallService := services.NewFirewallService(serverDispatcher, logger)
 	templatesService := services.NewTemplatesService(serverDispatcher, logger, dockerService.ClientManager)
+	backupService := services.NewBackupService(db, serverDispatcher, logger)
+
+	// Wire firewall backup callback - creates backup on every rule change
+	firewallService.SetOnRulesChanged(func(rules []models.FirewallRule) {
+		if err := backupService.CreateFirewallBackup(rules); err != nil {
+			logger.Error("failed to create firewall backup", "error", err)
+		}
+	})
 
 	// Initialize Docker clients from environment variables
 	docsService := services.NewDocsService(db, serverDispatcher, logger)
@@ -82,6 +91,7 @@ func NewServer() *http.Server {
 		qemuService:      qemuService,
 		firewallService:  firewallService,
 		templatesService: templatesService,
+		backupService:    backupService,
 	}
 
 	// Declare Server config

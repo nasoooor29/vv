@@ -33,6 +33,10 @@ const (
 	RBAC_FIREWALL_WRITE  RBACPolicy = "firewall_write"
 	RBAC_FIREWALL_UPDATE RBACPolicy = "firewall_update"
 	RBAC_FIREWALL_DELETE RBACPolicy = "firewall_delete"
+
+	RBAC_BACKUP_READ   RBACPolicy = "backup_read"
+	RBAC_BACKUP_WRITE  RBACPolicy = "backup_write"
+	RBAC_BACKUP_DELETE RBACPolicy = "backup_delete"
 )
 
 var AllRBACPolicies = map[string]RBACPolicy{
@@ -58,6 +62,10 @@ var AllRBACPolicies = map[string]RBACPolicy{
 	string(RBAC_FIREWALL_WRITE):  RBAC_FIREWALL_WRITE,
 	string(RBAC_FIREWALL_UPDATE): RBAC_FIREWALL_UPDATE,
 	string(RBAC_FIREWALL_DELETE): RBAC_FIREWALL_DELETE,
+
+	string(RBAC_BACKUP_READ):   RBAC_BACKUP_READ,
+	string(RBAC_BACKUP_WRITE):  RBAC_BACKUP_WRITE,
+	string(RBAC_BACKUP_DELETE): RBAC_BACKUP_DELETE,
 }
 
 // user role to roles

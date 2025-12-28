@@ -8,6 +8,46 @@ import (
 	"time"
 )
 
+type BackupJob struct {
+	ID           int64      `json:"id"`
+	Name         string     `json:"name"`
+	Type         string     `json:"type"`
+	TargetType   string     `json:"target_type"`
+	TargetID     string     `json:"target_id"`
+	TargetName   *string    `json:"target_name"`
+	ClientID     *string    `json:"client_id"`
+	Status       string     `json:"status"`
+	Progress     *int64     `json:"progress"`
+	Destination  *string    `json:"destination"`
+	SizeBytes    *int64     `json:"size_bytes"`
+	ErrorMessage *string    `json:"error_message"`
+	StartedAt    *time.Time `json:"started_at"`
+	CompletedAt  *time.Time `json:"completed_at"`
+	CreatedBy    *int64     `json:"created_by"`
+	CreatedAt    *time.Time `json:"created_at"`
+}
+
+type BackupSchedule struct {
+	ID             int64      `json:"id"`
+	Name           string     `json:"name"`
+	Type           string     `json:"type"`
+	TargetType     string     `json:"target_type"`
+	TargetID       string     `json:"target_id"`
+	TargetName     *string    `json:"target_name"`
+	ClientID       *string    `json:"client_id"`
+	Schedule       string     `json:"schedule"`
+	ScheduleTime   *string    `json:"schedule_time"`
+	Destination    string     `json:"destination"`
+	RetentionCount *int64     `json:"retention_count"`
+	Enabled        *int64     `json:"enabled"`
+	LastRunAt      *time.Time `json:"last_run_at"`
+	NextRunAt      *time.Time `json:"next_run_at"`
+	LastStatus     *string    `json:"last_status"`
+	CreatedBy      *int64     `json:"created_by"`
+	CreatedAt      *time.Time `json:"created_at"`
+	UpdatedAt      *time.Time `json:"updated_at"`
+}
+
 type Log struct {
 	ID           int64     `json:"id"`
 	UserID       int64     `json:"user_id"`

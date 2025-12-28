@@ -40,3 +40,12 @@ sql:
         package: "sessions"
         out: "./internal/database/sessions"
 
+  - engine: "sqlite"
+    schema: "./internal/database/migrations"
+    queries: "./internal/database/queries/backups.sql"
+    gen:
+      go:
+        emit_pointers_for_null_types: true
+        emit_json_tags: true
+        package: "backups"
+        out: "./internal/database/backups"
