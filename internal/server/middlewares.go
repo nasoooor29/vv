@@ -73,72 +73,81 @@ func RequestLogger(logger *slog.Logger, dispatcher *utils.Dispatcher) echo.Middl
 				Error:     errMsg,
 			}
 
-			if req.Method != "GET" {
-				dispatcher.InsertIntoDB(data)
-
-				// Send notification based on log level
-				_, logLevel := utils.StatusCodeToLogLevel(data.Status)
-				if logLevel == slog.LevelError {
-					dispatcher.SendError(
-						"Request Error",
-						fmt.Sprintf("%s %s returned %d", data.Method, data.Path, data.Status),
-						map[string]string{
-							"Method":    data.Method,
-							"Path":      data.Path,
-							"Status":    fmt.Sprintf("%d", data.Status),
-							"Remote IP": data.RemoteIp,
-							"Latency":   data.Latency.String(),
-						},
-					)
-				} else if data.Method == "DELETE" {
-					dispatcher.SendWarning(
-						"Request Warning",
-						fmt.Sprintf("%s %s returned %d", data.Method, data.Path, data.Status),
-						map[string]string{
-							"Method":    data.Method,
-							"Path":      data.Path,
-							"Status":    fmt.Sprintf("%d", data.Status),
-							"Remote IP": data.RemoteIp,
-							"Latency":   data.Latency.String(),
-						},
-					)
-				} else if logLevel == slog.LevelWarn {
-					dispatcher.SendWarning(
-						"Request Warning",
-						fmt.Sprintf("%s %s returned %d", data.Method, data.Path, data.Status),
-						map[string]string{
-							"Method":    data.Method,
-							"Path":      data.Path,
-							"Status":    fmt.Sprintf("%d", data.Status),
-							"Remote IP": data.RemoteIp,
-							"Latency":   data.Latency.String(),
-						},
-					)
-				} else {
-					dispatcher.SendInfo(
-						"Request Info",
-						fmt.Sprintf("%s %s returned %d", data.Method, data.Path, data.Status),
-						map[string]string{
-							"Method":    data.Method,
-							"Path":      data.Path,
-							"Status":    fmt.Sprintf("%d", data.Status),
-							"Remote IP": data.RemoteIp,
-							"Latency":   data.Latency.String(),
-						},
-					)
-				}
+			if models.ENV_VARS.VerboseNotifications {
+				notifyAndInsert(dispatcher, data)
+			} else if req.Method != "GET" {
+				notifyAndInsert(dispatcher, data)
 			}
 
 			_, logLevel := utils.StatusCodeToLogLevel(data.Status)
-			if logLevel == slog.LevelError {
+			switch logLevel {
+			case slog.LevelError:
 				logger.Error("[REQUEST]", "data", data)
-			} else if logLevel == slog.LevelWarn {
+			case slog.LevelWarn:
 				logger.Warn("[REQUEST]", "data", data)
-			} else {
+			default:
 				logger.Info("[REQUEST]", "data", data)
 			}
 
 			return err
 		}
+	}
+}
+
+func notifyAndInsert(dispatcher *utils.Dispatcher, data models.LogRequestData) {
+	dispatcher.InsertIntoDB(data)
+
+	// Send notification based on log level
+	_, logLevel := utils.StatusCodeToLogLevel(data.Status)
+	fmt.Printf("logLevel: %v\n", logLevel)
+	if logLevel == slog.LevelError {
+		dispatcher.SendError(
+			"Request Error",
+			fmt.Sprintf("%s %s returned %d", data.Method, data.Path, data.Status),
+			map[string]string{
+				"Method":    data.Method,
+				"Path":      data.Path,
+				"Status":    fmt.Sprintf("%d", data.Status),
+				"Remote IP": data.RemoteIp,
+				"Latency":   data.Latency.String(),
+			},
+		)
+	} else if data.Method == "DELETE" {
+		dispatcher.SendWarning(
+			"Request Warning",
+			fmt.Sprintf("%s %s returned %d", data.Method, data.Path, data.Status),
+			map[string]string{
+				"Method":    data.Method,
+				"Path":      data.Path,
+				"Status":    fmt.Sprintf("%d", data.Status),
+				"Remote IP": data.RemoteIp,
+				"Latency":   data.Latency.String(),
+			},
+		)
+	} else if logLevel == slog.LevelWarn {
+		dispatcher.SendWarning(
+			"Request Warning",
+			fmt.Sprintf("%s %s returned %d", data.Method, data.Path, data.Status),
+			map[string]string{
+				"Method":    data.Method,
+				"Path":      data.Path,
+				"Status":    fmt.Sprintf("%d", data.Status),
+				"Remote IP": data.RemoteIp,
+				"Latency":   data.Latency.String(),
+			},
+		)
+	} else {
+		fmt.Printf("logLevel: %v\n", logLevel)
+		dispatcher.SendInfo(
+			"Request Info",
+			fmt.Sprintf("%s %s returned %d", data.Method, data.Path, data.Status),
+			map[string]string{
+				"Method":    data.Method,
+				"Path":      data.Path,
+				"Status":    fmt.Sprintf("%d", data.Status),
+				"Remote IP": data.RemoteIp,
+				"Latency":   data.Latency.String(),
+			},
+		)
 	}
 }
