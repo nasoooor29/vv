@@ -13,6 +13,8 @@ export const virtualMachineInfoSchema = z.object({
   memory_kb: z.number(),
   vcpus: z.number(),
   cpu_time_ns: z.number(),
+  vnc_ip: z.string(),
+  vnc_port: z.number(),
 });
 
 export const virtualMachineWithInfoSchema = z.object({
@@ -26,7 +28,7 @@ export const createVmRequestSchema = z.object({
   name: z.string(),
   memory: z.number(),
   vcpus: z.number(),
-  disk_size: z.number(),
+  disk: z.number(),
   os_image: z.string(),
   autostart: z.boolean(),
 });
@@ -269,16 +271,41 @@ export const reorderRulesRequestSchema = z.object({
   handles: z.array(z.number()),
 });
 
+export const settingsServiceSchema = z.object({
+  Dispatcher: z.any().optional(),
+  Logger: z.any().optional(),
+  Notifier: z.any().optional(),
+});
+
+export const notificationSettingRequestSchema = z.object({
+  provider: z.string(),
+  enabled: z.boolean(),
+  webhook_url: z.string(),
+  notify_on_error: z.boolean(),
+  notify_on_warn: z.boolean(),
+  notify_on_info: z.boolean(),
+  config: z.string().optional(),
+});
+
 export const firewallServiceSchema = z.object({
   Dispatcher: z.any().optional(),
   Logger: z.any().optional(),
+});
+
+export const isoServiceSchema = z.object({
+  Dispatcher: z.any().optional(),
+  Logger: z.any().optional(),
+  FS: z.any().optional(),
 });
 
 export const qemuServiceSchema = z.object({
   Dispatcher: z.any().optional(),
   Logger: z.any().optional(),
   LibVirt: z.any().optional(),
+  FS: z.any().optional(),
 });
+
+export const createVirtualMachineRequestSchema = z.object({});
 
 export const storageServiceSchema = z.object({
   Dispatcher: z.any().optional(),
@@ -339,6 +366,8 @@ export const getLogsRequestSchema = z.object({
   PageSize: z.number(),
   Days: z.number(),
 });
+
+export const vncProxySchema = z.object({});
 
 export const upsertNotificationSettingParamsSchema = z.object({
   provider: z.string(),

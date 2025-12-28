@@ -28,6 +28,8 @@ type Server struct {
 	OAuthProviders map[string]goth.Provider
 
 	// Services
+	firewallService  *services.FirewallService
+	templatesService *services.TemplatesService
 	authService      *services.AuthService
 	usersService     *services.UsersService
 	storageService   *services.StorageService
@@ -35,9 +37,9 @@ type Server struct {
 	docsService      *services.DocsService
 	metricsService   *services.MetricsService
 	qemuService      *services.QemuService
+	isoService       *services.ISOService
 	dockerService    *services.DockerService
-	firewallService  *services.FirewallService
-	templatesService *services.TemplatesService
+	vncProxy         *services.VNCProxy
 	settingsService  *services.SettingsService
 }
 
@@ -89,13 +91,14 @@ func NewServer() *http.Server {
 	// Load notification settings from database
 	loadNotificationSettingsFromDB(db, notifier)
 	qemuService := services.NewQemuService(serverDispatcher, fs, logger)
+	isoService := services.NewISOService(serverDispatcher, fs, logger)
+	vncProxy := services.NewVNCProxy(logger)
 
 	NewServer := &Server{
-		firewallService:  firewallService,
-		templatesService: templatesService,
 		port:             port,
 		db:               db,
 		logger:           logger,
+		fs:               fs,
 		dispatcher:       serverDispatcher,
 		OAuthProviders:   authService.OAuthProviders,
 		authService:      authService,
@@ -106,6 +109,10 @@ func NewServer() *http.Server {
 		dockerService:    dockerService,
 		docsService:      docsService,
 		qemuService:      qemuService,
+		isoService:       isoService,
+		firewallService:  firewallService,
+		templatesService: templatesService,
+		vncProxy:         vncProxy,
 		settingsService:  settingsService,
 	}
 

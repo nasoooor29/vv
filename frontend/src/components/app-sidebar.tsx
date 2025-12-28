@@ -20,6 +20,7 @@ import {
   Users,
   Settings,
   FileText,
+  Disc3,
   Package,
   Cloud,
 } from "lucide-react";
@@ -112,6 +113,12 @@ export function AppSidebar() {
       id: "vms",
       label: "Virtual Machines",
       icon: Server,
+      requiredPermission: RBAC_QEMU_READ,
+    },
+    {
+      id: "iso",
+      label: "ISO Templates",
+      icon: Disc3,
       requiredPermission: RBAC_QEMU_READ,
     },
     {

@@ -9,6 +9,7 @@ import {
   AlertCircle,
   Server,
   Play,
+  Monitor,
   RotateCw,
   Power,
   Info,
@@ -31,8 +32,10 @@ import type { T } from "@/types";
 import { formatBytes } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { CONSTANTS } from "@/lib";
+import { useNavigate } from "react-router";
 
 export default function QemuPage() {
+  const navigate = useNavigate();
   const { hasPermission } = usePermission();
   const [selectedVM, setSelectedVM] = useState<T.VirtualMachineWithInfo | null>(
     null,
@@ -76,6 +79,11 @@ export default function QemuPage() {
   const handleViewDetails = (vm: T.VirtualMachineWithInfo) => {
     setSelectedVM(vm);
     detailDialog.open();
+  };
+
+  const handleOpenConsole = (uuid: string) => {
+    detailDialog.close();
+    navigate(`/app/vms/${uuid}/console`);
   };
 
   const getVMStatus = (state: number) => {
@@ -220,6 +228,18 @@ export default function QemuPage() {
                         </Button>
                       )}
 
+                      {hasPermission(RBAC_QEMU_READ) && isRunning && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOpenConsole(vm.uuid)}
+                          className="gap-2"
+                        >
+                          <Monitor className="h-4 w-4" />
+                          Console
+                        </Button>
+                      )}
+
                       {hasPermission(RBAC_QEMU_UPDATE) && isRunning && (
                         <>
                           <Button
@@ -255,7 +275,10 @@ export default function QemuPage() {
         title={selectedVM?.name ?? "VM Details"}
         description={selectedVM?.uuid}
       >
-        <VMDetailDialogContent vm={selectedVM} />
+        <VMDetailDialogContent
+          vm={selectedVM}
+          onOpenConsole={handleOpenConsole}
+        />
       </detailDialog.Component>
 
       <actionDialog.Component

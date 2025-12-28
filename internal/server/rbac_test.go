@@ -81,19 +81,21 @@ func setupTestServer(t *testing.T) *testHelper {
 		logger:           logger,
 		dispatcher:       dispatcher,
 		db:               dbService,
+		fs:               fs,
 		authService:      services.NewAuthService(dbService, dispatcher, logger),
 		usersService:     services.NewUsersService(dbService, dispatcher, logger),
 		logsService:      services.NewLogsService(dbService, dispatcher, logger),
 		metricsService:   services.NewMetricsService(dbService, dispatcher, logger),
 		storageService:   services.NewStorageService(dispatcher, logger),
 		qemuService:      services.NewQemuService(dispatcher, fs, logger),
+		isoService:       services.NewISOService(dispatcher, fs, logger),
 		dockerService:    dockerService,
 		docsService:      services.NewDocsService(dbService, dispatcher, logger),
 		firewallService:  services.NewFirewallService(dispatcher, logger),
 		templatesService: services.NewTemplatesService(dispatcher, logger, dockerService.ClientManager),
 		settingsService:  services.NewSettingsService(dbService, dispatcher, logger, notifManager),
+		vncProxy:         services.NewVNCProxy(logger),
 	}
-
 	handler := s.RegisterRoutes()
 
 	return &testHelper{

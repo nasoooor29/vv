@@ -15,6 +15,8 @@ export interface VirtualMachineInfo {
   memory_kb: number /* uint64 */;
   vcpus: number /* uint16 */;
   cpu_time_ns: number /* uint64 */;
+  vnc_ip: string;
+  vnc_port: number /* int */;
 }
 /**
  * VirtualMachineWithInfo combines VM details with runtime information
@@ -32,7 +34,7 @@ export interface CreateVMRequest {
   name: string;
   memory: number /* int64 */;
   vcpus: number /* int32 */;
-  disk_size: number /* int64 */;
+  disk: number /* int64 */;
   os_image: string;
   autostart: boolean;
 }
@@ -382,15 +384,46 @@ export interface ReorderRulesRequest {
   chain: string;
   handles: number /* uint64 */[]; // Rule handles in desired order
 }
+export interface SettingsService {
+  Dispatcher?: any /* utils.Dispatcher */;
+  Logger?: any /* slog.Logger */;
+  Notifier?: any /* notifs.Manager */;
+}
+/**
+ * NotificationSettingRequest represents the request body for upserting a notification setting
+ */
+export interface NotificationSettingRequest {
+  provider: string;
+  enabled: boolean;
+  webhook_url: string;
+  notify_on_error: boolean;
+  notify_on_warn: boolean;
+  notify_on_info: boolean;
+  config?: string;
+}
 export interface FirewallService {
   Dispatcher?: any /* utils.Dispatcher */;
   Logger?: any /* slog.Logger */;
 }
+export interface ISOService {
+  Dispatcher?: any /* utils.Dispatcher */;
+  Logger?: any /* slog.Logger */;
+  FS?: any /* utils.FS */;
+}
+/**
+ * Validate file size (max 5GB)
+ */
 export interface QemuService {
   Dispatcher?: any /* utils.Dispatcher */;
   Logger?: any /* slog.Logger */;
   LibVirt?: any /* libvirt.Libvirt */;
+  FS?: any /* utils.FS */;
 }
+/**
+ * DomainState: 0=NoState, 1=Running, 2=Blocked, 3=Paused, 4=ShuttingDown, 5=ShutOff, 6=Crashed, 7=Suspended
+ */
+export const DomainPaused = 3;
+export interface CreateVirtualMachineRequest {}
 export interface StorageService {
   Dispatcher?: any /* utils.Dispatcher */;
   Logger?: any /* slog.Logger */;
@@ -446,6 +479,7 @@ export interface GetLogsRequest {
   PageSize: number /* int */;
   Days: number /* int */; // Filter logs from last N days
 }
+export interface VNCProxy {}
 export interface UpsertNotificationSettingParams {
   provider: string;
   enabled?: boolean;

@@ -45,49 +45,41 @@ func BuildLibVirtDomain(p *LibVirtDomainParams) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	graphics := []libvirtxml.DomainGraphic{
-		{
-			Spice: &libvirtxml.DomainGraphicSpice{
-				Port:     int(p.SpiceListenPort),
-				AutoPort: "yes",
-				Listen:   p.SpiceListenIpAddr,
-				Image: &libvirtxml.DomainGraphicSpiceImage{
-					Compression: "off",
-				},
-			},
+	g := libvirtxml.DomainGraphic{}
 
-			VNC: &libvirtxml.DomainGraphicVNC{
-				Port:     int(p.VNCListenPort),
-				AutoPort: "yes",
-				Listen:   p.VNCListenIpAddr,
-			},
-		},
+	if p.VNCListenPort >= 0 {
+		g.VNC = &libvirtxml.DomainGraphicVNC{
+			Port:     int(p.VNCListenPort),
+			AutoPort: "no",
+			Listen:   p.VNCListenIpAddr,
+		}
+	} else {
+		g.VNC = &libvirtxml.DomainGraphicVNC{
+			AutoPort: "yes",
+			Listen:   p.VNCListenIpAddr,
+		}
 	}
-	if p.VNCListenPort < 0 {
-		graphics = []libvirtxml.DomainGraphic{
-			{
-				VNC: &libvirtxml.DomainGraphicVNC{
-					Port:     int(p.VNCListenPort),
-					AutoPort: "yes",
-					Listen:   p.VNCListenIpAddr,
-				},
+
+	if p.SpiceListenPort >= 0 {
+		g.Spice = &libvirtxml.DomainGraphicSpice{
+			Port:     int(p.SpiceListenPort),
+			AutoPort: "no",
+			Listen:   p.SpiceListenIpAddr,
+			Image: &libvirtxml.DomainGraphicSpiceImage{
+				Compression: "off",
+			},
+		}
+	} else {
+		g.Spice = &libvirtxml.DomainGraphicSpice{
+			AutoPort: "yes",
+			Listen:   p.SpiceListenIpAddr,
+			Image: &libvirtxml.DomainGraphicSpiceImage{
+				Compression: "off",
 			},
 		}
 	}
-	if p.SpiceListenPort < 0 {
-		graphics = []libvirtxml.DomainGraphic{
-			{
-				Spice: &libvirtxml.DomainGraphicSpice{
-					Port:     int(p.SpiceListenPort),
-					AutoPort: "yes",
-					Listen:   p.SpiceListenIpAddr,
-					Image: &libvirtxml.DomainGraphicSpiceImage{
-						Compression: "off",
-					},
-				},
-			},
-		}
-	}
+
+	graphics := []libvirtxml.DomainGraphic{g}
 
 	dom := libvirtxml.Domain{
 		UUID: uuid.String(),
@@ -187,25 +179,10 @@ func BuildLibVirtDomain(p *LibVirtDomainParams) (string, error) {
 					Source: &libvirtxml.DomainInterfaceSource{
 						Network: &libvirtxml.DomainInterfaceSourceNetwork{
 							Network: "default",
-							Bridge:  "virbr0",
 						},
-					},
-					Target: &libvirtxml.DomainInterfaceTarget{
-						Dev: "vnet2",
 					},
 					Model: &libvirtxml.DomainInterfaceModel{
-						Type: "virtio",
-					},
-					Alias: &libvirtxml.DomainAlias{
-						Name: "net0",
-					},
-					Address: &libvirtxml.DomainAddress{
-						PCI: &libvirtxml.DomainAddressPCI{
-							Domain:   new(uint),
-							Bus:      new(uint),
-							Slot:     new(uint),
-							Function: new(uint),
-						},
+						Type: "virtio", // common portable model
 					},
 				},
 			},
@@ -214,6 +191,8 @@ func BuildLibVirtDomain(p *LibVirtDomainParams) (string, error) {
 	}
 	return dom.Marshal()
 }
+
+var ErrVNCNotFound = fmt.Errorf("VNC configuration not found in domain XML")
 
 // Extract VNC configuration from domain XML
 func VNCFromDomainXML(domainXML string) (string, int, error) {
@@ -226,5 +205,5 @@ func VNCFromDomainXML(domainXML string) (string, int, error) {
 			return g.VNC.Listen, g.VNC.Port, nil
 		}
 	}
-	return "", 0, fmt.Errorf("no VNC configuration found in domain XML")
+	return "", 0, ErrVNCNotFound
 }
