@@ -49,12 +49,37 @@ type Config struct {
 func DefaultConfig(goModPath string) Config {
 	return Config{
 		GoModPath: goModPath,
+		// License file names to search for - we'll do case-insensitive matching
+		// and also check for common misspellings (licence vs license)
 		LicenseNames: []string{
+			// Standard spellings
 			"LICENSE",
 			"LICENSE.md",
 			"LICENSE.txt",
+			"LICENSE.MIT",
+			"LICENSE-MIT",
+			"LICENSE.APACHE",
+			"LICENSE-APACHE",
+			// British spelling (licence)
+			"LICENCE",
+			"LICENCE.md",
+			"LICENCE.txt",
+			// Other common names
 			"COPYING",
+			"COPYING.md",
+			"COPYING.txt",
 			"COPYRIGHT",
+			"COPYRIGHT.md",
+			"COPYRIGHT.txt",
+			// Lowercase variants
+			"license",
+			"license.md",
+			"license.txt",
+			"licence",
+			"licence.md",
+			"licence.txt",
+			"copying",
+			"copyright",
 		},
 	}
 }
@@ -103,16 +128,44 @@ func resolveModules() ([]goModuleFromGoList, error) {
 }
 
 // findLicenseFile searches for a license file in the given directory
+// It performs case-insensitive matching and checks for common misspellings
 func findLicenseFile(dir string, licenseNames []string) (string, error) {
 	if dir == "" {
 		return "", errors.New("empty directory path")
 	}
 
+	// First, try exact matches from the provided list
 	for _, name := range licenseNames {
 		path := filepath.Join(dir, name)
 		if info, err := os.Stat(path); err == nil && !info.IsDir() {
-			// Return relative path from module root for clarity
 			return name, nil
+		}
+	}
+
+	// If no exact match, scan directory for case-insensitive matches
+	// This catches any case variations we might have missed
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return "", fmt.Errorf("failed to read directory: %w", err)
+	}
+
+	// Patterns to match (case-insensitive) - includes common misspellings
+	licensePatterns := []string{
+		"license", // American spelling
+		"licence", // British spelling
+		"copying",
+		"copyright",
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		nameLower := strings.ToLower(entry.Name())
+		for _, pattern := range licensePatterns {
+			if strings.HasPrefix(nameLower, pattern) {
+				return entry.Name(), nil
+			}
 		}
 	}
 
