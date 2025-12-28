@@ -39,6 +39,7 @@ visory.db*
 visory_test_*.db*
 api
 
+cmd/depscan/depscan
 legacy-visory
 *.db-shm
 *.db-wal
