@@ -18,6 +18,7 @@ on:
 jobs:
   license-scan:
     runs-on: ubuntu-latest
+    environment: ci-base
     
     steps:
       - uses: actions/checkout@v4
@@ -37,5 +38,11 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
-          # Check for non-MIT licenses in direct dependencies only and send Discord notification
-          ./depscan --direct-only --warn-non-mit || true
+          # Check for non-MIT licenses in direct dependencies only
+          # Send Discord notification only if webhook URL is configured
+          if [ -n "$DISCORD_WEBHOOK_URL" ]; then
+            ./depscan --direct-only --warn-non-mit || true
+          else
+            echo "DISCORD_WEBHOOK_URL not set, running scan without Discord notification"
+            ./depscan --direct-only || true
+          fi
