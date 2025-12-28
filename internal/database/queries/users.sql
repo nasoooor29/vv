@@ -89,3 +89,6 @@ SET
   updated_at = CURRENT_TIMESTAMP
 WHERE
   id = ? RETURNING *;
+
+-- name: CountUsers :one
+SELECT COUNT(*) FROM users;

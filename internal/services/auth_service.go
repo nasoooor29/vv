@@ -197,6 +197,17 @@ func (s *AuthService) Register(c echo.Context) error {
 		return s.Dispatcher.NewInternalServerError("Failed to hash password", err)
 	}
 	p.Password = string(bcryptPassword)
+
+	// Check if this is the first user - if so, make them admin
+	userCount, err := s.db.User.CountUsers(c.Request().Context())
+	if err != nil {
+		return s.Dispatcher.NewInternalServerError("Failed to check user count", err)
+	}
+	if userCount == 0 {
+		p.Role = string(models.RBAC_USER_ADMIN)
+		s.Logger.Info("First user registered, granting admin role", "email", p.Email)
+	}
+
 	val, err := s.db.User.UpsertUser(c.Request().Context(), p)
 	if err != nil {
 		return s.Dispatcher.NewInternalServerError("Failed to register user", err)
@@ -330,11 +341,22 @@ func (s *AuthService) OAuthCallback(c echo.Context) error {
 			return s.Dispatcher.NewInternalServerError("Failed to hash password", err)
 		}
 
+		// Check if this is the first user - if so, make them admin
+		role := "user"
+		userCount, err := s.db.User.CountUsers(c.Request().Context())
+		if err != nil {
+			return s.Dispatcher.NewInternalServerError("Failed to check user count", err)
+		}
+		if userCount == 0 {
+			role = string(models.RBAC_USER_ADMIN)
+			s.Logger.Info("First user via OAuth, granting admin role", "email", gothUser.Email)
+		}
+
 		newUser, err := s.db.User.UpsertUser(c.Request().Context(), user.UpsertUserParams{
 			Username: generateUsernameFromEmail(gothUser.Email),
 			Email:    gothUser.Email,
 			Password: string(bcryptPassword),
-			Role:     "user",
+			Role:     role,
 		})
 		if err != nil {
 			return s.Dispatcher.NewInternalServerError("Failed to create user", err)
