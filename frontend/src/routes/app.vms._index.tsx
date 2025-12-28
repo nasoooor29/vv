@@ -9,6 +9,7 @@ import {
   AlertCircle,
   Server,
   Play,
+  Monitor,
   RotateCw,
   Power,
   Info,
@@ -227,6 +228,18 @@ export default function QemuPage() {
                         </Button>
                       )}
 
+                      {hasPermission(RBAC_QEMU_READ) && isRunning && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOpenConsole(vm.uuid)}
+                          className="gap-2"
+                        >
+                          <Monitor className="h-4 w-4" />
+                          Console
+                        </Button>
+                      )}
+
                       {hasPermission(RBAC_QEMU_UPDATE) && isRunning && (
                         <>
                           <Button
@@ -262,7 +275,10 @@ export default function QemuPage() {
         title={selectedVM?.name ?? "VM Details"}
         description={selectedVM?.uuid}
       >
-        <VMDetailDialogContent vm={selectedVM} onOpenConsole={handleOpenConsole} />
+        <VMDetailDialogContent
+          vm={selectedVM}
+          onOpenConsole={handleOpenConsole}
+        />
       </detailDialog.Component>
 
       <actionDialog.Component

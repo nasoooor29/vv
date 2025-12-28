@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router";
 import { VncScreen, type VncScreenHandle } from "react-vnc";
 import { orpc } from "@/lib/orpc";
@@ -7,9 +7,8 @@ import { CONSTANTS } from "@/lib";
 import { AlertCircle, ArrowLeft, Monitor } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
 
 export default function VMConsolePage() {
   console.log("help");
@@ -74,18 +73,6 @@ export default function VMConsolePage() {
       </Alert>
     );
   }
-
-  // if (!vncIP || !vncPort) {
-  //   return (
-  //     <Alert className="border-yellow-500 bg-yellow-500/10">
-  //       <AlertCircle className="h-4 w-4" />
-  //       <AlertDescription>
-  //         VNC is not available for this VM. Please ensure the VM is running and
-  //         has VNC configured.
-  //       </AlertDescription>
-  //     </Alert>
-  //   );
-  // }
 
   return (
     <div className="flex flex-col h-[calc(100vh-2rem)] space-y-4">

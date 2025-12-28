@@ -463,6 +463,7 @@ func (s *QemuService) CreateVirtualMachine(c echo.Context) error {
 		VNCListenPort:         -1,
 		VNCListenIpAddr:       "127.0.0.1",
 	})
+	fmt.Printf("xmlDom: %v\n", xmlDom)
 	if err != nil {
 		s.Logger.Error("Failed to create virtual machine", "name", req.Name, "error", err)
 		return s.Dispatcher.NewInternalServerError("Failed to create virtual machine", err)
