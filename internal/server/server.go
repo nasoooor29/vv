@@ -7,7 +7,6 @@ import (
 	"os"
 	"strconv"
 	"time"
-
 	"visory/internal/database"
 	"visory/internal/models"
 	"visory/internal/services"
@@ -26,6 +25,8 @@ type Server struct {
 	OAuthProviders map[string]goth.Provider
 
 	// Services
+	firewallService  *services.FirewallService
+	templatesService *services.TemplatesService
 	authService      *services.AuthService
 	usersService     *services.UsersService
 	storageService   *services.StorageService
@@ -35,8 +36,7 @@ type Server struct {
 	qemuService      *services.QemuService
 	isoService       *services.ISOService
 	dockerService    *services.DockerService
-	firewallService  *services.FirewallService
-	templatesService *services.TemplatesService
+	vncProxy         *services.VNCProxy
 }
 
 func NewServer() *http.Server {
@@ -69,6 +69,7 @@ func NewServer() *http.Server {
 	docsService := services.NewDocsService(db, serverDispatcher, logger)
 	qemuService := services.NewQemuService(serverDispatcher, fs, logger)
 	isoService := services.NewISOService(serverDispatcher, fs, logger)
+	vncProxy := services.NewVNCProxy(logger)
 
 	NewServer := &Server{
 		port:             port,
@@ -88,6 +89,7 @@ func NewServer() *http.Server {
 		isoService:       isoService,
 		firewallService:  firewallService,
 		templatesService: templatesService,
+		vncProxy:         vncProxy,
 	}
 
 	// Declare Server config

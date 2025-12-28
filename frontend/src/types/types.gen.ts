@@ -605,3 +605,41 @@ export interface UserSession {
   created_at: string;
   updated_at: string;
 }
+export interface VirtualMachine {
+  id: number /* int32 */;
+  name: string;
+  uuid: string;
+}
+export interface VirtualMachineInfo {
+  state: number /* uint8 */;
+  max_mem_kb: number /* uint64 */;
+  memory_kb: number /* uint64 */;
+  vcpus: number /* uint16 */;
+  cpu_time_ns: number /* uint64 */;
+  vnc_ip: string;
+  vnc_port: number;
+}
+export interface VirtualMachineWithInfo {
+  id: number /* int32 */;
+  name: string;
+  uuid: string;
+  state: number /* uint8 */;
+  max_mem_kb: number /* uint64 */;
+  memory_kb: number /* uint64 */;
+  vcpus: number /* uint16 */;
+  cpu_time_ns: number /* uint64 */;
+  vnc_ip: string;
+  vnc_port: number;
+}
+export interface CreateVMRequest {
+  name: string;
+  memory: number /* int64 */;
+  vcpus: number /* int32 */;
+  disk: number /* int64 */;
+  os_image?: string;
+  autostart?: boolean;
+}
+export interface VMActionResponse {
+  success: boolean;
+  message: string;
+}

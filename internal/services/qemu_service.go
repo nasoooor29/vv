@@ -260,7 +260,7 @@ func (s *QemuService) GetVirtualMachineInfo(c echo.Context) error {
 }
 
 //	@Summary      Start virtual machine
-//	@Description  Start a stopped virtual machine
+//	@Description  Start a stopped virtual machine or resume a paused one
 //	@Tags         qemu
 //	@Param        uuid  path  string  true  "Virtual Machine UUID"
 //	@Produce      json
@@ -271,7 +271,7 @@ func (s *QemuService) GetVirtualMachineInfo(c echo.Context) error {
 //	@Failure      500  {object}  models.HTTPError
 //	@Router       /qemu/virtual-machines/{uuid}/start [post]
 //
-// StartVirtualMachine starts a virtual machine
+// StartVirtualMachine starts a virtual machine or resumes it if paused
 func (s *QemuService) StartVirtualMachine(c echo.Context) error {
 	if s.LibVirt == nil {
 		return s.Dispatcher.NewInternalServerError("LibVirt connection not available", nil)
@@ -282,20 +282,42 @@ func (s *QemuService) StartVirtualMachine(c echo.Context) error {
 		return s.Dispatcher.NewBadRequest("Virtual machine UUID is required", nil)
 	}
 
-	domain, err := s.getDomainByUUID(vmUUID)
+	domain, err := s.GetDomainByUUID(vmUUID)
 	if err != nil {
 		s.Logger.Error("Failed to find domain", "uuid", vmUUID, "error", err)
 		return s.Dispatcher.NewNotFound("Virtual machine not found", err)
 	}
 
-	if err := s.LibVirt.DomainCreate(domain); err != nil {
-		s.Logger.Error("Failed to start domain", "name", domain.Name, "error", err)
-		return s.Dispatcher.NewInternalServerError("Failed to start virtual machine", err)
+	// Get domain info to check state
+	state, _, _, _, _, err := s.LibVirt.DomainGetInfo(domain)
+	if err != nil {
+		s.Logger.Error("Failed to get domain info", "name", domain.Name, "error", err)
+		return s.Dispatcher.NewInternalServerError("Failed to get virtual machine state", err)
+	}
+
+	// DomainState: 0=NoState, 1=Running, 2=Blocked, 3=Paused, 4=ShuttingDown, 5=ShutOff, 6=Crashed, 7=Suspended
+	const DomainPaused = 3
+
+	var action string
+	if state == DomainPaused {
+		// Resume paused VM
+		if err := s.LibVirt.DomainResume(domain); err != nil {
+			s.Logger.Error("Failed to resume domain", "name", domain.Name, "error", err)
+			return s.Dispatcher.NewInternalServerError("Failed to resume virtual machine", err)
+		}
+		action = "resumed"
+	} else {
+		// Start stopped VM
+		if err := s.LibVirt.DomainCreate(domain); err != nil {
+			s.Logger.Error("Failed to start domain", "name", domain.Name, "error", err)
+			return s.Dispatcher.NewInternalServerError("Failed to start virtual machine", err)
+		}
+		action = "started"
 	}
 
 	return c.JSON(http.StatusOK, models.VMActionResponse{
 		Success: true,
-		Message: fmt.Sprintf("Virtual machine '%s' started successfully", domain.Name),
+		Message: fmt.Sprintf("Virtual machine '%s' %s successfully", domain.Name, action),
 	})
 }
 
@@ -322,7 +344,7 @@ func (s *QemuService) RebootVirtualMachine(c echo.Context) error {
 		return s.Dispatcher.NewBadRequest("Virtual machine UUID is required", nil)
 	}
 
-	domain, err := s.getDomainByUUID(vmUUID)
+	domain, err := s.GetDomainByUUID(vmUUID)
 	if err != nil {
 		s.Logger.Error("Failed to find domain", "uuid", vmUUID, "error", err)
 		return s.Dispatcher.NewNotFound("Virtual machine not found", err)
@@ -362,7 +384,7 @@ func (s *QemuService) ShutdownVirtualMachine(c echo.Context) error {
 		return s.Dispatcher.NewBadRequest("Virtual machine UUID is required", nil)
 	}
 
-	domain, err := s.getDomainByUUID(vmUUID)
+	domain, err := s.GetDomainByUUID(vmUUID)
 	if err != nil {
 		s.Logger.Error("Failed to find domain", "uuid", vmUUID, "error", err)
 		return s.Dispatcher.NewNotFound("Virtual machine not found", err)
@@ -468,7 +490,7 @@ func (s *QemuService) CreateVirtualMachine(c echo.Context) error {
 }
 
 // Helper function to get domain by UUID
-func (s *QemuService) getDomainByUUID(vmUUID string) (libvirt.Domain, error) {
+func (s *QemuService) GetDomainByUUID(vmUUID string) (libvirt.Domain, error) {
 	flags := libvirt.ConnectListDomainsActive | libvirt.ConnectListDomainsInactive
 	domains, _, err := s.LibVirt.ConnectListAllDomains(1, flags)
 	if err != nil {

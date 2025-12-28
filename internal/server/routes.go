@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"time"
 	"visory/internal/models"
-
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"visory/internal/utils"
 
 	"github.com/coder/websocket"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
@@ -85,6 +85,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 	qemuGroup.POST("/virtual-machines/:uuid/start", s.qemuService.StartVirtualMachine, Roles(models.RBAC_QEMU_WRITE))
 	qemuGroup.POST("/virtual-machines/:uuid/reboot", s.qemuService.RebootVirtualMachine, Roles(models.RBAC_QEMU_UPDATE))
 	qemuGroup.POST("/virtual-machines/:uuid/shutdown", s.qemuService.ShutdownVirtualMachine, Roles(models.RBAC_QEMU_UPDATE))
+	// qemuGroup.GET("/virtual-machines/:uuid/console", s.VNCConsoleHandler, Roles(models.RBAC_QEMU_READ))
+	e.GET("/api/qemu/virtual-machines/:uuid/console", s.VNCConsoleHandler)
 
 	// ISO routes
 	isoGroup := api.Group("/iso", s.authService.AuthMiddleware, RequestLogger(s.isoService.Logger, s.isoService.Dispatcher))
@@ -198,6 +200,45 @@ func (s *Server) websocketHandler(c echo.Context) error {
 		time.Sleep(time.Second * 2)
 	}
 	return nil
+}
+
+// VNCConsoleHandler handles WebSocket connections to VNC consoles
+//
+//	@Summary      VNC console WebSocket
+//	@Description  establishes websocket connection to VM VNC console
+//	@Tags         qemu
+//	@Param        uuid  path  string  true  "Virtual Machine UUID"
+//	@Router       /qemu/virtual-machines/{uuid}/console [get]
+func (s *Server) VNCConsoleHandler(c echo.Context) error {
+	uuid := c.Param("uuid")
+	if uuid == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "VM UUID is required"})
+	}
+
+	// Get VM info to get VNC connection details
+	domain, err := s.qemuService.GetDomainByUUID(uuid)
+	if err != nil {
+		s.logger.Error("Failed to find domain", "uuid", uuid, "error", err)
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "Virtual machine not found"})
+	}
+
+	// Get VNC info from domain XML
+	dXml, err := s.qemuService.LibVirt.DomainGetXMLDesc(domain, 0)
+	if err != nil {
+		s.logger.Error("Failed to get domain XML", "domain", domain.Name, "error", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to get VNC info"})
+	}
+
+	vncIP, vncPort, err := utils.VNCFromDomainXML(dXml)
+	if err != nil {
+		s.logger.Error("Failed to parse VNC info", "domain", domain.Name, "error", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "VNC not available"})
+	}
+
+	s.logger.Info("VNC WebSocket connected", "uuid", uuid, "vncIP", vncIP, "vncPort", vncPort)
+
+	// Connect to VNC server via proxy
+	return s.vncProxy.ConnectVNC(c, vncIP, vncPort)
 }
 
 // getLevelFromStatusCode determines log level based on HTTP status code

@@ -56,12 +56,17 @@ type Pages = {
   "/app/vms": {
     params: {};
   };
+  "/app/vms/:uuid/console": {
+    params: {
+      "uuid": string;
+    };
+  };
 };
 
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/auth" | "/auth/register" | "/auth/login" | "/app" | "/app/sys/networking" | "/app/sys/settings" | "/app/sys/storage" | "/app/dashboard" | "/app/sys/users" | "/app/sys/logs" | "/app/monitor" | "/app/docker" | "/app/iso" | "/app/vms";
+    page: "/" | "/auth" | "/auth/register" | "/auth/login" | "/app" | "/app/sys/networking" | "/app/sys/settings" | "/app/sys/storage" | "/app/dashboard" | "/app/sys/users" | "/app/sys/logs" | "/app/monitor" | "/app/docker" | "/app/iso" | "/app/vms" | "/app/vms/:uuid/console";
   };
   "routes/_landing.tsx": {
     id: "routes/_landing";
@@ -85,7 +90,7 @@ type RouteFiles = {
   };
   "routes/app.tsx": {
     id: "routes/app";
-    page: "/app" | "/app/sys/networking" | "/app/sys/settings" | "/app/sys/storage" | "/app/dashboard" | "/app/sys/users" | "/app/sys/logs" | "/app/monitor" | "/app/docker" | "/app/iso" | "/app/vms";
+    page: "/app" | "/app/sys/networking" | "/app/sys/settings" | "/app/sys/storage" | "/app/dashboard" | "/app/sys/users" | "/app/sys/logs" | "/app/monitor" | "/app/docker" | "/app/iso" | "/app/vms" | "/app/vms/:uuid/console";
   };
   "routes/app.sys.networking.tsx": {
     id: "routes/app.sys.networking";
@@ -129,7 +134,11 @@ type RouteFiles = {
   };
   "routes/app.vms.tsx": {
     id: "routes/app.vms";
-    page: "/app/vms";
+    page: "/app/vms" | "/app/vms/:uuid/console";
+  };
+  "routes/app.vms.$uuid.console.tsx": {
+    id: "routes/app.vms.$uuid.console";
+    page: "/app/vms/:uuid/console";
   };
 };
 
@@ -152,4 +161,5 @@ type RouteModules = {
   "routes/app.docker": typeof import("./src/routes/app.docker/route.tsx");
   "routes/app.iso": typeof import("./src/routes/app.iso.tsx");
   "routes/app.vms": typeof import("./src/routes/app.vms.tsx");
+  "routes/app.vms.$uuid.console": typeof import("./src/routes/app.vms.$uuid.console.tsx");
 };

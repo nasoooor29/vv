@@ -274,6 +274,9 @@ export const qemuServiceSchema = z.object({
   Dispatcher: z.any().optional(),
   Logger: z.any().optional(),
   LibVirt: z.any().optional(),
+  SessionSecret: z.string(),
+  FRONTEND_DASH: z.string(),
+  BaseUrlWithPort: z.string(),
 });
 
 export const storageServiceSchema = z.object({
@@ -293,6 +296,274 @@ export const usersServiceSchema = z.object({
 });
 
 export const clientInfoSchema = z.object({
+export const authServiceSchema = z.object({
+  Dispatcher: z.any().optional(),
+  Logger: z.any().optional(),
+  OAuthProviders: z.record(z.string(), z.any()),
+});
+
+export const metricsServiceSchema = z.object({
+  Dispatcher: z.any().optional(),
+  Logger: z.any().optional(),
+});
+
+export const getMetricsRequestSchema = z.object({
+  Days: z.number(),
+});
+
+export const logsServiceSchema = z.object({
+  Dispatcher: z.any().optional(),
+  Logger: z.any().optional(),
+});
+
+export const getLogsRequestSchema = z.object({
+  ServiceGroup: z.string(),
+  Level: z.string(),
+  Page: z.number(),
+  PageSize: z.number(),
+  Days: z.number(),
+});
+
+export const countLogsByLevelParamsSchema = z.object({
+  level: z.string(),
+  created_at: z.string(),
+});
+
+export const countLogsByServiceGroupParamsSchema = z.object({
+  service_group: z.string(),
+  created_at: z.string(),
+});
+
+export const countLogsByServiceGroupAndLevelParamsSchema = z.object({
+  service_group: z.string(),
+  level: z.string(),
+  created_at: z.string(),
+});
+
+export const createLogParamsSchema = z.object({
+  user_id: z.number(),
+  action: z.string(),
+  details: z.string().optional(),
+  service_group: z.string(),
+  level: z.string(),
+});
+
+export const getAverageLogCountByHourRowSchema = z.object({
+  hour: z.any(),
+  log_count: z.number(),
+});
+
+export const getErrorRateByServiceRowSchema = z.object({
+  service_group: z.string(),
+  error_count: z.number(),
+  total_count: z.number(),
+  error_rate: z.number(),
+});
+
+export const getLogLevelDistributionParamsSchema = z.object({
+  created_at: z.string(),
+  created_at_2: z.string(),
+});
+
+export const getLogLevelDistributionRowSchema = z.object({
+  level: z.string(),
+  count: z.number(),
+  percentage: z.number(),
+});
+
+export const getLogsByLevelParamsSchema = z.object({
+  level: z.string(),
+  created_at: z.string(),
+  limit: z.number(),
+  offset: z.number(),
+});
+
+export const getLogsByServiceGroupParamsSchema = z.object({
+  service_group: z.string(),
+  created_at: z.string(),
+  limit: z.number(),
+  offset: z.number(),
+});
+
+export const getLogsByServiceGroupAndLevelParamsSchema = z.object({
+  service_group: z.string(),
+  level: z.string(),
+  created_at: z.string(),
+  limit: z.number(),
+  offset: z.number(),
+});
+
+export const getLogsPaginatedParamsSchema = z.object({
+  created_at: z.string(),
+  limit: z.number(),
+  offset: z.number(),
+});
+
+export const getServiceGroupDistributionParamsSchema = z.object({
+  created_at: z.string(),
+  created_at_2: z.string(),
+});
+
+export const getServiceGroupDistributionRowSchema = z.object({
+  service_group: z.string(),
+  count: z.number(),
+  percentage: z.number(),
+});
+
+export const upsertSessionParamsSchema = z.object({
+  user_id: z.number(),
+  session_token: z.string(),
+});
+
+export const serviceSchema = z.object({
+  User: z.any().optional(),
+  Session: z.any().optional(),
+  Log: z.any().optional(),
+  Notification: z.any().optional(),
+});
+
+export const healthStatsSchema = z.object({
+  open_connections: z.number(),
+  in_use: z.number(),
+  idle: z.number(),
+  wait_count: z.number(),
+  wait_duration: z.string(),
+  max_idle_closed: z.number(),
+  max_lifetime_closed: z.number(),
+});
+
+export const createUserParamsSchema = z.object({
+  username: z.string(),
+  email: z.string(),
+  password: z.string(),
+  role: z.string(),
+});
+
+export const getByEmailOrUsernameParamsSchema = z.object({
+  email: z.string(),
+  username: z.string(),
+});
+
+export const userSchema = z.object({
+  id: z.number(),
+  username: z.string(),
+  email: z.string(),
+  password: z.string(),
+  role: z.string(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export const userSessionSchema = z.object({
+  id: z.number(),
+  user_id: z.number(),
+  session_token: z.string(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export const updateUserParamsSchema = z.object({
+  username: z.string(),
+  email: z.string(),
+  role: z.string(),
+  id: z.number(),
+});
+
+export const updateUserPasswordParamsSchema = z.object({
+  password: z.string(),
+  id: z.number(),
+});
+
+export const updateUserRoleParamsSchema = z.object({
+  role: z.string(),
+  id: z.number(),
+});
+
+export const upsertUserParamsSchema = z.object({
+  username: z.string(),
+  email: z.string(),
+  password: z.string(),
+  role: z.string(),
+});
+
+export const logSchema = z.object({
+  id: z.number(),
+  user_id: z.number(),
+  action: z.string(),
+  details: z.string().optional(),
+  created_at: z.string(),
+  service_group: z.string(),
+  level: z.string(),
+});
+
+export const notificationSchema = z.object({
+  id: z.number(),
+  user_id: z.number(),
+  message: z.string(),
+  read: z.boolean().optional(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export const virtualMachineSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  uuid: z.string(),
+});
+
+export const virtualMachineInfoSchema = z.object({
+  state: z.number(),
+  max_mem_kb: z.number(),
+  memory_kb: z.number(),
+  vcpus: z.number(),
+  cpu_time_ns: z.number(),
+  vnc_ip: z.string(),
+  vnc_port: z.number(),
+});
+
+export const virtualMachineWithInfoSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  uuid: z.string(),
+  state: z.number(),
+  max_mem_kb: z.number(),
+  memory_kb: z.number(),
+  vcpus: z.number(),
+  cpu_time_ns: z.number(),
+  vnc_ip: z.string(),
+  vnc_port: z.number(),
+});
+
+export const createVmRequestSchema = z.object({
+  name: z.string(),
+  memory: z.number(),
+  vcpus: z.number(),
+  disk: z.number(),
+  os_image: z.string().optional(),
+  autostart: z.boolean().optional(),
+});
+
+export const vmActionResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+});
+
+export const healthSchema = z.object({
+  status: z.string(),
+  message: z.string(),
+  app_version: z.string(),
+  base_url: z.string(),
+  error: z.string().optional(),
+  stats: healthStatsSchema,
+});
+
+export const getUserAndSessionByTokenRowSchema = z.object({
+  user: userSchema,
+  user_session: userSessionSchema,
+});
+
+// Docker Types
+export const dockerClientInfoSchema = z.object({
   id: z.number(),
   status: z.string(),
 });
