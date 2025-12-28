@@ -24,6 +24,12 @@ type EnvVars struct {
 	SessionSecret   string `envconfig:"SESSION_SECRET" required:"true"`
 	FRONTEND_DASH   string `envconfig:"FRONTEND_DASH_URL" default:"http://localhost:5173/app"`
 	BaseUrlWithPort string
+
+	// Discord Webhook Configuration
+	DiscordWebhookURL    string `envconfig:"DISCORD_WEBHOOK_URL"`
+	DiscordNotifyOnError bool   `envconfig:"DISCORD_NOTIFY_ON_ERROR" default:"true"`
+	DiscordNotifyOnWarn  bool   `envconfig:"DISCORD_NOTIFY_ON_WARN" default:"false"`
+	DiscordNotifyOnInfo  bool   `envconfig:"DISCORD_NOTIFY_ON_INFO" default:"false"`
 }
 
 var ENV_VARS EnvVars

@@ -125,6 +125,14 @@ func (s *Server) RegisterRoutes() http.Handler {
 	firewallGroup.POST("/rules/reorder", s.firewallService.ReorderRules, Roles(models.RBAC_FIREWALL_UPDATE))
 	firewallGroup.DELETE("/rules/:handle", s.firewallService.DeleteRule, Roles(models.RBAC_FIREWALL_DELETE))
 
+	// Settings routes
+	settingsGroup := api.Group("/settings", s.authService.AuthMiddleware, RequestLogger(s.settingsService.Logger, s.settingsService.Dispatcher))
+	settingsGroup.GET("/notifications", s.settingsService.GetAllNotificationSettings, Roles(models.RBAC_SETTINGS_MANAGER))
+	settingsGroup.GET("/notifications/:provider", s.settingsService.GetNotificationSettingByProvider, Roles(models.RBAC_SETTINGS_MANAGER))
+	settingsGroup.POST("/notifications", s.settingsService.UpsertNotificationSetting, Roles(models.RBAC_SETTINGS_MANAGER))
+	settingsGroup.DELETE("/notifications/:provider", s.settingsService.DeleteNotificationSetting, Roles(models.RBAC_SETTINGS_MANAGER))
+	settingsGroup.POST("/notifications/:provider/test", s.settingsService.TestNotification, Roles(models.RBAC_SETTINGS_MANAGER))
+
 	docsGroup := api.Group("/docs", RequestLogger(s.docsService.Logger, s.docsService.Dispatcher))
 	docsGroup.GET("", s.docsService.ServeRedoc)
 	docsGroup.GET("/swagger", s.docsService.ServeSwagger)

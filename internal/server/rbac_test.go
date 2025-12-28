@@ -17,6 +17,7 @@ import (
 	dbsessions "visory/internal/database/sessions"
 	"visory/internal/database/user"
 	"visory/internal/models"
+	"visory/internal/notifications"
 	"visory/internal/services"
 	"visory/internal/utils"
 
@@ -69,9 +70,12 @@ func setupTestServer(t *testing.T) *testHelper {
 	})
 
 	dbService := database.New()
-	dispatcher := utils.NewDispatcher(dbService)
+	dispatcher := utils.NewDispatcher(dbService, nil)
 
 	dockerService := services.NewDockerService(dispatcher, logger)
+	notifManager := notifications.NewManager()
+
+	fs := utils.NewFS(fmt.Sprintf("%v-test-%d", "visory", time.Now().UnixNano()))
 	s := &Server{
 		port:             9999,
 		logger:           logger,
@@ -82,11 +86,12 @@ func setupTestServer(t *testing.T) *testHelper {
 		logsService:      services.NewLogsService(dbService, dispatcher, logger),
 		metricsService:   services.NewMetricsService(dbService, dispatcher, logger),
 		storageService:   services.NewStorageService(dispatcher, logger),
-		qemuService:      services.NewQemuService(dispatcher, logger),
+		qemuService:      services.NewQemuService(dispatcher, fs, logger),
 		dockerService:    dockerService,
 		docsService:      services.NewDocsService(dbService, dispatcher, logger),
 		firewallService:  services.NewFirewallService(dispatcher, logger),
 		templatesService: services.NewTemplatesService(dispatcher, logger, dockerService.ClientManager),
+		settingsService:  services.NewSettingsService(dbService, dispatcher, logger, notifManager),
 	}
 
 	handler := s.RegisterRoutes()
