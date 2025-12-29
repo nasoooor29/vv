@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"time"
 
+	"visory/internal/database/backups"
 	"visory/internal/database/logs"
 	"visory/internal/database/notifications"
 	"visory/internal/database/sessions"
@@ -40,6 +41,7 @@ type Service struct {
 	Session      *sessions.Queries
 	Log          *logs.Queries
 	Notification *notifications.Queries
+	Backup       *backups.Queries
 }
 
 func New() *Service {
@@ -85,6 +87,7 @@ func New() *Service {
 		Session:      sessions.New(db),
 		Log:          logs.New(db),
 		Notification: notifications.New(db),
+		Backup:       backups.New(db),
 	}
 	return dbInstance
 }

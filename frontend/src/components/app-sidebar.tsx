@@ -23,6 +23,7 @@ import {
   Disc3,
   Package,
   Cloud,
+  Archive,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Link, useNavigate } from "react-router";
@@ -38,6 +39,7 @@ import {
   RBAC_SETTINGS_MANAGER,
   RBAC_USER_ADMIN,
   RBAC_AUDIT_LOG_VIEWER,
+  RBAC_BACKUP_READ,
 } from "@/types/types.gen";
 
 import { formatTimeDifference } from "@/lib/utils";
@@ -154,6 +156,12 @@ export function AppSidebar() {
       label: "Storage",
       icon: Database,
       requiredPermission: RBAC_SETTINGS_MANAGER,
+    },
+    {
+      id: "backups",
+      label: "Backups",
+      icon: Archive,
+      requiredPermission: RBAC_BACKUP_READ,
     },
     {
       id: "users",

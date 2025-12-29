@@ -13,8 +13,6 @@ export const virtualMachineInfoSchema = z.object({
   memory_kb: z.number(),
   vcpus: z.number(),
   cpu_time_ns: z.number(),
-  vnc_ip: z.string(),
-  vnc_port: z.number(),
 });
 
 export const virtualMachineWithInfoSchema = z.object({
@@ -28,7 +26,7 @@ export const createVmRequestSchema = z.object({
   name: z.string(),
   memory: z.number(),
   vcpus: z.number(),
-  disk: z.number(),
+  disk_size: z.number(),
   os_image: z.string(),
   autostart: z.boolean(),
 });
@@ -47,6 +45,131 @@ export const rbacPolicySchema = z.string();
 
 export const httpErrorSchema = z.object({
   message: z.string(),
+});
+
+export const backupTypeSchema = z.string();
+
+export const backupTargetTypeSchema = z.string();
+
+export const backupStatusSchema = z.string();
+
+export const backupJobSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  type: z.string(),
+  target_type: z.string(),
+  target_id: z.string(),
+  target_name: z.string().optional(),
+  client_id: z.string().optional(),
+  status: z.string(),
+  progress: z.number().optional(),
+  destination: z.string().optional(),
+  size_bytes: z.number().optional(),
+  error_message: z.string().optional(),
+  started_at: z.string().optional(),
+  completed_at: z.string().optional(),
+  created_by: z.number().optional(),
+  created_at: z.string().optional(),
+});
+
+export const backupScheduleSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  type: z.string(),
+  target_type: z.string(),
+  target_id: z.string(),
+  target_name: z.string().optional(),
+  client_id: z.string().optional(),
+  schedule: z.string(),
+  schedule_time: z.string().optional(),
+  destination: z.string(),
+  retention_count: z.number().optional(),
+  enabled: z.number().optional(),
+  last_run_at: z.string().optional(),
+  next_run_at: z.string().optional(),
+  last_status: z.string().optional(),
+  created_by: z.number().optional(),
+  created_at: z.string().optional(),
+  updated_at: z.string().optional(),
+});
+
+export const firewallBackupSchema = z.object({
+  id: z.number(),
+  filename: z.string(),
+  size_bytes: z.number(),
+  rule_count: z.number(),
+  created_at: z.string(),
+});
+
+export const vmSnapshotSchema = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+  state: z.string(),
+  created_at: z.string().optional(),
+  is_current: z.boolean(),
+});
+
+export const containerBackupSchema = z.object({
+  id: z.string(),
+  filename: z.string(),
+  container_id: z.string(),
+  client_id: z.string(),
+  size_bytes: z.number(),
+  created_at: z.string(),
+});
+
+export const createVmSnapshotRequestSchema = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+});
+
+export const createContainerBackupRequestSchema = z.object({
+  name: z.string(),
+});
+
+export const restoreVmSnapshotRequestSchema = z.object({
+  snapshot_name: z.string(),
+});
+
+export const restoreContainerBackupRequestSchema = z.object({
+  backup_file: z.string(),
+  container_name: z.string().optional(),
+});
+
+export const createBackupScheduleRequestSchema = z.object({
+  name: z.string(),
+  type: backupTypeSchema,
+  target_type: backupTargetTypeSchema,
+  target_id: z.string(),
+  target_name: z.string(),
+  client_id: z.string().optional(),
+  schedule: z.string(),
+  schedule_time: z.string(),
+  retention_count: z.number(),
+});
+
+export const updateBackupScheduleRequestSchema = z.object({
+  name: z.string().optional(),
+  schedule: z.string().optional(),
+  schedule_time: z.string().optional(),
+  retention_count: z.number().optional(),
+  enabled: z.boolean().optional(),
+});
+
+export const backupActionResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  job_id: z.number().optional(),
+});
+
+export const backupStatsSchema = z.object({
+  total_backups: z.number(),
+  vm_snapshots: z.number(),
+  container_backups: z.number(),
+  firewall_backups: z.number(),
+  total_size_bytes: z.number(),
+  active_schedules: z.number(),
+  last_backup_at: z.string().optional(),
 });
 
 export const logResponseSchema = z.object({
@@ -193,10 +316,6 @@ export const envVarsSchema = z.object({
   SessionSecret: z.string(),
   FRONTEND_DASH: z.string(),
   BaseUrlWithPort: z.string(),
-  DiscordWebhookURL: z.string(),
-  DiscordNotifyOnError: z.boolean(),
-  DiscordNotifyOnWarn: z.boolean(),
-  DiscordNotifyOnInfo: z.boolean(),
 });
 
 export const templateVolumeSchema = z.object({
@@ -271,41 +390,21 @@ export const reorderRulesRequestSchema = z.object({
   handles: z.array(z.number()),
 });
 
-export const settingsServiceSchema = z.object({
-  Dispatcher: z.any().optional(),
-  Logger: z.any().optional(),
-  Notifier: z.any().optional(),
-});
-
-export const notificationSettingRequestSchema = z.object({
-  provider: z.string(),
-  enabled: z.boolean(),
-  webhook_url: z.string(),
-  notify_on_error: z.boolean(),
-  notify_on_warn: z.boolean(),
-  notify_on_info: z.boolean(),
-  config: z.string().optional(),
-});
-
 export const firewallServiceSchema = z.object({
   Dispatcher: z.any().optional(),
   Logger: z.any().optional(),
 });
 
-export const isoServiceSchema = z.object({
+export const backupServiceSchema = z.object({
   Dispatcher: z.any().optional(),
   Logger: z.any().optional(),
-  FS: z.any().optional(),
 });
 
 export const qemuServiceSchema = z.object({
   Dispatcher: z.any().optional(),
   Logger: z.any().optional(),
   LibVirt: z.any().optional(),
-  FS: z.any().optional(),
 });
-
-export const createVirtualMachineRequestSchema = z.object({});
 
 export const storageServiceSchema = z.object({
   Dispatcher: z.any().optional(),
@@ -367,16 +466,106 @@ export const getLogsRequestSchema = z.object({
   Days: z.number(),
 });
 
-export const vncProxySchema = z.object({});
+export const createBackupJobParamsSchema = z.object({
+  name: z.string(),
+  type: z.string(),
+  target_type: z.string(),
+  target_id: z.string(),
+  target_name: z.string().optional(),
+  client_id: z.string().optional(),
+  status: z.string(),
+  progress: z.number().optional(),
+  destination: z.string().optional(),
+  size_bytes: z.number().optional(),
+  error_message: z.string().optional(),
+  started_at: z.string().optional(),
+  completed_at: z.string().optional(),
+  created_by: z.number().optional(),
+});
 
-export const upsertNotificationSettingParamsSchema = z.object({
-  provider: z.string(),
-  enabled: z.boolean().optional(),
-  webhook_url: z.string().optional(),
-  notify_on_error: z.boolean().optional(),
-  notify_on_warn: z.boolean().optional(),
-  notify_on_info: z.boolean().optional(),
-  config: z.string().optional(),
+export const createBackupScheduleParamsSchema = z.object({
+  name: z.string(),
+  type: z.string(),
+  target_type: z.string(),
+  target_id: z.string(),
+  target_name: z.string().optional(),
+  client_id: z.string().optional(),
+  schedule: z.string(),
+  schedule_time: z.string().optional(),
+  destination: z.string(),
+  retention_count: z.number().optional(),
+  enabled: z.number().optional(),
+  next_run_at: z.string().optional(),
+  created_by: z.number().optional(),
+});
+
+export const getBackupStatsRowSchema = z.object({
+  total_backups: z.number(),
+  vm_snapshots: z.number().optional(),
+  container_backups: z.number().optional(),
+  firewall_backups: z.number().optional(),
+  total_size_bytes: z.any(),
+  last_backup_at: z.any(),
+});
+
+export const listBackupJobsParamsSchema = z.object({
+  limit: z.number(),
+  offset: z.number(),
+});
+
+export const listBackupJobsByTargetParamsSchema = z.object({
+  target_type: z.string(),
+  target_id: z.string(),
+  limit: z.number(),
+  offset: z.number(),
+});
+
+export const listBackupJobsByTypeParamsSchema = z.object({
+  type: z.string(),
+  limit: z.number(),
+  offset: z.number(),
+});
+
+export const updateBackupJobCompletedParamsSchema = z.object({
+  completed_at: z.string().optional(),
+  size_bytes: z.number().optional(),
+  id: z.number(),
+});
+
+export const updateBackupJobFailedParamsSchema = z.object({
+  error_message: z.string().optional(),
+  completed_at: z.string().optional(),
+  id: z.number(),
+});
+
+export const updateBackupJobProgressParamsSchema = z.object({
+  progress: z.number().optional(),
+  id: z.number(),
+});
+
+export const updateBackupJobStatusParamsSchema = z.object({
+  status: z.string(),
+  progress: z.number().optional(),
+  error_message: z.string().optional(),
+  started_at: z.string().optional(),
+  completed_at: z.string().optional(),
+  id: z.number(),
+});
+
+export const updateBackupScheduleParamsSchema = z.object({
+  name: z.string(),
+  schedule: z.string(),
+  schedule_time: z.string().optional(),
+  retention_count: z.number().optional(),
+  enabled: z.number().optional(),
+  id: z.number(),
+});
+
+export const updateScheduleAfterRunParamsSchema = z.object({
+  last_run_at: z.string().optional(),
+  next_run_at: z.string().optional(),
+  last_status: z.string().optional(),
+  id: z.number(),
 });
 
 export const countLogsByLevelParamsSchema = z.object({
@@ -475,6 +664,7 @@ export const serviceSchema = z.object({
   Session: z.any().optional(),
   Log: z.any().optional(),
   Notification: z.any().optional(),
+  Backup: z.any().optional(),
 });
 
 export const healthStatsSchema = z.object({
@@ -556,19 +746,6 @@ export const notificationSchema = z.object({
   user_id: z.number(),
   message: z.string(),
   read: z.boolean().optional(),
-  created_at: z.string(),
-  updated_at: z.string(),
-});
-
-export const notificationSettingSchema = z.object({
-  id: z.number(),
-  provider: z.string(),
-  enabled: z.boolean().optional(),
-  webhook_url: z.string().optional(),
-  notify_on_error: z.boolean().optional(),
-  notify_on_warn: z.boolean().optional(),
-  notify_on_info: z.boolean().optional(),
-  config: z.string().optional(),
   created_at: z.string(),
   updated_at: z.string(),
 });

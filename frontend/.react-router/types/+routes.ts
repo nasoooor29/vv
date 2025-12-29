@@ -34,21 +34,16 @@ type Pages = {
   "/app": {
     params: {};
   };
-  "/app/vms/:uuid/console": {
-    params: {
-      "uuid": string;
-    };
-  };
   "/app/sys/networking": {
     params: {};
   };
   "/app/sys/settings": {
     params: {};
   };
-  "/app/sys/storage": {
+  "/app/sys/backups": {
     params: {};
   };
-  "/app/vms": {
+  "/app/sys/storage": {
     params: {};
   };
   "/app/dashboard": {
@@ -69,7 +64,7 @@ type Pages = {
   "/app/docker": {
     params: {};
   };
-  "/app/iso": {
+  "/app/vms": {
     params: {};
   };
 };
@@ -77,7 +72,7 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/auth" | "/auth/register" | "/auth/login" | "/docs" | "/docs/*" | "/app" | "/app/vms/:uuid/console" | "/app/sys/networking" | "/app/sys/settings" | "/app/sys/storage" | "/app/vms" | "/app/dashboard" | "/app/sys/users" | "/app/templates" | "/app/sys/logs" | "/app/monitor" | "/app/docker" | "/app/iso";
+    page: "/" | "/auth" | "/auth/register" | "/auth/login" | "/docs" | "/docs/*" | "/app" | "/app/sys/networking" | "/app/sys/settings" | "/app/sys/backups" | "/app/sys/storage" | "/app/dashboard" | "/app/sys/users" | "/app/templates" | "/app/sys/logs" | "/app/monitor" | "/app/docker" | "/app/vms";
   };
   "routes/_landing.tsx": {
     id: "routes/_landing";
@@ -113,11 +108,7 @@ type RouteFiles = {
   };
   "routes/app.tsx": {
     id: "routes/app";
-    page: "/app" | "/app/vms/:uuid/console" | "/app/sys/networking" | "/app/sys/settings" | "/app/sys/storage" | "/app/vms" | "/app/dashboard" | "/app/sys/users" | "/app/templates" | "/app/sys/logs" | "/app/monitor" | "/app/docker" | "/app/iso";
-  };
-  "routes/app.vms.$uuid.console.tsx": {
-    id: "routes/app.vms.$uuid.console";
-    page: "/app/vms/:uuid/console";
+    page: "/app" | "/app/sys/networking" | "/app/sys/settings" | "/app/sys/backups" | "/app/sys/storage" | "/app/dashboard" | "/app/sys/users" | "/app/templates" | "/app/sys/logs" | "/app/monitor" | "/app/docker" | "/app/vms";
   };
   "routes/app.sys.networking.tsx": {
     id: "routes/app.sys.networking";
@@ -127,13 +118,13 @@ type RouteFiles = {
     id: "routes/app.sys.settings";
     page: "/app/sys/settings";
   };
+  "routes/app.sys.backups/route.tsx": {
+    id: "routes/app.sys.backups";
+    page: "/app/sys/backups";
+  };
   "routes/app.sys.storage/route.tsx": {
     id: "routes/app.sys.storage";
     page: "/app/sys/storage";
-  };
-  "routes/app.vms._index.tsx": {
-    id: "routes/app.vms._index";
-    page: "/app/vms";
   };
   "routes/app.dashboard.tsx": {
     id: "routes/app.dashboard";
@@ -163,9 +154,9 @@ type RouteFiles = {
     id: "routes/app.docker";
     page: "/app/docker";
   };
-  "routes/app.iso.tsx": {
-    id: "routes/app.iso";
-    page: "/app/iso";
+  "routes/app.vms.tsx": {
+    id: "routes/app.vms";
+    page: "/app/vms";
   };
 };
 
@@ -180,11 +171,10 @@ type RouteModules = {
   "routes/docs._index": typeof import("./src/routes/docs._index.tsx");
   "routes/docs.$": typeof import("./src/routes/docs.$.tsx");
   "routes/app": typeof import("./src/routes/app.tsx");
-  "routes/app.vms.$uuid.console": typeof import("./src/routes/app.vms.$uuid.console.tsx");
   "routes/app.sys.networking": typeof import("./src/routes/app.sys.networking.tsx");
   "routes/app.sys.settings": typeof import("./src/routes/app.sys.settings.tsx");
+  "routes/app.sys.backups": typeof import("./src/routes/app.sys.backups/route.tsx");
   "routes/app.sys.storage": typeof import("./src/routes/app.sys.storage/route.tsx");
-  "routes/app.vms._index": typeof import("./src/routes/app.vms._index.tsx");
   "routes/app.dashboard": typeof import("./src/routes/app.dashboard.tsx");
   "routes/app.sys.users": typeof import("./src/routes/app.sys.users/route.tsx");
   "routes/app.templates": typeof import("./src/routes/app.templates/route.tsx");
@@ -192,5 +182,5 @@ type RouteModules = {
   "routes/app.monitor": typeof import("./src/routes/app.monitor.tsx");
   "routes/app._index": typeof import("./src/routes/app._index.tsx");
   "routes/app.docker": typeof import("./src/routes/app.docker/route.tsx");
-  "routes/app.iso": typeof import("./src/routes/app.iso.tsx");
+  "routes/app.vms": typeof import("./src/routes/app.vms.tsx");
 };

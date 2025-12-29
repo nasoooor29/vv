@@ -2,7 +2,7 @@
 // versions:
 //   sqlc v1.30.0
 
-package sessions
+package backups
 
 import (
 	"time"
@@ -65,19 +65,6 @@ type Notification struct {
 	Read      *bool     `json:"read"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
-}
-
-type NotificationSetting struct {
-	ID            int64     `json:"id"`
-	Provider      string    `json:"provider"`
-	Enabled       *bool     `json:"enabled"`
-	WebhookUrl    *string   `json:"webhook_url"`
-	NotifyOnError *bool     `json:"notify_on_error"`
-	NotifyOnWarn  *bool     `json:"notify_on_warn"`
-	NotifyOnInfo  *bool     `json:"notify_on_info"`
-	Config        *string   `json:"config"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
 }
 
 type User struct {

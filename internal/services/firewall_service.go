@@ -30,13 +30,14 @@ const (
 )
 
 type FirewallService struct {
-	Dispatcher *utils.Dispatcher
-	Logger     *slog.Logger
-	mu         sync.RWMutex
-	conn       *nftables.Conn
-	table      *nftables.Table
-	chains     map[string]*nftables.Chain
-	dataDir    string
+	Dispatcher     *utils.Dispatcher
+	Logger         *slog.Logger
+	mu             sync.RWMutex
+	conn           *nftables.Conn
+	table          *nftables.Table
+	chains         map[string]*nftables.Chain
+	dataDir        string
+	onRulesChanged func(rules []models.FirewallRule) // Callback for when rules change (for backup)
 }
 
 // NewFirewallService creates a new FirewallService with dependency injection
@@ -53,6 +54,12 @@ func NewFirewallService(dispatcher *utils.Dispatcher, logger *slog.Logger) *Fire
 	}
 
 	return service
+}
+
+// SetOnRulesChanged sets a callback function that is called whenever firewall rules change
+// This is used by the backup service to create backups of firewall rules
+func (s *FirewallService) SetOnRulesChanged(callback func(rules []models.FirewallRule)) {
+	s.onRulesChanged = callback
 }
 
 // initialize sets up nftables connection and ensures table/chains exist
@@ -748,6 +755,12 @@ func (s *FirewallService) persistRules() error {
 	}
 
 	s.Logger.Info("persisted firewall rules", "count", len(allRules), "file", filePath)
+
+	// Call the backup callback if set (for creating firewall backups)
+	if s.onRulesChanged != nil {
+		go s.onRulesChanged(allRules)
+	}
+
 	return nil
 }
 

@@ -136,6 +136,34 @@ func (s *Server) RegisterRoutes() http.Handler {
 	firewallGroup.POST("/rules/reorder", s.firewallService.ReorderRules, Roles(models.RBAC_FIREWALL_UPDATE))
 	firewallGroup.DELETE("/rules/:handle", s.firewallService.DeleteRule, Roles(models.RBAC_FIREWALL_DELETE))
 
+	// Backup routes
+	backupLogger := RequestLogger(s.backupService.Logger, s.backupService.Dispatcher)
+	backupGroup := api.Group("/backup", s.authService.AuthMiddleware, backupLogger)
+
+	// Backup jobs
+	backupGroup.GET("/jobs", s.backupService.ListBackupJobs, Roles(models.RBAC_BACKUP_READ))
+	backupGroup.GET("/jobs/:id", s.backupService.GetBackupJob, Roles(models.RBAC_BACKUP_READ))
+	backupGroup.DELETE("/jobs/:id", s.backupService.DeleteBackupJob, Roles(models.RBAC_BACKUP_DELETE))
+
+	// Backup stats
+	backupGroup.GET("/stats", s.backupService.GetBackupStats, Roles(models.RBAC_BACKUP_READ))
+
+	// Backup schedules
+	backupGroup.GET("/schedules", s.backupService.ListBackupSchedules, Roles(models.RBAC_BACKUP_READ))
+	backupGroup.GET("/schedules/:id", s.backupService.GetBackupSchedule, Roles(models.RBAC_BACKUP_READ))
+	backupGroup.POST("/schedules", s.backupService.CreateBackupSchedule, Roles(models.RBAC_BACKUP_WRITE))
+	backupGroup.PUT("/schedules/:id", s.backupService.UpdateBackupSchedule, Roles(models.RBAC_BACKUP_WRITE))
+	backupGroup.DELETE("/schedules/:id", s.backupService.DeleteBackupSchedule, Roles(models.RBAC_BACKUP_DELETE))
+	backupGroup.POST("/schedules/:id/toggle", s.backupService.ToggleBackupSchedule, Roles(models.RBAC_BACKUP_WRITE))
+
+	// Firewall backups
+	backupGroup.GET("/firewall", s.backupService.ListFirewallBackups, Roles(models.RBAC_BACKUP_READ))
+	backupGroup.GET("/firewall/:filename", s.backupService.GetFirewallBackup, Roles(models.RBAC_BACKUP_READ))
+	backupGroup.DELETE("/firewall/:filename", s.backupService.DeleteFirewallBackup, Roles(models.RBAC_BACKUP_DELETE))
+
+	// Container backups
+	backupGroup.GET("/containers", s.backupService.ListContainerBackups, Roles(models.RBAC_BACKUP_READ))
+	backupGroup.DELETE("/containers/:filename", s.backupService.DeleteContainerBackup, Roles(models.RBAC_BACKUP_DELETE))
 	// Settings routes
 	settingsGroup := api.Group("/settings", s.authService.AuthMiddleware, RequestLogger(s.settingsService.Logger, s.settingsService.Dispatcher))
 	settingsGroup.GET("/notifications", s.settingsService.GetAllNotificationSettings, Roles(models.RBAC_SETTINGS_MANAGER))

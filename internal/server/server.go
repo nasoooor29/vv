@@ -28,7 +28,6 @@ type Server struct {
 	OAuthProviders map[string]goth.Provider
 
 	// Services
-	firewallService  *services.FirewallService
 	templatesService *services.TemplatesService
 	authService      *services.AuthService
 	usersService     *services.UsersService
@@ -39,6 +38,8 @@ type Server struct {
 	qemuService      *services.QemuService
 	isoService       *services.ISOService
 	dockerService    *services.DockerService
+	firewallService  *services.FirewallService
+	backupService    *services.BackupService
 	vncProxy         *services.VNCProxy
 	settingsService  *services.SettingsService
 }
@@ -83,6 +84,14 @@ func NewServer() *http.Server {
 	dockerService := services.NewDockerService(serverDispatcher, logger)
 	firewallService := services.NewFirewallService(serverDispatcher, logger)
 	templatesService := services.NewTemplatesService(serverDispatcher, logger, dockerService.ClientManager)
+	backupService := services.NewBackupService(db, serverDispatcher, logger)
+
+	// Wire firewall backup callback - creates backup on every rule change
+	firewallService.SetOnRulesChanged(func(rules []models.FirewallRule) {
+		if err := backupService.CreateFirewallBackup(rules); err != nil {
+			logger.Error("failed to create firewall backup", "error", err)
+		}
+	})
 
 	// Initialize Docker clients from environment variables
 	docsService := services.NewDocsService(db, serverDispatcher, logger)
@@ -112,6 +121,7 @@ func NewServer() *http.Server {
 		isoService:       isoService,
 		firewallService:  firewallService,
 		templatesService: templatesService,
+		backupService:    backupService,
 		vncProxy:         vncProxy,
 		settingsService:  settingsService,
 	}
