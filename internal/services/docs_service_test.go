@@ -16,7 +16,7 @@ import (
 )
 
 func setupDocsServiceTest(t *testing.T) *DocsService {
-	dispatcher := utils.NewDispatcher(nil)
+	dispatcher := utils.NewDispatcher(nil, nil)
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	}))

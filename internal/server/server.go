@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 
 	"visory/internal/database"
 	"visory/internal/models"
+	"visory/internal/notifications"
 	"visory/internal/services"
 	"visory/internal/utils"
 
@@ -19,12 +21,14 @@ import (
 type Server struct {
 	port int
 
+	fs             *utils.FS
 	db             *database.Service
 	dispatcher     *utils.Dispatcher
 	logger         *slog.Logger
 	OAuthProviders map[string]goth.Provider
 
 	// Services
+	templatesService *services.TemplatesService
 	authService      *services.AuthService
 	usersService     *services.UsersService
 	storageService   *services.StorageService
@@ -32,10 +36,12 @@ type Server struct {
 	docsService      *services.DocsService
 	metricsService   *services.MetricsService
 	qemuService      *services.QemuService
+	isoService       *services.ISOService
 	dockerService    *services.DockerService
 	firewallService  *services.FirewallService
-	templatesService *services.TemplatesService
 	backupService    *services.BackupService
+	vncProxy         *services.VNCProxy
+	settingsService  *services.SettingsService
 }
 
 func NewServer() *http.Server {
@@ -48,7 +54,23 @@ func NewServer() *http.Server {
 	slog.SetDefault(logger)
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 	db := database.New()
-	dispatcher := utils.NewDispatcher(db)
+
+	// Initialize notification manager with configured senders
+	notifier := notifications.NewManager()
+
+	// Register Discord sender if configured
+	if models.ENV_VARS.DiscordWebhookURL != "" {
+		discordSender := notifications.NewDiscordSender(notifications.DiscordConfig{
+			WebhookURL:    models.ENV_VARS.DiscordWebhookURL,
+			NotifyOnError: models.ENV_VARS.DiscordNotifyOnError,
+			NotifyOnWarn:  models.ENV_VARS.DiscordNotifyOnWarn,
+			NotifyOnInfo:  models.ENV_VARS.DiscordNotifyOnInfo,
+		})
+		notifier.RegisterSender(discordSender)
+	}
+
+	dispatcher := utils.NewDispatcher(db, notifier)
+	fs := utils.NewFS(models.ENV_VARS.Directory)
 
 	// Add server group to logger
 	serverDispatcher := dispatcher.WithGroup("server")
@@ -73,12 +95,19 @@ func NewServer() *http.Server {
 
 	// Initialize Docker clients from environment variables
 	docsService := services.NewDocsService(db, serverDispatcher, logger)
-	qemuService := services.NewQemuService(serverDispatcher, logger)
+	settingsService := services.NewSettingsService(db, serverDispatcher, logger, notifier)
+
+	// Load notification settings from database
+	loadNotificationSettingsFromDB(db, notifier)
+	qemuService := services.NewQemuService(serverDispatcher, fs, logger)
+	isoService := services.NewISOService(serverDispatcher, fs, logger)
+	vncProxy := services.NewVNCProxy(logger)
 
 	NewServer := &Server{
 		port:             port,
 		db:               db,
 		logger:           logger,
+		fs:               fs,
 		dispatcher:       serverDispatcher,
 		OAuthProviders:   authService.OAuthProviders,
 		authService:      authService,
@@ -89,9 +118,12 @@ func NewServer() *http.Server {
 		dockerService:    dockerService,
 		docsService:      docsService,
 		qemuService:      qemuService,
+		isoService:       isoService,
 		firewallService:  firewallService,
 		templatesService: templatesService,
 		backupService:    backupService,
+		vncProxy:         vncProxy,
+		settingsService:  settingsService,
 	}
 
 	// Declare Server config
@@ -104,4 +136,38 @@ func NewServer() *http.Server {
 	}
 
 	return server
+}
+
+// loadNotificationSettingsFromDB loads notification settings from the database and registers senders
+func loadNotificationSettingsFromDB(db *database.Service, notifier *notifications.Manager) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	settings, err := db.Notification.GetEnabledNotificationSettings(ctx)
+	if err != nil {
+		slog.Warn("Failed to load notification settings from database", "error", err)
+		return
+	}
+
+	for _, setting := range settings {
+		if setting.WebhookUrl == nil || *setting.WebhookUrl == "" {
+			continue
+		}
+
+		switch setting.Provider {
+		case "discord":
+			notifyOnError := setting.NotifyOnError != nil && *setting.NotifyOnError
+			notifyOnWarn := setting.NotifyOnWarn != nil && *setting.NotifyOnWarn
+			notifyOnInfo := setting.NotifyOnInfo != nil && *setting.NotifyOnInfo
+
+			sender := notifications.NewDiscordSender(notifications.DiscordConfig{
+				WebhookURL:    *setting.WebhookUrl,
+				NotifyOnError: notifyOnError,
+				NotifyOnWarn:  notifyOnWarn,
+				NotifyOnInfo:  notifyOnInfo,
+			})
+			notifier.RegisterSender(sender)
+			slog.Info("Loaded notification setting from database", "provider", setting.Provider)
+		}
+	}
 }

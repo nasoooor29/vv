@@ -9,6 +9,58 @@ import (
 	"context"
 )
 
+const deleteNotificationSetting = `-- name: DeleteNotificationSetting :exec
+DELETE FROM notification_settings WHERE provider = ?
+`
+
+func (q *Queries) DeleteNotificationSetting(ctx context.Context, provider string) error {
+	_, err := q.db.ExecContext(ctx, deleteNotificationSetting, provider)
+	return err
+}
+
+const getAllNotificationSettings = `-- name: GetAllNotificationSettings :many
+
+SELECT
+  id, provider, enabled, webhook_url, notify_on_error, notify_on_warn, notify_on_info, config, created_at, updated_at
+FROM
+  notification_settings
+`
+
+// Notification Settings Queries
+func (q *Queries) GetAllNotificationSettings(ctx context.Context) ([]NotificationSetting, error) {
+	rows, err := q.db.QueryContext(ctx, getAllNotificationSettings)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []NotificationSetting
+	for rows.Next() {
+		var i NotificationSetting
+		if err := rows.Scan(
+			&i.ID,
+			&i.Provider,
+			&i.Enabled,
+			&i.WebhookUrl,
+			&i.NotifyOnError,
+			&i.NotifyOnWarn,
+			&i.NotifyOnInfo,
+			&i.Config,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAllNotifications = `-- name: GetAllNotifications :many
 SELECT
   id, user_id, message, read, created_at, updated_at
@@ -46,6 +98,49 @@ func (q *Queries) GetAllNotifications(ctx context.Context) ([]Notification, erro
 	return items, nil
 }
 
+const getEnabledNotificationSettings = `-- name: GetEnabledNotificationSettings :many
+SELECT
+  id, provider, enabled, webhook_url, notify_on_error, notify_on_warn, notify_on_info, config, created_at, updated_at
+FROM
+  notification_settings
+WHERE
+  enabled = TRUE
+`
+
+func (q *Queries) GetEnabledNotificationSettings(ctx context.Context) ([]NotificationSetting, error) {
+	rows, err := q.db.QueryContext(ctx, getEnabledNotificationSettings)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []NotificationSetting
+	for rows.Next() {
+		var i NotificationSetting
+		if err := rows.Scan(
+			&i.ID,
+			&i.Provider,
+			&i.Enabled,
+			&i.WebhookUrl,
+			&i.NotifyOnError,
+			&i.NotifyOnWarn,
+			&i.NotifyOnInfo,
+			&i.Config,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getNotificationByID = `-- name: GetNotificationByID :one
 SELECT
   id, user_id, message, read, created_at, updated_at
@@ -63,6 +158,91 @@ func (q *Queries) GetNotificationByID(ctx context.Context, id int64) (Notificati
 		&i.UserID,
 		&i.Message,
 		&i.Read,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getNotificationSettingByProvider = `-- name: GetNotificationSettingByProvider :one
+SELECT
+  id, provider, enabled, webhook_url, notify_on_error, notify_on_warn, notify_on_info, config, created_at, updated_at
+FROM
+  notification_settings
+WHERE
+  provider = ?
+`
+
+func (q *Queries) GetNotificationSettingByProvider(ctx context.Context, provider string) (NotificationSetting, error) {
+	row := q.db.QueryRowContext(ctx, getNotificationSettingByProvider, provider)
+	var i NotificationSetting
+	err := row.Scan(
+		&i.ID,
+		&i.Provider,
+		&i.Enabled,
+		&i.WebhookUrl,
+		&i.NotifyOnError,
+		&i.NotifyOnWarn,
+		&i.NotifyOnInfo,
+		&i.Config,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const upsertNotificationSetting = `-- name: UpsertNotificationSetting :one
+INSERT INTO notification_settings (
+  provider,
+  enabled,
+  webhook_url,
+  notify_on_error,
+  notify_on_warn,
+  notify_on_info,
+  config,
+  updated_at
+) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+ON CONFLICT(provider) DO UPDATE SET
+  enabled = excluded.enabled,
+  webhook_url = excluded.webhook_url,
+  notify_on_error = excluded.notify_on_error,
+  notify_on_warn = excluded.notify_on_warn,
+  notify_on_info = excluded.notify_on_info,
+  config = excluded.config,
+  updated_at = CURRENT_TIMESTAMP
+RETURNING id, provider, enabled, webhook_url, notify_on_error, notify_on_warn, notify_on_info, config, created_at, updated_at
+`
+
+type UpsertNotificationSettingParams struct {
+	Provider      string  `json:"provider"`
+	Enabled       *bool   `json:"enabled"`
+	WebhookUrl    *string `json:"webhook_url"`
+	NotifyOnError *bool   `json:"notify_on_error"`
+	NotifyOnWarn  *bool   `json:"notify_on_warn"`
+	NotifyOnInfo  *bool   `json:"notify_on_info"`
+	Config        *string `json:"config"`
+}
+
+func (q *Queries) UpsertNotificationSetting(ctx context.Context, arg UpsertNotificationSettingParams) (NotificationSetting, error) {
+	row := q.db.QueryRowContext(ctx, upsertNotificationSetting,
+		arg.Provider,
+		arg.Enabled,
+		arg.WebhookUrl,
+		arg.NotifyOnError,
+		arg.NotifyOnWarn,
+		arg.NotifyOnInfo,
+		arg.Config,
+	)
+	var i NotificationSetting
+	err := row.Scan(
+		&i.ID,
+		&i.Provider,
+		&i.Enabled,
+		&i.WebhookUrl,
+		&i.NotifyOnError,
+		&i.NotifyOnWarn,
+		&i.NotifyOnInfo,
+		&i.Config,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

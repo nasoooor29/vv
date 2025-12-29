@@ -11,6 +11,7 @@ import { z } from "zod";
 import { useNavigate } from "react-router";
 import OAuthMenu from "@/components/oauth";
 import { useSession } from "@/stores/user";
+import { Cloud } from "lucide-react";
 
 const loginSchema = z.object({
   username: z.string(),
